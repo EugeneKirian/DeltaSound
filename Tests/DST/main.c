@@ -22,12 +22,45 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "directsoundenumerate.h"
 
-#include "base.h"
-#include "allocator.h"
+#include <stdio.h>
 
-typedef struct deltasound deltasound;
+#define TEST(X)                                         \
+    printf("%s\t", #X);                                 \
+    printf("%s\r\n", Test##X(a, b) ? "OK" : "ERROR");
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
+int main(int argc, char** argv) {
+    if (argc != 3) {
+        printf("Usage:\r\n\t%s\t<path to dsound.dll> <path to dsound.dll>\r\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    HMODULE a = NULL;
+    HMODULE b = NULL;
+
+    if ((a = LoadLibraryA(argv[1])) == NULL) {
+        printf("Unable to load %s\r\n", argv[1]);
+        goto exit;
+    }
+
+    if ((b = LoadLibraryA(argv[2])) == NULL) {
+        printf("Unable to load %s\r\n", argv[2]);
+        goto exit;
+    }
+
+    TEST(DirectSoundEnumerateA);
+    TEST(DirectSoundEnumerateW);
+
+exit:
+
+    if (a != NULL) {
+        FreeLibrary(a);
+    }
+
+    if (b != NULL) {
+        FreeLibrary(b);
+    }
+
+    return EXIT_SUCCESS;
+}

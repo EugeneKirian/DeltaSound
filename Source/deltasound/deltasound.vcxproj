@@ -19,10 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="allocator.h" />
+    <ClInclude Include="base.h" />
     <ClInclude Include="deltasound.h" />
+    <ClInclude Include="ds.h" />
+    <ClInclude Include="dsi.h" />
+    <ClInclude Include="uuid.h" />
+    <ClInclude Include="wasapi_device.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="allocator.c" />
     <ClCompile Include="deltasound.c" />
+    <ClCompile Include="wasapi_device.c" />
+    <ClCompile Include="uuid.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -77,20 +86,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)\..\Bin\x64\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)\..\Obj\x64\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\..\Bin\x64\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)\..\Obj\x64\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)\..\Bin\x64\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)\..\Obj\x64\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\..\Bin\x64\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)\..\Obj\x64\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)\..\Bin\x32\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)\..\Obj\x32\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\..\Bin\x32\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)\..\Obj\x32\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)\..\Bin\x32\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)\..\Obj\x32\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\..\Bin\x32\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)\..\Obj\x32\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
