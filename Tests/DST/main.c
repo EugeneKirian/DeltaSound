@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "directsoundenumerate.h"
+#include "directsoundcaptureenumerate.h"
 
 #include <stdio.h>
 
@@ -33,6 +34,11 @@ SOFTWARE.
 int main(int argc, char** argv) {
     if (argc != 3) {
         printf("Usage:\r\n\t%s\t<path to dsound.dll> <path to dsound.dll>\r\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    if (FAILED(CoInitialize(NULL))) {
+        printf("Unable to initialize COM\r\n");
         return EXIT_FAILURE;
     }
 
@@ -51,6 +57,8 @@ int main(int argc, char** argv) {
 
     TEST(DirectSoundEnumerateA);
     TEST(DirectSoundEnumerateW);
+    TEST(DirectSoundCaptureEnumerateA);
+    TEST(DirectSoundCaptureEnumerateW);
 
 exit:
 
@@ -61,6 +69,8 @@ exit:
     if (b != NULL) {
         FreeLibrary(b);
     }
+
+    CoUninitialize();
 
     return EXIT_SUCCESS;
 }
