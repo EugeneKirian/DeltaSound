@@ -22,12 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include <windows.h>
 
-#include "base.h"
-#include "allocator.h"
+#define DELTACALL   __stdcall
 
-typedef struct deltasound deltasound;
-
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
+#define UNUSED(X)   ((VOID)X)

@@ -24,10 +24,17 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
-#include "allocator.h"
+#include <windows.h>
 
-typedef struct deltasound deltasound;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
+extern const CLSID CLSID_IMMDeviceEnumerator;
+extern const IID IID_IMMDeviceEnumerator;
+extern const IID IID_IAudioClient;
+extern const IID IID_IAudioRenderClient;
+
+#ifdef __cplusplus
+}
+#endif

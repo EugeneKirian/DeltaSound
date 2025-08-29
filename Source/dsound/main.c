@@ -23,6 +23,23 @@ SOFTWARE.
 */
 
 #include <deltasound.h>
+#include <wasapi_device.h>
+
+#include <dsound.h>
+
+#define DEVICEENUMERATE_ANSI    0
+#define DEVICEENUMERATE_WIDE    1
+
+typedef BOOL(CALLBACK* LPDEVICEENUMERATECALLBACK)(LPGUID, LPCVOID, LPCVOID, LPVOID);
+
+HRESULT DELTACALL enumerate_devices(
+    DWORD dwType,
+    DWORD dwWide,
+    LPDEVICEENUMERATECALLBACK pCallback,
+    LPVOID pContext);
+
+static allocator* alc;
+static deltasound* ds;
 
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,
@@ -32,15 +49,16 @@ BOOL WINAPI DllMain(
 
     // TODO NOT IMPLEMENTED
 
+    switch (fdwReason) {
+    case DLL_PROCESS_ATTACH: {
+        if (SUCCEEDED(allocator_create(&alc))) {
+            if (SUCCEEDED(deltasound_create(alc, &ds))) {
+                return TRUE;
+            }
+        }
 
-    // Perform actions based on the reason for calling.
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        // Initialize once for each new process.
-        // Return FALSE to fail DLL load.
-        break;
-
+        return FALSE;
+    }
     case DLL_THREAD_ATTACH:
         // Do thread-specific initialization.
         break;
@@ -49,18 +67,22 @@ BOOL WINAPI DllMain(
         // Do thread-specific cleanup.
         break;
 
-    case DLL_PROCESS_DETACH:
+    case DLL_PROCESS_DETACH: {
+        if (lpvReserved == NULL) {
+            if (ds != NULL) {
+                deltasound_release(ds);
+                ds = NULL;
 
-        if (lpvReserved != NULL)
-        {
-            break; // do not do cleanup if process termination scenario
+                allocator_release(alc);
+                alc = NULL;
+            }
         }
 
-        // Perform any necessary cleanup.
         break;
     }
+    }
 
-    return TRUE;  // Successful DLL_PROCESS_ATTACH.
+    return TRUE;
 }
 
 HRESULT WINAPI DirectSoundCreate(
@@ -74,15 +96,31 @@ HRESULT WINAPI DirectSoundCreate(
 HRESULT WINAPI DirectSoundEnumerateA(
     LPDSENUMCALLBACKA pDSEnumCallback,
     LPVOID pContext) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (pDSEnumCallback == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (alc == NULL || ds == NULL) {
+        return E_FAIL;
+    }
+
+    return enumerate_devices(WASAPIDEVICETYPE_AUDIO, DEVICEENUMERATE_ANSI,
+        (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
 HRESULT WINAPI DirectSoundEnumerateW(
     LPDSENUMCALLBACKW pDSEnumCallback,
     LPVOID pContext) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (pDSEnumCallback == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (alc == NULL || ds == NULL) {
+        return E_FAIL;
+    }
+
+    return enumerate_devices(WASAPIDEVICETYPE_AUDIO, DEVICEENUMERATE_WIDE,
+        (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
 HRESULT WINAPI DirectSoundCaptureCreate(
@@ -96,15 +134,31 @@ HRESULT WINAPI DirectSoundCaptureCreate(
 HRESULT WINAPI DirectSoundCaptureEnumerateA(
     LPDSENUMCALLBACKA pDSEnumCallback,
     LPVOID pContext) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (pDSEnumCallback == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (alc == NULL || ds == NULL) {
+        return E_FAIL;
+    }
+
+    return enumerate_devices(WASAPIDEVICETYPE_RECORD, DEVICEENUMERATE_ANSI,
+        (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
 HRESULT WINAPI DirectSoundCaptureEnumerateW(
     LPDSENUMCALLBACKW pDSEnumCallback,
     LPVOID pContext) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (pDSEnumCallback == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (alc == NULL || ds == NULL) {
+        return E_FAIL;
+    }
+
+    return enumerate_devices(WASAPIDEVICETYPE_RECORD, DEVICEENUMERATE_WIDE,
+        (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
 HRESULT WINAPI DirectSoundCreate8(
@@ -156,4 +210,67 @@ HRESULT DllGetClassObject(
     LPVOID* ppv) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
+}
+
+/* ---------------------------------------------------------------------- */
+
+const static LPCVOID AudioDriverNames[2][2] =
+{
+    { (LPCVOID)"Primary Sound Driver", (LPCVOID)L"Primary Sound Driver" },
+    { (LPCVOID)"Primary Sound Capture Driver", (LPCVOID)L"Primary Sound Capture Driver" }
+};
+
+HRESULT DELTACALL enumerate_devices(
+    DWORD dwType,
+    DWORD dwWide,
+    LPDEVICEENUMERATECALLBACK pCallback,
+    LPVOID pContext) {
+    UINT count = 0;
+    HRESULT hr = DS_OK;
+
+    // Always report primary device, even when there is no audio devices...
+    if (!pCallback(NULL, AudioDriverNames[dwType][dwWide],
+        dwWide == DEVICEENUMERATE_ANSI ? (LPCVOID)"" : (LPCVOID)L"", pContext)) {
+        return S_OK;;
+    }
+
+    // The rest of the system devices...
+    if (SUCCEEDED(hr = wasapi_device_get_count(dwType, &count))) {
+        wasapi_device* devices = NULL;
+        if (SUCCEEDED(hr = allocator_allocate(alc, count * sizeof(wasapi_device), &devices))) {
+            ZeroMemory(devices, count * sizeof(wasapi_device));
+
+            if (SUCCEEDED(hr = wasapi_device_get_devices(dwType, &count, devices))) {
+                for (UINT i = 0; i < count; i++) {
+                    wasapi_device* dev = &devices[i];
+                    if (dwWide == DEVICEENUMERATE_WIDE) {
+                        if (!pCallback(&dev->ID, dev->Name, dev->Module, pContext)) {
+                            break;
+                        }
+                    }
+                    else {
+                        CHAR name[MAX_WASAPI_DEVICE_IDENTITY_LENGTH];
+                        ZeroMemory(name, MAX_WASAPI_DEVICE_IDENTITY_LENGTH);
+
+                        WideCharToMultiByte(CP_ACP, 0,
+                            dev->Name, -1, name, MAX_WASAPI_DEVICE_IDENTITY_LENGTH, NULL, NULL);
+
+                        CHAR module[MAX_WASAPI_DEVICE_IDENTITY_LENGTH];
+                        ZeroMemory(module, MAX_WASAPI_DEVICE_IDENTITY_LENGTH);
+
+                        WideCharToMultiByte(CP_ACP, 0,
+                            dev->Module, -1, module, MAX_WASAPI_DEVICE_IDENTITY_LENGTH, NULL, NULL);
+
+                        if (!pCallback(&dev->ID, name, module, pContext)) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            allocator_free(alc, devices);
+        }
+    }
+
+    return hr;
 }

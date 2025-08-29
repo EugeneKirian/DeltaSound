@@ -22,5 +22,67 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "allocator.h"
 #include "deltasound.h"
 
+#define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
+
+struct deltasound {
+    allocator*      Allocator;
+};
+
+HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut);
+
+HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    // TODO LOG
+
+    HRESULT hr = S_OK;
+    deltasound* instance = NULL;
+    if (FAILED(hr = deltasound_allocate(pAlloc, &instance))) {
+        return hr;
+    }
+
+    *ppOut = instance;
+
+    return hr;
+}
+
+VOID DELTACALL deltasound_release(deltasound* self) {
+    if (self == NULL) {
+        return;
+    }
+
+    // TODO LOG
+
+    if (self != NULL) {
+        // TODO
+
+        allocator_free(self->Allocator, self);
+    }
+}
+
+/* ---------------------------------------------------------------------- */
+
+HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    deltasound* instance = NULL;
+    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
+        return hr;
+    }
+
+    ZeroMemory(instance, sizeof(deltasound));
+
+    instance->Allocator = pAlloc;
+
+    *ppOut = instance;
+
+    return S_OK;
+}

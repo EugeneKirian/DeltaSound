@@ -25,9 +25,12 @@ SOFTWARE.
 #pragma once
 
 #include "base.h"
-#include "allocator.h"
 
-typedef struct deltasound deltasound;
+typedef struct allocator allocator;
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
+HRESULT DELTACALL allocator_create(allocator** ppOut);
+VOID DELTACALL allocator_release(allocator* pAlloc);
+
+HRESULT DELTACALL allocator_allocate(allocator* pAlloc, size_t nBytes, LPVOID* ppMem);
+HRESULT DELTACALL allocator_reallocate(allocator* pAlloc, LPVOID pMem, size_t nBytes, LPVOID* ppMem);
+HRESULT DELTACALL allocator_free(allocator* pAlloc, LPVOID pMem);

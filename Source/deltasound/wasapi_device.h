@@ -25,9 +25,18 @@ SOFTWARE.
 #pragma once
 
 #include "base.h"
-#include "allocator.h"
 
-typedef struct deltasound deltasound;
+#define WASAPIDEVICETYPE_AUDIO  0
+#define WASAPIDEVICETYPE_RECORD 1
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
+#define MAX_WASAPI_DEVICE_IDENTITY_LENGTH   256
+
+typedef struct wasapi_device {
+    GUID    ID;
+    DWORD   Type;
+    WCHAR   Name[MAX_WASAPI_DEVICE_IDENTITY_LENGTH];
+    WCHAR   Module[MAX_WASAPI_DEVICE_IDENTITY_LENGTH];
+} wasapi_device;
+
+HRESULT DELTACALL wasapi_device_get_count(DWORD dwType, UINT* pdwCount);
+HRESULT DELTACALL wasapi_device_get_devices(DWORD dwType, UINT* pdwCount, wasapi_device* pDevices);

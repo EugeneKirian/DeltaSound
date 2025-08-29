@@ -24,10 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
-#include "allocator.h"
+#include <windows.h>
 
-typedef struct deltasound deltasound;
-
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
+BOOL TestDirectSoundCaptureEnumerateA(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b);
