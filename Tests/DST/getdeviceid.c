@@ -74,7 +74,11 @@ BOOL TestGetDeviceID(HMODULE a, HMODULE b) {
         HRESULT hb = gb(tests[i], &rb);
 
         if (ha != hb || !CompareResults(&ra, &rb)) {
-            return FALSE;
+            printf("\r\nGuid = {%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+                ra.Data1, ra.Data2, ra.Data3,
+                ra.Data4[0], ra.Data4[1], ra.Data4[2], ra.Data4[3],
+                ra.Data4[4], ra.Data4[5], ra.Data4[6], ra.Data4[7]);
+            //return FALSE;
         }
     }
 

@@ -26,15 +26,7 @@ SOFTWARE.
 
 #include <windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern const CLSID CLSID_IMMDeviceEnumerator;
 extern const IID IID_IMMDeviceEnumerator;
 extern const IID IID_IAudioClient;
 extern const IID IID_IAudioRenderClient;
-
-#ifdef __cplusplus
-}
-#endif

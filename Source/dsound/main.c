@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #include <deltasound.h>
-#include <wasapi_device.h>
+#include <device_info.h>
 
 #include <dsound.h>
 
@@ -104,7 +104,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
         return E_FAIL;
     }
 
-    return enumerate_devices(WASAPIDEVICETYPE_AUDIO, DEVICEENUMERATE_ANSI,
+    return enumerate_devices(DEVICETYPE_AUDIO, DEVICEENUMERATE_ANSI,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
@@ -119,7 +119,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
         return E_FAIL;
     }
 
-    return enumerate_devices(WASAPIDEVICETYPE_AUDIO, DEVICEENUMERATE_WIDE,
+    return enumerate_devices(DEVICETYPE_AUDIO, DEVICEENUMERATE_WIDE,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
@@ -142,7 +142,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateA(
         return E_FAIL;
     }
 
-    return enumerate_devices(WASAPIDEVICETYPE_RECORD, DEVICEENUMERATE_ANSI,
+    return enumerate_devices(DEVICETYPE_RECORD, DEVICEENUMERATE_ANSI,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
@@ -157,7 +157,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateW(
         return E_FAIL;
     }
 
-    return enumerate_devices(WASAPIDEVICETYPE_RECORD, DEVICEENUMERATE_WIDE,
+    return enumerate_devices(DEVICETYPE_RECORD, DEVICEENUMERATE_WIDE,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
@@ -199,21 +199,48 @@ HRESULT WINAPI GetDeviceID(
         return E_INVALIDARG;
     }
 
+    HRESULT hr = S_OK;
+    DWORD type = DEVICETYPE_INVALID;
+    DWORD kind = DEVICEKIND_INVALID;
+
     if (IsEqualGUID(&DSDEVID_DefaultPlayback, pGuidSrc)) {
-        // TODO
+        type = DEVICETYPE_AUDIO;
+        kind = DEVICEKIND_MULTIMEDIA;
     }
     else if (IsEqualGUID(&DSDEVID_DefaultVoicePlayback, pGuidSrc)) {
-        // TODO
+        type = DEVICETYPE_AUDIO;
+        kind = DEVICEKIND_COMMUNICATION;
     }
     else if (IsEqualGUID(&DSDEVID_DefaultCapture, pGuidSrc)) {
-        // TODO
+        type = DEVICETYPE_RECORD;
+        kind = DEVICEKIND_MULTIMEDIA;
     }
     else if (IsEqualGUID(&DSDEVID_DefaultVoiceCapture, pGuidSrc)) {
-        // TODO
+        type = DEVICETYPE_RECORD;
+        kind = DEVICEKIND_COMMUNICATION;
     }
 
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    ZeroMemory(pGuidDest, sizeof(GUID));
+
+    if (type != DEVICETYPE_INVALID && kind != DEVICEKIND_INVALID) {
+        device_info device;
+        ZeroMemory(&device, sizeof(device_info));
+
+        if (FAILED(hr = device_info_get_default_device(type, kind, &device))) {
+            return DSERR_NODRIVER;
+        }
+
+        CopyMemory(pGuidDest, &device.uID, sizeof(GUID));
+    }
+    else if (IsEqualGUID(pGuidSrc, &GUID_NULL, sizeof(GUID))) {
+        return DSERR_NODRIVER;
+    }
+    else {
+        // Iterate through available devices to find a match...
+
+    }
+
+    return hr;
 }
 
 HRESULT WINAPI DllCanUnloadNow() {
@@ -252,32 +279,35 @@ HRESULT DELTACALL enumerate_devices(
     }
 
     // The rest of the system devices...
-    if (SUCCEEDED(hr = wasapi_device_get_count(dwType, &count))) {
-        wasapi_device* devices = NULL;
-        if (SUCCEEDED(hr = allocator_allocate(alc, count * sizeof(wasapi_device), &devices))) {
-            ZeroMemory(devices, count * sizeof(wasapi_device));
-            if (SUCCEEDED(hr = wasapi_device_get_devices(dwType, &count, devices))) {
+    if (SUCCEEDED(hr = device_info_get_count(dwType, &count))) {
+        device_info* devices = NULL;
+
+        if (SUCCEEDED(hr = allocator_allocate(alc, count * sizeof(device_info), &devices))) {
+            ZeroMemory(devices, count * sizeof(device_info));
+
+            if (SUCCEEDED(hr = device_info_get_devices(dwType, &count, devices))) {
                 for (UINT i = 0; i < count; i++) {
-                    wasapi_device* dev = &devices[i];
+                    device_info* dev = &devices[i];
+
                     if (dwWide == DEVICEENUMERATE_WIDE) {
-                        if (!pCallback(&dev->ID, dev->Name, dev->Module, pContext)) {
+                        if (!pCallback(&dev->uID, dev->wszName, dev->wszModule, pContext)) {
                             break;
                         }
                     }
                     else {
-                        CHAR name[MAX_WASAPI_DEVICE_ID_LENGTH];
-                        ZeroMemory(name, MAX_WASAPI_DEVICE_ID_LENGTH);
+                        CHAR name[MAX_DEVICE_ID_LENGTH];
+                        ZeroMemory(name, MAX_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->Name, -1, name, MAX_WASAPI_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->wszName, -1, name, MAX_DEVICE_ID_LENGTH, NULL, NULL);
 
-                        CHAR module[MAX_WASAPI_DEVICE_ID_LENGTH];
-                        ZeroMemory(module, MAX_WASAPI_DEVICE_ID_LENGTH);
+                        CHAR module[MAX_DEVICE_ID_LENGTH];
+                        ZeroMemory(module, MAX_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->Module, -1, module, MAX_WASAPI_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->wszModule, -1, module, MAX_DEVICE_ID_LENGTH, NULL, NULL);
 
-                        if (!pCallback(&dev->ID, name, module, pContext)) {
+                        if (!pCallback(&dev->uID, name, module, pContext)) {
                             break;
                         }
                     }
