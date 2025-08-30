@@ -28,9 +28,31 @@ SOFTWARE.
 
 typedef HRESULT(WINAPI* LPGETDEVICEID)(LPCGUID pGuidSrc, LPGUID pGuidDest);
 
+typedef BOOL(CALLBACK* LPDSENUMCALLBACKA)(LPGUID, LPCSTR, LPCSTR, LPVOID);
+typedef HRESULT(WINAPI* LPDIRECTSOUNDENUMERATEA)(LPDSENUMCALLBACKA, LPVOID);
+
+#define MAX_STORAGE_COUNT           128
+
+typedef struct callback_context {
+    UINT    Count;
+    GUID*   Items;
+} callback_context;
+
+static BOOL CALLBACK EnumerateDeviceCallBackA(LPGUID guid, LPCSTR desc, LPCSTR module, LPVOID ctx) {
+    if (guid == NULL) { return TRUE; }
+
+    callback_context* context = (callback_context*)ctx;
+
+    CopyMemory(&context->Items[context->Count], guid, sizeof(GUID));
+
+    context->Count++;
+
+    return context->Count < MAX_STORAGE_COUNT;
+}
+
 #define MAX_GETDEVICEID_TEST_COUNT  5
 
-static const LPGUID tests[MAX_GETDEVICEID_TEST_COUNT] = {
+static const LPCGUID get_device_id_tests[MAX_GETDEVICEID_TEST_COUNT] = {
     &GUID_NULL,
     &DSDEVID_DefaultPlayback,
     &DSDEVID_DefaultCapture,
@@ -40,7 +62,7 @@ static const LPGUID tests[MAX_GETDEVICEID_TEST_COUNT] = {
 
 static BOOL CompareResults(LPCGUID a, LPCGUID b) {
     if (a != NULL && b != NULL) {
-        return memcmp(a, b, sizeof(GUID)) == 0;
+        return IsEqualGUID(a, b);
     }
 
     return FALSE;
@@ -49,6 +71,10 @@ static BOOL CompareResults(LPCGUID a, LPCGUID b) {
 BOOL TestGetDeviceID(HMODULE a, HMODULE b) {
     LPGETDEVICEID ga = (LPGETDEVICEID)GetProcAddress(a, "GetDeviceID");
     LPGETDEVICEID gb = (LPGETDEVICEID)GetProcAddress(b, "GetDeviceID");
+
+    if (ga == NULL || gb == NULL) {
+        return FALSE;
+    }
 
     // NULL
     {
@@ -70,17 +96,81 @@ BOOL TestGetDeviceID(HMODULE a, HMODULE b) {
         ZeroMemory(&ra, sizeof(GUID));
         ZeroMemory(&rb, sizeof(GUID));
 
-        HRESULT ha = ga(tests[i], &ra);
-        HRESULT hb = gb(tests[i], &rb);
+        HRESULT ha = ga(get_device_id_tests[i], &ra);
+        HRESULT hb = gb(get_device_id_tests[i], &rb);
 
         if (ha != hb || !CompareResults(&ra, &rb)) {
-            printf("\r\nGuid = {%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
-                ra.Data1, ra.Data2, ra.Data3,
-                ra.Data4[0], ra.Data4[1], ra.Data4[2], ra.Data4[3],
-                ra.Data4[4], ra.Data4[5], ra.Data4[6], ra.Data4[7]);
-            //return FALSE;
+            return FALSE;
         }
     }
 
-    return TRUE;
+    // Enumerate devices...
+    BOOL result = TRUE;
+
+    callback_context ca, cb;
+    ZeroMemory(&ca, sizeof(callback_context));
+    ZeroMemory(&cb, sizeof(callback_context));
+
+    const size_t size = sizeof(GUID) * MAX_STORAGE_COUNT;
+
+    if ((ca.Items = (LPGUID)malloc(size)) == NULL) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if ((cb.Items = (LPGUID)malloc(size)) == NULL) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ZeroMemory(ca.Items, size);
+    ZeroMemory(cb.Items, size);
+
+    LPDIRECTSOUNDENUMERATEA ea = (LPDIRECTSOUNDENUMERATEA)GetProcAddress(a, "DirectSoundEnumerateA");
+    LPDIRECTSOUNDENUMERATEA eb = (LPDIRECTSOUNDENUMERATEA)GetProcAddress(b, "DirectSoundEnumerateA");
+
+    if (ga == NULL || gb == NULL) {
+        return FALSE;
+    }
+
+    if (ea(EnumerateDeviceCallBackA, &ca) != eb(EnumerateDeviceCallBackA, &cb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+
+    if (ca.Count != cb.Count) {
+        result = FALSE;
+        goto exit;
+    }
+
+    for (UINT i = 0; i < ca.Count; i++) {
+        if (!IsEqualGUID(&ca.Items[i], &cb.Items[i])) {
+            result = FALSE;
+            goto exit;
+        }
+
+        GUID ra, rb;
+        ZeroMemory(&ra, sizeof(GUID));
+        ZeroMemory(&rb, sizeof(GUID));
+
+        HRESULT ha = ga(&ca.Items[i], &ra);
+        HRESULT hb = gb(&cb.Items[i], &rb);
+
+        if (ha != hb || !CompareResults(&ra, &rb)) {
+            result = FALSE;
+            goto exit;
+        }
+    }
+
+exit:
+    if (ca.Items != NULL) {
+        free(ca.Items);
+    }
+
+    if (cb.Items != NULL) {
+        free(cb.Items);
+    }
+
+    return result;
 }

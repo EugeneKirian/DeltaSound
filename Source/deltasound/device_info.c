@@ -66,7 +66,8 @@ HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount) {
 
 HRESULT DELTACALL device_info_get_devices(
     DWORD dwType, UINT* pdwCount, device_info* pDevices) {
-    if (dwType != DEVICETYPE_AUDIO && dwType != DEVICETYPE_RECORD) {
+    if (dwType != DEVICETYPE_AUDIO
+        && dwType != DEVICETYPE_RECORD && dwType != DEVICETYPE_ALL) {
         return E_INVALIDARG;
     }
 
@@ -270,21 +271,14 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
         IMMDevice* device = NULL;
 
         if (SUCCEEDED(hr = IMMDeviceCollection_Item(collection, i, &device))) {
-            ctx->pDevices[written].dwType = ctx->dwType;
-
-            if (FAILED(hr = device_info_get_id(device, &ctx->pDevices[written].uID))) {
-                continue;
+            if (SUCCEEDED(hr = device_info_get_id(device, &ctx->pDevices[written].uID))) {
+                if (SUCCEEDED(hr = device_info_get_module(device, ctx->pDevices[written].wszModule))) {
+                    if (SUCCEEDED(hr = device_info_get_name(device, ctx->pDevices[written].wszName))) {
+                        ctx->pDevices[written].dwType = ctx->dwType;
+                        written++;
+                    }
+                }
             }
-
-            if (FAILED(hr = device_info_get_module(device, ctx->pDevices[written].wszModule))) {
-                continue;
-            }
-
-            if (FAILED(hr = device_info_get_name(device, ctx->pDevices[written].wszName))) {
-                continue;
-            }
-
-            written++;
 
             RELEASE(device);
         }
@@ -321,22 +315,20 @@ DWORD WINAPI device_info_get_default_device_thread(get_default_device_context* c
         goto exit;
     }
 
-    ctx->pDevice->dwType = ctx->dwType;
+    ZeroMemory(ctx->pDevice, sizeof(device_info));
 
-    if (FAILED(hr = device_info_get_id(device, &ctx->pDevice->uID))) {
-        ZeroMemory(ctx->pDevice, sizeof(device_info));
-        goto exit;
+    if (SUCCEEDED(hr = device_info_get_id(device, &ctx->pDevice->uID))) {
+        if (SUCCEEDED(hr = device_info_get_module(device, ctx->pDevice->wszModule))) {
+            if (SUCCEEDED(hr = device_info_get_name(device, ctx->pDevice->wszName))) {
+                ctx->pDevice->dwType = ctx->dwType;
+            }
+        }
     }
 
-    if (FAILED(hr = device_info_get_module(device, ctx->pDevice->wszModule))) {
+    if (FAILED(hr)) {
         ZeroMemory(ctx->pDevice, sizeof(device_info));
-        goto exit;
     }
 
-    if (FAILED(hr = device_info_get_name(device, ctx->pDevice->wszName))) {
-        ZeroMemory(ctx->pDevice, sizeof(device_info));
-        goto exit;
-    }
 exit:
 
     RELEASE(device);

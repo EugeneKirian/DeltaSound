@@ -45,7 +45,7 @@ typedef struct context_a {
 } context_a;
 
 static BOOL storage_a_compare(storage_a* a, storage_a* b) {
-    if (memcmp(&a->ID, &b->ID, sizeof(GUID)) != 0) {
+    if (!IsEqualGUID(&a->ID, &b->ID)) {
         return FALSE;
     }
 
@@ -165,7 +165,7 @@ typedef struct context_w {
 } context_w;
 
 static BOOL storage_w_compare(storage_w* a, storage_w* b) {
-    if (memcmp(&a->ID, &b->ID, sizeof(GUID)) != 0) {
+    if (!IsEqualGUID(&a->ID, &b->ID)) {
         return FALSE;
     }
 

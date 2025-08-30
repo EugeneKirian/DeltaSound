@@ -32,6 +32,8 @@ SOFTWARE.
 
 typedef BOOL(CALLBACK* LPDEVICEENUMERATECALLBACK)(LPGUID, LPCVOID, LPCVOID, LPVOID);
 
+VOID DELTACALL release();
+
 HRESULT DELTACALL enumerate_devices(
     DWORD dwType,
     DWORD dwWide,
@@ -51,11 +53,18 @@ BOOL WINAPI DllMain(
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH: {
-        if (SUCCEEDED(allocator_create(&alc))) {
-            if (SUCCEEDED(deltasound_create(alc, &ds))) {
-                return TRUE;
-            }
+        if (FAILED(allocator_create(&alc))) {
+            goto exit;
         }
+
+        if (FAILED(deltasound_create(alc, &ds))) {
+            goto exit;
+        }
+
+        return TRUE;
+
+    exit:
+        release();
 
         return FALSE;
     }
@@ -69,13 +78,7 @@ BOOL WINAPI DllMain(
 
     case DLL_PROCESS_DETACH: {
         if (lpvReserved == NULL) {
-            if (ds != NULL) {
-                deltasound_release(ds);
-                ds = NULL;
-
-                allocator_release(alc);
-                alc = NULL;
-            }
+            release();
         }
 
         break;
@@ -199,7 +202,7 @@ HRESULT WINAPI GetDeviceID(
         return E_INVALIDARG;
     }
 
-    HRESULT hr = S_OK;
+    HRESULT hr = DS_OK;
     DWORD type = DEVICETYPE_INVALID;
     DWORD kind = DEVICEKIND_INVALID;
 
@@ -223,6 +226,7 @@ HRESULT WINAPI GetDeviceID(
     ZeroMemory(pGuidDest, sizeof(GUID));
 
     if (type != DEVICETYPE_INVALID && kind != DEVICEKIND_INVALID) {
+        // Get device id for predefined DirectSound device types.
         device_info device;
         ZeroMemory(&device, sizeof(device_info));
 
@@ -231,13 +235,35 @@ HRESULT WINAPI GetDeviceID(
         }
 
         CopyMemory(pGuidDest, &device.uID, sizeof(GUID));
-    }
-    else if (IsEqualGUID(pGuidSrc, &GUID_NULL, sizeof(GUID))) {
-        return DSERR_NODRIVER;
-    }
-    else {
-        // Iterate through available devices to find a match...
 
+        return DS_OK;
+    }
+
+    // Iterate through available devices to find a match...
+    UINT count = 0;
+    if (SUCCEEDED(hr = device_info_get_count(DEVICETYPE_ALL, &count))) {
+        device_info* devices = NULL;
+
+        if (SUCCEEDED(hr = allocator_allocate(alc, count * sizeof(device_info), &devices))) {
+            ZeroMemory(devices, count * sizeof(device_info));
+
+            if (SUCCEEDED(hr = device_info_get_devices(DEVICETYPE_ALL, &count, devices))) {
+                for (UINT i = 0; i < count; i++) {
+                    device_info* dev = &devices[i];
+
+                    if (IsEqualGUID(pGuidSrc, &dev->uID)) {
+                        CopyMemory(pGuidDest, &dev->uID, sizeof(GUID));
+                        allocator_free(alc, devices);
+                        return DS_OK;
+                    }
+                }
+
+                allocator_free(alc, devices);
+                return DSERR_NODRIVER;
+            }
+
+            allocator_free(alc, devices);
+        }
     }
 
     return hr;
@@ -245,7 +271,7 @@ HRESULT WINAPI GetDeviceID(
 
 HRESULT WINAPI DllCanUnloadNow() {
     // TODO NOT IMPLEMENTED
-    return S_OK;
+    return DS_OK;
 }
 
 HRESULT DllGetClassObject(
@@ -257,6 +283,18 @@ HRESULT DllGetClassObject(
 }
 
 /* ---------------------------------------------------------------------- */
+
+VOID DELTACALL release() {
+    if (ds != NULL) {
+        deltasound_release(ds);
+        ds = NULL;
+    }
+
+    if (alc != NULL) {
+        allocator_release(alc);
+        alc = NULL;
+    }
+}
 
 const static LPCVOID AudioDriverNames[2][2] =
 {
@@ -275,10 +313,10 @@ HRESULT DELTACALL enumerate_devices(
     // Always report primary device, even when there is no audio devices...
     if (!pCallback(NULL, AudioDriverNames[dwType][dwWide],
         dwWide == DEVICEENUMERATE_ANSI ? (LPCVOID)"" : (LPCVOID)L"", pContext)) {
-        return S_OK;
+        return DS_OK;
     }
 
-    // The rest of the system devices...
+    // Iterate through the rest of the system devices...
     if (SUCCEEDED(hr = device_info_get_count(dwType, &count))) {
         device_info* devices = NULL;
 
