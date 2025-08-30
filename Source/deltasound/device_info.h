@@ -24,9 +24,29 @@ SOFTWARE.
 
 #pragma once
 
-#include <windows.h>
+#include "base.h"
 
-extern const CLSID CLSID_IMMDeviceEnumerator;
-extern const IID IID_IMMDeviceEnumerator;
-extern const IID IID_IAudioClient;
-extern const IID IID_IAudioRenderClient;
+#define DEVICETYPE_AUDIO            0
+#define DEVICETYPE_RECORD           1
+#define DEVICETYPE_ALL              2
+#define DEVICETYPE_INVALID          (-1)
+
+#define DEVICEKIND_AUDIO            0
+#define DEVICEKIND_MULTIMEDIA       1
+#define DEVICEKIND_COMMUNICATION    2
+#define DEVICEKIND_INVALID          (-1)
+
+#define MAX_DEVICE_ID_LENGTH        128
+
+typedef struct device_info {
+    GUID    uID;
+    DWORD   dwType;
+    WCHAR   wszName[MAX_DEVICE_ID_LENGTH];
+    WCHAR   wszModule[MAX_DEVICE_ID_LENGTH];
+} device_info;
+
+HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount);
+HRESULT DELTACALL device_info_get_devices(
+    DWORD dwType, UINT* pdwCount, device_info* pDevices);
+HRESULT DELTACALL device_info_get_default_device(
+    DWORD dwType, DWORD dwKind, device_info* pDevice);

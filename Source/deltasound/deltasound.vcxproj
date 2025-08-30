@@ -25,12 +25,12 @@
     <ClInclude Include="ds.h" />
     <ClInclude Include="dsi.h" />
     <ClInclude Include="uuid.h" />
-    <ClInclude Include="wasapi_device.h" />
+    <ClInclude Include="device_info.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocator.c" />
     <ClCompile Include="deltasound.c" />
-    <ClCompile Include="wasapi_device.c" />
+    <ClCompile Include="device_info.c" />
     <ClCompile Include="uuid.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
