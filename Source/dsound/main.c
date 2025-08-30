@@ -195,6 +195,23 @@ HRESULT WINAPI DirectSoundFullDuplexCreate(
 HRESULT WINAPI GetDeviceID(
     LPCGUID pGuidSrc,
     LPGUID pGuidDest) {
+    if (pGuidSrc == NULL || pGuidDest == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (IsEqualGUID(&DSDEVID_DefaultPlayback, pGuidSrc)) {
+        // TODO
+    }
+    else if (IsEqualGUID(&DSDEVID_DefaultVoicePlayback, pGuidSrc)) {
+        // TODO
+    }
+    else if (IsEqualGUID(&DSDEVID_DefaultCapture, pGuidSrc)) {
+        // TODO
+    }
+    else if (IsEqualGUID(&DSDEVID_DefaultVoiceCapture, pGuidSrc)) {
+        // TODO
+    }
+
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
 }
@@ -231,7 +248,7 @@ HRESULT DELTACALL enumerate_devices(
     // Always report primary device, even when there is no audio devices...
     if (!pCallback(NULL, AudioDriverNames[dwType][dwWide],
         dwWide == DEVICEENUMERATE_ANSI ? (LPCVOID)"" : (LPCVOID)L"", pContext)) {
-        return S_OK;;
+        return S_OK;
     }
 
     // The rest of the system devices...
@@ -239,7 +256,6 @@ HRESULT DELTACALL enumerate_devices(
         wasapi_device* devices = NULL;
         if (SUCCEEDED(hr = allocator_allocate(alc, count * sizeof(wasapi_device), &devices))) {
             ZeroMemory(devices, count * sizeof(wasapi_device));
-
             if (SUCCEEDED(hr = wasapi_device_get_devices(dwType, &count, devices))) {
                 for (UINT i = 0; i < count; i++) {
                     wasapi_device* dev = &devices[i];
@@ -249,17 +265,17 @@ HRESULT DELTACALL enumerate_devices(
                         }
                     }
                     else {
-                        CHAR name[MAX_WASAPI_DEVICE_IDENTITY_LENGTH];
-                        ZeroMemory(name, MAX_WASAPI_DEVICE_IDENTITY_LENGTH);
+                        CHAR name[MAX_WASAPI_DEVICE_ID_LENGTH];
+                        ZeroMemory(name, MAX_WASAPI_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->Name, -1, name, MAX_WASAPI_DEVICE_IDENTITY_LENGTH, NULL, NULL);
+                            dev->Name, -1, name, MAX_WASAPI_DEVICE_ID_LENGTH, NULL, NULL);
 
-                        CHAR module[MAX_WASAPI_DEVICE_IDENTITY_LENGTH];
-                        ZeroMemory(module, MAX_WASAPI_DEVICE_IDENTITY_LENGTH);
+                        CHAR module[MAX_WASAPI_DEVICE_ID_LENGTH];
+                        ZeroMemory(module, MAX_WASAPI_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->Module, -1, module, MAX_WASAPI_DEVICE_IDENTITY_LENGTH, NULL, NULL);
+                            dev->Module, -1, module, MAX_WASAPI_DEVICE_ID_LENGTH, NULL, NULL);
 
                         if (!pCallback(&dev->ID, name, module, pContext)) {
                             break;

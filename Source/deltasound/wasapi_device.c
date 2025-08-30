@@ -91,6 +91,67 @@ HRESULT DELTACALL wasapi_device_get_devices(DWORD dwType, UINT* pdwCount, wasapi
 
 /* ---------------------------------------------------------------------- */
 
+HRESULT DELTACALL wasapi_device_get_device_id(IMMDevice* dev, LPGUID pID, LPWSTR pszId) {
+    if (dev == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    LPWSTR instance = NULL;
+
+    if (SUCCEEDED(hr = IMMDevice_GetId(dev, &instance))) {
+        // Instance has values like:
+        // {0.0.0.00000000}.{024e7d15-2f2f-4f02-8e3a-30e4d164e235}
+
+        if (pID != NULL) {
+            ZeroMemory(pID, sizeof(GUID));
+
+            LPWSTR start = wcsrchr(instance, L'{');
+            if (start != NULL) {
+                if (FAILED(hr = IIDFromString(start, pID))) {
+                    CoTaskMemFree(instance);
+                    return hr;
+                }
+            }
+        }
+
+        if (pszId != NULL) {
+            wcscpy_s(pszId, MAX_WASAPI_DEVICE_ID_LENGTH - 1, instance);
+        }
+
+        CoTaskMemFree(instance);
+    }
+
+    return hr;
+}
+
+HRESULT DELTACALL wasapi_device_get_device_name(IMMDevice* dev, LPWSTR pszName) {
+    if (dev == NULL || pszName == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    IPropertyStore* props = NULL;
+
+    if (SUCCEEDED(hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &props))) {
+
+        PROPVARIANT name;
+        PropVariantInit(&name);
+
+        if (SUCCEEDED(hr = IPropertyStore_GetValue(props, &PKEY_Device_FriendlyName, &name))) {
+            if (name.vt != VT_EMPTY) {
+                wcscpy_s(pszName, MAX_WASAPI_DEVICE_ID_LENGTH - 1, name.pwszVal);
+            }
+        }
+
+        PropVariantClear(&name);
+
+        RELEASE(props);
+    }
+
+    return hr;
+}
+
 DWORD WINAPI wasapi_device_thread(wasapi_device_context* ctx) {
     if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
         return EXIT_FAILURE;
@@ -124,58 +185,20 @@ DWORD WINAPI wasapi_device_thread(wasapi_device_context* ctx) {
 
     for (UINT i = 0; i < read; i++) {
         IMMDevice* dev = NULL;
-        IPropertyStore* props = NULL;
 
         if (SUCCEEDED(hr = IMMDeviceCollection_Item(collection, i, &dev))) {
-            if (SUCCEEDED(hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &props))) {
+            // ID & Module
+            if (SUCCEEDED(hr = wasapi_device_get_device_id(dev,
+                &ctx->Devices[written].ID, ctx->Devices[written].Module))) {
+                // Type
+                ctx->Devices[written].Type = ctx->Type;
 
-                LPWSTR instance = NULL;
-                if (SUCCEEDED(hr = IMMDevice_GetId(dev, &instance))) {
-
-                    // ID
-                    {
-                        GUID uuid;
-                        ZeroMemory(&uuid, sizeof(GUID));
-
-                        // ID has values like:
-                        // {0.0.0.00000000}.{024e7d15-2f2f-4f02-8e3a-30e4d164e235}
-
-                        LPWSTR start = wcsrchr(instance, L'{');
-                        if (start != NULL) {
-                            if (SUCCEEDED(hr = IIDFromString(start, &uuid))) {
-                                ctx->Devices[written].ID = uuid;
-                            }
-                        }
-                    }
-
-                    // Type
-                    ctx->Devices[written].Type = ctx->Type;
-
-                    // Name
-                    {
-                        PROPVARIANT name;
-                        PropVariantInit(&name);
-
-                        if (SUCCEEDED(hr = IPropertyStore_GetValue(props, &PKEY_Device_FriendlyName, &name))) {
-                            if (name.vt != VT_EMPTY) {
-                                wcscpy_s(ctx->Devices[written].Name,
-                                    MAX_WASAPI_DEVICE_IDENTITY_LENGTH - 1, name.pwszVal);
-                            }
-                        }
-
-                        PropVariantClear(&name);
-                    }
-
-                    // Module
-                    {
-                        wcscpy_s(ctx->Devices[written].Module,
-                            MAX_WASAPI_DEVICE_IDENTITY_LENGTH - 1, instance);
-                    }
-
+                // Name
+                if (SUCCEEDED(hr = wasapi_device_get_device_name(dev,
+                    ctx->Devices[written].Name))) {
+                    // Increase write index when the device structure is fully updated.
                     written++;
                 }
-
-                CoTaskMemFree(instance);
             }
 
             RELEASE(dev);

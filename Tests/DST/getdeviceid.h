@@ -24,19 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include <windows.h>
 
-#define WASAPIDEVICETYPE_AUDIO  0
-#define WASAPIDEVICETYPE_RECORD 1
-
-#define MAX_WASAPI_DEVICE_ID_LENGTH   128
-
-typedef struct wasapi_device {
-    GUID    ID;
-    DWORD   Type;
-    WCHAR   Name[MAX_WASAPI_DEVICE_ID_LENGTH];
-    WCHAR   Module[MAX_WASAPI_DEVICE_ID_LENGTH];
-} wasapi_device;
-
-HRESULT DELTACALL wasapi_device_get_count(DWORD dwType, UINT* pdwCount);
-HRESULT DELTACALL wasapi_device_get_devices(DWORD dwType, UINT* pdwCount, wasapi_device* pDevices);
+BOOL TestGetDeviceID(HMODULE a, HMODULE b);

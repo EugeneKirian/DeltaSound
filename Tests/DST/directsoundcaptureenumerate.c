@@ -205,8 +205,7 @@ static BOOL CALLBACK EnumerateDeviceCallBackW(LPGUID guid, LPCWSTR desc, LPCWSTR
     return TRUE;
 }
 
-BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b)
-{
+BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b) {
     BOOL result = TRUE;
 
     context_w ca, cb;
