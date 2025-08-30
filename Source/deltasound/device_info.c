@@ -35,8 +35,7 @@ SOFTWARE.
 
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 
-const PROPERTYKEY PKEY_AudioEndpoint_GUID =
-{
+const PROPERTYKEY PKEY_AudioEndpoint_GUID = {
     { 0x1DA5D803, 0xD492, 0x4EDD, { 0x8C, 0x23, 0xE0, 0xC0, 0xFF, 0xEE, 0x7F, 0x0E} }, 4
 };
 
