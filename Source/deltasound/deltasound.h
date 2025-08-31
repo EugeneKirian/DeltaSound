@@ -24,10 +24,12 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
 #include "allocator.h"
+#include "ds.h"
 
 typedef struct deltasound deltasound;
 
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
 VOID DELTACALL deltasound_release(deltasound* pDS);
+
+HRESULT DELTACALL deltasound_create_ds(deltasound* pDS, REFIID riid, LPDIRECTSOUND* ppDS);

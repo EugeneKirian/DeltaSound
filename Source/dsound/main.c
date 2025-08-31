@@ -32,7 +32,7 @@ SOFTWARE.
 
 typedef BOOL(CALLBACK* LPDEVICEENUMERATECALLBACK)(LPGUID, LPCVOID, LPCVOID, LPVOID);
 
-VOID DELTACALL release();
+VOID DELTACALL cleanup();
 
 HRESULT DELTACALL enumerate_devices(
     DWORD dwType,
@@ -41,7 +41,7 @@ HRESULT DELTACALL enumerate_devices(
     LPVOID pContext);
 
 static allocator* alc;
-static deltasound* ds;
+static deltasound* delta;
 
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,
@@ -53,18 +53,13 @@ BOOL WINAPI DllMain(
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH: {
-        if (FAILED(allocator_create(&alc))) {
-            goto exit;
+        if (SUCCEEDED(allocator_create(&alc))) {
+            if (SUCCEEDED(deltasound_create(alc, &delta))) {
+                return TRUE;
+            }
         }
 
-        if (FAILED(deltasound_create(alc, &ds))) {
-            goto exit;
-        }
-
-        return TRUE;
-
-    exit:
-        release();
+        cleanup();
 
         return FALSE;
     }
@@ -78,7 +73,7 @@ BOOL WINAPI DllMain(
 
     case DLL_PROCESS_DETACH: {
         if (lpvReserved == NULL) {
-            release();
+            cleanup();
         }
 
         break;
@@ -92,8 +87,32 @@ HRESULT WINAPI DirectSoundCreate(
     LPCGUID pcGuidDevice,
     LPDIRECTSOUND* ppDS,
     LPUNKNOWN pUnkOuter) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (ppDS == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (pUnkOuter != NULL) {
+        return DSERR_NOAGGREGATION;
+    }
+
+    HRESULT hr = DS_OK;
+    LPDIRECTSOUND instance = NULL;
+
+    if (SUCCEEDED(hr = deltasound_create_ds(delta, &IID_IDirectSound, &instance))) {
+        if (FAILED(hr = IDirectSound_Initialize(instance, pcGuidDevice))) {
+            if (hr != DSERR_ALREADYINITIALIZED) {
+                IDirectSound_Release(instance);
+                instance = NULL;
+            }
+            else {
+                hr = DS_OK;
+            }
+        }
+    }
+
+    *ppDS = instance;
+
+    return hr;
 }
 
 HRESULT WINAPI DirectSoundEnumerateA(
@@ -103,7 +122,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -118,7 +137,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -141,7 +160,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateA(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -156,7 +175,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateW(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -284,10 +303,10 @@ HRESULT DllGetClassObject(
 
 /* ---------------------------------------------------------------------- */
 
-VOID DELTACALL release() {
-    if (ds != NULL) {
-        deltasound_release(ds);
-        ds = NULL;
+VOID DELTACALL cleanup() {
+    if (delta != NULL) {
+        deltasound_release(delta);
+        delta = NULL;
     }
 
     if (alc != NULL) {

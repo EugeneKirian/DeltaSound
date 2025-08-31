@@ -23,85 +23,59 @@ SOFTWARE.
 */
 
 #include "allocator.h"
-#include "deltasound.h"
+#include "ds.h"
 
-#define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
+HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
 
-struct deltasound {
-    allocator*      Allocator;
-};
-
-HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut);
-
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
+HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    // TODO LOG
-
     HRESULT hr = S_OK;
-    deltasound* instance = NULL;
-    if (FAILED(hr = deltasound_allocate(pAlloc, &instance))) {
+    ds* instance = NULL;
+    if (FAILED(hr = ds_allocate(pAlloc, &instance))) {
+        return hr;
+    }
+
+    ZeroMemory(instance, sizeof(instance));
+
+    instance->Allocator = pAlloc;
+
+    if (FAILED(hr = ids_create(&instance->Interface))) {
+        ds_release(instance);
         return hr;
     }
 
     *ppOut = instance;
 
-    return hr;
+    return S_OK;
 }
 
-VOID DELTACALL deltasound_release(deltasound* self) {
+VOID DELTACALL ds_release(ds* self) {
     if (self == NULL) {
         return;
     }
 
-    // TODO LOG
+    // TODO cleanup logic
 
-    if (self != NULL) {
-        // TODO
-
-        allocator_free(self->Allocator, self);
-    }
-}
-
-HRESULT DELTACALL deltasound_create_ds(deltasound* self, REFIID riid, LPDIRECTSOUND* ppDS) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (riid == NULL || ppDS == NULL) {
-        return E_INVALIDARG;
-    }
-
-    ds* instance = NULL;
-    HRESULT hr = S_OK;
-
-    if (FAILED(hr = ds_create(self->Allocator, &instance))) {
-        return hr;
-    }
-
-    // TODO Keep track of all created instances
-
-    *ppDS = (LPDIRECTSOUND)instance;
-
-    return hr;
+    allocator_free(self->Allocator, self);
 }
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
+HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    deltasound* instance = NULL;
-    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
+    ds* instance = NULL;
+    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(instance), &instance))) {
         return hr;
     }
 
-    ZeroMemory(instance, sizeof(deltasound));
+    ZeroMemory(instance, sizeof(instance));
 
     instance->Allocator = pAlloc;
 

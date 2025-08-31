@@ -28,4 +28,25 @@ SOFTWARE.
 
 #include <dsound.h>
 
-typedef struct dsi dsi;
+typedef struct ids ids;
+
+typedef HRESULT(DELTACALL* LPIDSQUERYINTERFACE)(ids*, REFIID, LPVOID*);
+typedef ULONG(DELTACALL* LPIDSADDREF)(ids*);
+typedef ULONG(DELTACALL* LPIDSRELEASE)(ids*);
+
+typedef HRESULT(DELTACALL* LPIDSCREATESOUNDBUFFER)(ids*, LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, LPUNKNOWN pUnkOuter);
+typedef HRESULT(DELTACALL* LPIDSGETCAPS)(ids*, LPDSCAPS pDSCaps);
+typedef HRESULT(DELTACALL* LPIDSDUPLICATESOUNDBUFFER)(ids*, LPDIRECTSOUNDBUFFER pDSBufferOriginal, LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate);
+typedef HRESULT(DELTACALL* LPIDSSETCOOPERATIVELEVEL)(ids*, HWND hwnd, DWORD dwLevel);
+typedef HRESULT(DELTACALL* LPIDSCOMPACT)(ids*);
+typedef HRESULT(DELTACALL* LPIDSGETSPEAKERCONFIG)(ids*, LPDWORD pdwSpeakerConfig);
+typedef HRESULT(DELTACALL* LPIDSSETSPEAKERCONFIG)(ids*, DWORD dwSpeakerConfig);
+typedef HRESULT(DELTACALL* LPIDSINITIALIZE)(ids*, LPCGUID pcGuidDevice);
+
+typedef struct ids_vft ids_vft;
+
+struct ids {
+    const ids_vft* Self;
+};
+
+HRESULT DELTACALL ids_create(ids* pIDS);

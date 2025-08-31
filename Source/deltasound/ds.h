@@ -24,8 +24,15 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
+#include "ids.h"
 
-#include <dsound.h>
+typedef struct ds {
+    ids         Interface;
+    allocator*  Allocator;
+    GUID        ID;
+    ULONG       RefCount;
+} ds;
 
-typedef struct ds ds;
+HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut);
+VOID DELTACALL ds_release(ds* pDS);
