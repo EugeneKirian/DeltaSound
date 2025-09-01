@@ -26,8 +26,6 @@ SOFTWARE.
 
 #include "base.h"
 
-#include <dsound.h>
-
 typedef struct ids ids;
 
 typedef HRESULT(DELTACALL* LPIDSQUERYINTERFACE)(ids*, REFIID, LPVOID*);

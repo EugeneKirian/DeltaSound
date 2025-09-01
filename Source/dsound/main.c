@@ -244,14 +244,14 @@ HRESULT WINAPI GetDeviceID(
 
     if (type != DEVICETYPE_INVALID && kind != DEVICEKIND_INVALID) {
         // Get device id for predefined DirectSound device types.
-        device_info device;
-        ZeroMemory(&device, sizeof(device_info));
+        device_info info;
+        ZeroMemory(&info, sizeof(device_info));
 
-        if (FAILED(hr = device_info_get_default_device(type, kind, &device))) {
+        if (FAILED(hr = device_info_get_default_device(type, kind, &info))) {
             return DSERR_NODRIVER;
         }
 
-        CopyMemory(pGuidDest, &device.ID, sizeof(GUID));
+        CopyMemory(pGuidDest, &info.ID, sizeof(GUID));
 
         return DS_OK;
     }

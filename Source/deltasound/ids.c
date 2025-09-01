@@ -103,8 +103,11 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self, LPCDSBUFFERDESC pcDSBufferD
 }
 
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return ds_get_caps((ds*)self, pDSCaps);
 }
 HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, LPDIRECTSOUNDBUFFER pDSBufferOriginal, LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate) {
     // TODO NOT IMPLEMENTED

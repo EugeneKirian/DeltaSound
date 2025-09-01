@@ -26,13 +26,6 @@ SOFTWARE.
 #include "device_info.h"
 #include "uuid.h"
 
-#include <stdio.h>
-
-#define CINTERFACE
-#define COBJMACROS
-#include <mmdeviceapi.h>
-#include <functiondiscoverykeys_devpkey.h>
-
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 
 const PROPERTYKEY PKEY_AudioEndpoint_GUID = {

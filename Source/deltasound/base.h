@@ -24,6 +24,14 @@ SOFTWARE.
 
 #include <windows.h>
 
+#include <dsound.h>
+
+#define CINTERFACE
+#define COBJMACROS
+#include <mmdeviceapi.h>
+#include <audioclient.h>
+#include <functiondiscoverykeys_devpkey.h>
+
 #define DELTACALL   __stdcall
 
 #define UNUSED(X)   ((VOID)X)
