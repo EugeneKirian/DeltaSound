@@ -25,14 +25,12 @@ SOFTWARE.
 #include <deltasound.h>
 #include <device_info.h>
 
-#include <dsound.h>
-
 #define DEVICEENUMERATE_ANSI    0
 #define DEVICEENUMERATE_WIDE    1
 
 typedef BOOL(CALLBACK* LPDEVICEENUMERATECALLBACK)(LPGUID, LPCVOID, LPCVOID, LPVOID);
 
-VOID DELTACALL release();
+VOID DELTACALL cleanup();
 
 HRESULT DELTACALL enumerate_devices(
     DWORD dwType,
@@ -41,7 +39,7 @@ HRESULT DELTACALL enumerate_devices(
     LPVOID pContext);
 
 static allocator* alc;
-static deltasound* ds;
+static deltasound* delta;
 
 BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,
@@ -53,18 +51,13 @@ BOOL WINAPI DllMain(
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH: {
-        if (FAILED(allocator_create(&alc))) {
-            goto exit;
+        if (SUCCEEDED(allocator_create(&alc))) {
+            if (SUCCEEDED(deltasound_create(alc, &delta))) {
+                return TRUE;
+            }
         }
 
-        if (FAILED(deltasound_create(alc, &ds))) {
-            goto exit;
-        }
-
-        return TRUE;
-
-    exit:
-        release();
+        cleanup();
 
         return FALSE;
     }
@@ -78,7 +71,7 @@ BOOL WINAPI DllMain(
 
     case DLL_PROCESS_DETACH: {
         if (lpvReserved == NULL) {
-            release();
+            cleanup();
         }
 
         break;
@@ -92,8 +85,32 @@ HRESULT WINAPI DirectSoundCreate(
     LPCGUID pcGuidDevice,
     LPDIRECTSOUND* ppDS,
     LPUNKNOWN pUnkOuter) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (ppDS == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (pUnkOuter != NULL) {
+        return DSERR_NOAGGREGATION;
+    }
+
+    HRESULT hr = DS_OK;
+    LPDIRECTSOUND instance = NULL;
+
+    if (SUCCEEDED(hr = deltasound_create_ds(delta, &IID_IDirectSound, &instance))) {
+        if (FAILED(hr = IDirectSound_Initialize(instance, pcGuidDevice))) {
+            if (hr != DSERR_ALREADYINITIALIZED) {
+                IDirectSound_Release(instance);
+                instance = NULL;
+            }
+            else {
+                hr = DS_OK;
+            }
+        }
+    }
+
+    *ppDS = instance;
+
+    return hr;
 }
 
 HRESULT WINAPI DirectSoundEnumerateA(
@@ -103,7 +120,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -118,7 +135,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -141,7 +158,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateA(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -156,7 +173,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateW(
         return DSERR_INVALIDPARAM;
     }
 
-    if (alc == NULL || ds == NULL) {
+    if (alc == NULL || delta == NULL) {
         return E_FAIL;
     }
 
@@ -234,7 +251,7 @@ HRESULT WINAPI GetDeviceID(
             return DSERR_NODRIVER;
         }
 
-        CopyMemory(pGuidDest, &device.uID, sizeof(GUID));
+        CopyMemory(pGuidDest, &device.ID, sizeof(GUID));
 
         return DS_OK;
     }
@@ -251,8 +268,8 @@ HRESULT WINAPI GetDeviceID(
                 for (UINT i = 0; i < count; i++) {
                     device_info* dev = &devices[i];
 
-                    if (IsEqualGUID(pGuidSrc, &dev->uID)) {
-                        CopyMemory(pGuidDest, &dev->uID, sizeof(GUID));
+                    if (IsEqualGUID(pGuidSrc, &dev->ID)) {
+                        CopyMemory(pGuidDest, &dev->ID, sizeof(GUID));
                         allocator_free(alc, devices);
                         return DS_OK;
                     }
@@ -284,10 +301,10 @@ HRESULT DllGetClassObject(
 
 /* ---------------------------------------------------------------------- */
 
-VOID DELTACALL release() {
-    if (ds != NULL) {
-        deltasound_release(ds);
-        ds = NULL;
+VOID DELTACALL cleanup() {
+    if (delta != NULL) {
+        deltasound_release(delta);
+        delta = NULL;
     }
 
     if (alc != NULL) {
@@ -328,7 +345,7 @@ HRESULT DELTACALL enumerate_devices(
                     device_info* dev = &devices[i];
 
                     if (dwWide == DEVICEENUMERATE_WIDE) {
-                        if (!pCallback(&dev->uID, dev->wszName, dev->wszModule, pContext)) {
+                        if (!pCallback(&dev->ID, dev->Name, dev->Module, pContext)) {
                             break;
                         }
                     }
@@ -337,15 +354,15 @@ HRESULT DELTACALL enumerate_devices(
                         ZeroMemory(name, MAX_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->wszName, -1, name, MAX_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->Name, -1, name, MAX_DEVICE_ID_LENGTH, NULL, NULL);
 
                         CHAR module[MAX_DEVICE_ID_LENGTH];
                         ZeroMemory(module, MAX_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->wszModule, -1, module, MAX_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->Module, -1, module, MAX_DEVICE_ID_LENGTH, NULL, NULL);
 
-                        if (!pCallback(&dev->uID, name, module, pContext)) {
+                        if (!pCallback(&dev->ID, name, module, pContext)) {
                             break;
                         }
                     }

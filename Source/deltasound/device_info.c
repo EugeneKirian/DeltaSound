@@ -39,21 +39,31 @@ const PROPERTYKEY PKEY_AudioEndpoint_GUID = {
     { 0x1DA5D803, 0xD492, 0x4EDD, { 0x8C, 0x23, 0xE0, 0xC0, 0xFF, 0xEE, 0x7F, 0x0E} }, 4
 };
 
+HRESULT DELTACALL device_info_thread_wait(HANDLE thread);
+
+typedef struct get_device_context {
+    LPCGUID         ID;
+    DWORD           Type;
+    device_info*    Device;
+} get_device_context;
+
+DWORD WINAPI device_info_get_device_thread(get_device_context* pContext);
+
 typedef struct get_devices_context {
-    DWORD           dwType;
-    UINT*           pdwCount;
-    device_info*    pDevices;
+    DWORD           Type;
+    UINT*           Count;
+    device_info*    Devices;
 } get_devices_context;
 
-DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx);
+DWORD WINAPI device_info_get_devices_thread(get_devices_context* pContext);
 
 typedef struct get_default_device_context {
-    DWORD           dwType;
-    DWORD           dwKind;
-    device_info*    pDevice;
+    DWORD           Type;
+    DWORD           Kind;
+    device_info*    Device;
 } get_default_device_context;
 
-DWORD WINAPI device_info_get_default_device_thread(get_default_device_context* ctx);
+DWORD WINAPI device_info_get_default_device_thread(get_default_device_context* pContext);
 
 HRESULT DELTACALL device_info_get_id(IMMDevice* pDevice, LPGUID pID);
 HRESULT DELTACALL device_info_get_module(IMMDevice* pDevice, LPWSTR pszId);
@@ -61,6 +71,26 @@ HRESULT DELTACALL device_info_get_name(IMMDevice* pDevice, LPWSTR pszName);
 
 HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount) {
     return device_info_get_devices(dwType, pdwCount, NULL);
+}
+
+HRESULT DELTACALL device_info_get_device(DWORD dwType, LPCGUID pcGuidDevice, device_info* pDevice) {
+    if (dwType != DEVICETYPE_AUDIO
+        && dwType != DEVICETYPE_RECORD && dwType != DEVICETYPE_ALL) {
+        return E_INVALIDARG;
+    }
+
+    if (pcGuidDevice == NULL || pDevice == NULL) {
+        return E_INVALIDARG;
+    }
+
+    get_device_context ctx;
+
+    ctx.ID = pcGuidDevice;
+    ctx.Type = dwType;
+    ctx.Device = pDevice;
+
+    return device_info_thread_wait(CreateThread(NULL, 0,
+        (LPTHREAD_START_ROUTINE)device_info_get_device_thread, &ctx, 0, NULL));
 }
 
 HRESULT DELTACALL device_info_get_devices(
@@ -78,32 +108,12 @@ HRESULT DELTACALL device_info_get_devices(
 
     get_devices_context ctx;
 
-    ctx.dwType = dwType;
-    ctx.pdwCount = pdwCount;
-    ctx.pDevices = pDevices;
+    ctx.Type = dwType;
+    ctx.Count = pdwCount;
+    ctx.Devices = pDevices;
 
-    // Create new thread so that COM can be properly initialized
-    // and uninitialized without affecting calling thread
-    // that might be still needing COM objects...
-
-    HANDLE thread = CreateThread(NULL, 0,
-        (LPTHREAD_START_ROUTINE)device_info_get_devices_thread, &ctx, 0, NULL);
-
-    if (thread == NULL) {
-        return E_FAIL;
-    }
-
-    // Wait for the thread to exit...
-    if (WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0) {
-        DWORD code = EXIT_SUCCESS;
-        if (GetExitCodeThread(thread, &code) && code == EXIT_SUCCESS) {
-            CloseHandle(thread);
-            return S_OK;
-        }
-    }
-
-    CloseHandle(thread);
-    return E_FAIL;
+    return device_info_thread_wait(CreateThread(NULL, 0,
+        (LPTHREAD_START_ROUTINE)device_info_get_devices_thread, &ctx, 0, NULL));
 }
 
 HRESULT DELTACALL device_info_get_default_device(
@@ -123,35 +133,35 @@ HRESULT DELTACALL device_info_get_default_device(
 
     get_default_device_context ctx;
 
-    ctx.dwType = dwType;
-    ctx.dwKind = dwKind;
-    ctx.pDevice = pDevice;
+    ctx.Type = dwType;
+    ctx.Kind = dwKind;
+    ctx.Device = pDevice;
 
-    // Create new thread so that COM can be properly initialized
-    // and uninitialized without affecting calling thread
-    // that might be still needing COM objects...
+    return device_info_thread_wait(CreateThread(NULL, 0,
+        (LPTHREAD_START_ROUTINE)device_info_get_default_device_thread, &ctx, 0, NULL));
+}
 
-    HANDLE thread = CreateThread(NULL, 0,
-        (LPTHREAD_START_ROUTINE)device_info_get_default_device_thread, &ctx, 0, NULL);
+/* ---------------------------------------------------------------------- */
 
+HRESULT DELTACALL device_info_thread_wait(HANDLE thread) {
     if (thread == NULL) {
         return E_FAIL;
     }
 
+    HRESULT hr = S_OK;
+
     // Wait for the thread to exit...
     if (WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0) {
         DWORD code = EXIT_SUCCESS;
-        if (GetExitCodeThread(thread, &code) && code == EXIT_SUCCESS) {
-            CloseHandle(thread);
-            return S_OK;
+
+        if (!GetExitCodeThread(thread, &code) || code != EXIT_SUCCESS) {
+            hr = E_FAIL;
         }
     }
 
     CloseHandle(thread);
-    return E_FAIL;
+    return hr;
 }
-
-/* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL device_info_get_id(IMMDevice* pDevice, LPGUID pID) {
     if (pDevice == NULL) {
@@ -235,6 +245,66 @@ HRESULT DELTACALL device_info_get_name(IMMDevice* pDevice, LPWSTR pszName) {
     return hr;
 }
 
+DWORD WINAPI device_info_get_device_thread(get_device_context* ctx) {
+    if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
+        return EXIT_FAILURE;
+    }
+
+    HRESULT hr = S_OK;
+    BOOL found = FALSE;
+    IMMDeviceEnumerator* enumerator = NULL;
+    IMMDeviceCollection* collection = NULL;
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_IMMDeviceEnumerator,
+        NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator, &enumerator))) {
+        goto exit;
+    }
+
+    if (FAILED(hr = IMMDeviceEnumerator_EnumAudioEndpoints(enumerator,
+        (EDataFlow)ctx->Type, DEVICE_STATE_ACTIVE, &collection))) {
+        goto exit;
+    }
+
+    UINT count = 0;
+    if (FAILED(hr = IMMDeviceCollection_GetCount(collection, &count))) {
+        goto exit;
+    }
+
+    for (UINT i = 0; i < count; i++) {
+        IMMDevice* device = NULL;
+
+        if (SUCCEEDED(hr = IMMDeviceCollection_Item(collection, i, &device))) {
+            if (SUCCEEDED(hr = device_info_get_id(device, &ctx->Device->ID))) {
+                if (IsEqualGUID(ctx->ID, &ctx->Device->ID)) {
+                    if (SUCCEEDED(hr = device_info_get_module(device, ctx->Device->Module))) {
+                        if (SUCCEEDED(hr = device_info_get_name(device, ctx->Device->Name))) {
+                            ctx->Type = ctx->Type;
+                            found = TRUE;
+                        }
+                    }
+                }
+            }
+
+            RELEASE(device);
+
+            if (found) { break; }
+        }
+    }
+
+    if (!found) {
+        ZeroMemory(ctx->Device, sizeof(device_info));
+    }
+
+exit:
+
+    RELEASE(collection);
+    RELEASE(enumerator);
+
+    CoUninitialize();
+
+    return found ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
 DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
     if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
         return EXIT_FAILURE;
@@ -243,7 +313,6 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
     HRESULT hr = S_OK;
     IMMDeviceEnumerator* enumerator = NULL;
     IMMDeviceCollection* collection = NULL;
-    UINT written = 0, read = 0;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_IMMDeviceEnumerator,
         NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator, &enumerator))) {
@@ -251,29 +320,30 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
     }
 
     if (FAILED(hr = IMMDeviceEnumerator_EnumAudioEndpoints(enumerator,
-        (EDataFlow)ctx->dwType, DEVICE_STATE_ACTIVE, &collection))) {
+        (EDataFlow)ctx->Type, DEVICE_STATE_ACTIVE, &collection))) {
         goto exit;
     }
 
+    UINT written = 0, read = 0;
     if (FAILED(hr = IMMDeviceCollection_GetCount(collection, &read))) {
         goto exit;
     }
 
-    if (ctx->pDevices == NULL) {
-        *ctx->pdwCount = read;
+    if (ctx->Devices == NULL) {
+        *ctx->Count = read;
         goto exit;
     }
 
-    ZeroMemory(ctx->pDevices, read * sizeof(device_info));
+    ZeroMemory(ctx->Devices, read * sizeof(device_info));
 
     for (UINT i = 0; i < read; i++) {
         IMMDevice* device = NULL;
 
         if (SUCCEEDED(hr = IMMDeviceCollection_Item(collection, i, &device))) {
-            if (SUCCEEDED(hr = device_info_get_id(device, &ctx->pDevices[written].uID))) {
-                if (SUCCEEDED(hr = device_info_get_module(device, ctx->pDevices[written].wszModule))) {
-                    if (SUCCEEDED(hr = device_info_get_name(device, ctx->pDevices[written].wszName))) {
-                        ctx->pDevices[written].dwType = ctx->dwType;
+            if (SUCCEEDED(hr = device_info_get_id(device, &ctx->Devices[written].ID))) {
+                if (SUCCEEDED(hr = device_info_get_module(device, ctx->Devices[written].Module))) {
+                    if (SUCCEEDED(hr = device_info_get_name(device, ctx->Devices[written].Name))) {
+                        ctx->Devices[written].Type = ctx->Type;
                         written++;
                     }
                 }
@@ -283,7 +353,7 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
         }
     }
 
-    *ctx->pdwCount = written;
+    *ctx->Count = written;
 
 exit:
 
@@ -301,8 +371,8 @@ DWORD WINAPI device_info_get_default_device_thread(get_default_device_context* c
     }
 
     HRESULT hr = S_OK;
-    IMMDeviceEnumerator* enumerator = NULL;
     IMMDevice* device = NULL;
+    IMMDeviceEnumerator* enumerator = NULL;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_IMMDeviceEnumerator,
         NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator, &enumerator))) {
@@ -310,22 +380,22 @@ DWORD WINAPI device_info_get_default_device_thread(get_default_device_context* c
     }
 
     if (FAILED(hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(enumerator,
-        (EDataFlow)ctx->dwType, (ERole)ctx->dwKind, &device))) {
+        (EDataFlow)ctx->Type, (ERole)ctx->Kind, &device))) {
         goto exit;
     }
 
-    ZeroMemory(ctx->pDevice, sizeof(device_info));
+    ZeroMemory(ctx->Device, sizeof(device_info));
 
-    if (SUCCEEDED(hr = device_info_get_id(device, &ctx->pDevice->uID))) {
-        if (SUCCEEDED(hr = device_info_get_module(device, ctx->pDevice->wszModule))) {
-            if (SUCCEEDED(hr = device_info_get_name(device, ctx->pDevice->wszName))) {
-                ctx->pDevice->dwType = ctx->dwType;
+    if (SUCCEEDED(hr = device_info_get_id(device, &ctx->Device->ID))) {
+        if (SUCCEEDED(hr = device_info_get_module(device, ctx->Device->Module))) {
+            if (SUCCEEDED(hr = device_info_get_name(device, ctx->Device->Name))) {
+                ctx->Device->Type = ctx->Type;
             }
         }
     }
 
     if (FAILED(hr)) {
-        ZeroMemory(ctx->pDevice, sizeof(device_info));
+        ZeroMemory(ctx->Device, sizeof(device_info));
     }
 
 exit:

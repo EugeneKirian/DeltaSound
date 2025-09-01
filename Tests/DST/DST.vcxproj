@@ -140,12 +140,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="directsoundcaptureenumerate.c" />
+    <ClCompile Include="directsoundcreate.c" />
     <ClCompile Include="directsoundenumerate.c" />
     <ClCompile Include="getdeviceid.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directsoundcaptureenumerate.h" />
+    <ClInclude Include="directsoundcreate.h" />
     <ClInclude Include="directsoundenumerate.h" />
     <ClInclude Include="getdeviceid.h" />
   </ItemGroup>

@@ -22,15 +22,19 @@
     <ClInclude Include="allocator.h" />
     <ClInclude Include="base.h" />
     <ClInclude Include="deltasound.h" />
+    <ClInclude Include="device.h" />
     <ClInclude Include="ds.h" />
-    <ClInclude Include="dsi.h" />
+    <ClInclude Include="ids.h" />
     <ClInclude Include="uuid.h" />
     <ClInclude Include="device_info.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocator.c" />
     <ClCompile Include="deltasound.c" />
+    <ClCompile Include="device.c" />
     <ClCompile Include="device_info.c" />
+    <ClCompile Include="ds.c" />
+    <ClCompile Include="ids.c" />
     <ClCompile Include="uuid.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
