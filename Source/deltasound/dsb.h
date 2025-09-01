@@ -24,28 +24,25 @@ SOFTWARE.
 
 #pragma once
 
-#include "ids.h"
 #include "deltasound.h"
-#include "device.h"
-#include "dsb.h"
+#include "idsb.h"
 
-typedef struct ds {
-    ids         Interface;
-    LONG        RefCount;
-    allocator*  Allocator;
-    deltasound* Instance;
-    device*     Device;
-    dsb*        Main;
-} ds;
+typedef struct dsb {
+    idsb            Interface;
+    LONG            RefCount;
+    allocator*      Allocator;
+    deltasound*     Instance;
+    DWORD           Flags;
+    WAVEFORMATEX    Format;
+    LONG            Volume;
+    LONG            Pan;
+    DWORD           Frequency;
+} dsb;
 
-HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut);
-VOID DELTACALL ds_release(ds* pDS);
+HRESULT DELTACALL dsb_create(allocator* pAlloc, dsb** ppOut);
+VOID DELTACALL dsb_release(dsb* pDSB);
 
-ULONG DELTACALL ds_add_ref(ds* pDS);
-ULONG DELTACALL ds_remove_ref(ds* pDS);
+ULONG DELTACALL dsb_add_ref(dsb* pDSB);
+ULONG DELTACALL dsb_remove_ref(dsb* pDSB);
 
-HRESULT DELTACALL ds_create_dsb(ds* pDS, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
-
-HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
-
-HRESULT DELTACALL ds_initialize(ds* pDS, LPCGUID pcGuidDevice);
+HRESULT DELTACALL dsb_initialize(dsb* pDSB, deltasound* pDS, LPCDSBUFFERDESC pcDesc);

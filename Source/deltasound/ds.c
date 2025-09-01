@@ -34,20 +34,22 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
 
     HRESULT hr = S_OK;
     ds* instance = NULL;
-    if (FAILED(hr = ds_allocate(pAlloc, &instance))) {
-        return hr;
-    }
 
-    if (FAILED(hr = ids_create(&instance->Interface))) {
+    if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
+        if (SUCCEEDED(hr = ids_create(&instance->Interface))) {
+            if (SUCCEEDED(hr = dsb_create(pAlloc, &instance->Main))) {
+                instance->RefCount = 1;
+
+                *ppOut = instance;
+
+                return S_OK;
+            }
+        }
+
         ds_release(instance);
-        return hr;
     }
 
-    instance->RefCount = 1;
-
-    *ppOut = instance;
-
-    return S_OK;
+    return hr;
 }
 
 VOID DELTACALL ds_release(ds* self) {
@@ -87,12 +89,17 @@ ULONG DELTACALL ds_remove_ref(ds* self) {
     return count;
 }
 
-HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pDSCaps) {
+HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pDSCaps == NULL) {
+    if (pcDesc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (pcDesc->dwSize != sizeof(dsb_desc_min)
+        && pcDesc->dwSize != sizeof(dsb_desc_max)) {
         return E_INVALIDARG;
     }
 
@@ -100,20 +107,66 @@ HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pDSCaps) {
         return DSERR_UNINITIALIZED;
     }
 
-    ZeroMemory(pDSCaps, sizeof(DSCAPS));
+    if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        // TODO process other flag validations
 
-    pDSCaps->dwSize = sizeof(DSCAPS);
-    pDSCaps->dwFlags = DSCAPS_SECONDARY16BIT | DSCAPS_SECONDARY8BIT
+        dsb_add_ref(self->Main);
+
+        *ppOut = self->Main;
+
+        return S_OK;
+    }
+
+    // TODO process other flags properly
+
+    HRESULT hr = S_OK;
+    dsb* instance = NULL;
+
+    if (SUCCEEDED(hr = dsb_create(self->Allocator, &instance))) {
+        if (SUCCEEDED(hr = dsb_initialize(instance, self->Instance, pcDesc))) {
+            *ppOut = instance;
+
+            return S_OK;
+        }
+        else if (hr == DSERR_ALREADYINITIALIZED) {
+            *ppOut = instance;
+
+            return S_OK;
+        }
+
+        dsb_release(instance);
+    }
+
+    return hr;
+}
+
+HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pCaps) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pCaps == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    ZeroMemory(pCaps, sizeof(DSCAPS));
+
+    pCaps->dwSize = sizeof(DSCAPS);
+    pCaps->dwFlags = DSCAPS_SECONDARY16BIT | DSCAPS_SECONDARY8BIT
         | DSCAPS_SECONDARYSTEREO | DSCAPS_SECONDARYMONO
         | DSCAPS_CONTINUOUSRATE | DSCAPS_PRIMARY16BIT
         | DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYSTEREO | DSCAPS_PRIMARYMONO;
 
-    pDSCaps->dwMinSecondarySampleRate = 100;
-    pDSCaps->dwMaxSecondarySampleRate = 200000;
-    pDSCaps->dwPrimaryBuffers = 1;
-    pDSCaps->dwMaxHwMixingAllBuffers = 1;
-    pDSCaps->dwMaxHwMixingStaticBuffers = 1;
-    pDSCaps->dwMaxHwMixingStreamingBuffers = 1;
+    pCaps->dwMinSecondarySampleRate = 100;
+    pCaps->dwMaxSecondarySampleRate = 200000;
+    pCaps->dwPrimaryBuffers = 1;
+    pCaps->dwMaxHwMixingAllBuffers = 1;
+    pCaps->dwMaxHwMixingStaticBuffers = 1;
+    pCaps->dwMaxHwMixingStreamingBuffers = 1;
 
     return S_OK;
 }
@@ -167,15 +220,15 @@ HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
 
     HRESULT hr = S_OK;
     ds* instance = NULL;
-    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
-        return hr;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
+
+        ZeroMemory(instance, sizeof(ds));
+
+        instance->Allocator = pAlloc;
+
+        *ppOut = instance;
     }
 
-    ZeroMemory(instance, sizeof(ds));
-
-    instance->Allocator = pAlloc;
-
-    *ppOut = instance;
-
-    return S_OK;
+    return hr;
 }

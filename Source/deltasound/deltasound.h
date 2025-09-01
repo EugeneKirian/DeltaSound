@@ -28,7 +28,7 @@ SOFTWARE.
 
 typedef struct deltasound {
     allocator*          Allocator;
-    CRITICAL_SECTION    Lock;
+    CRITICAL_SECTION    Lock;   // TODO
 } deltasound;
 
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);

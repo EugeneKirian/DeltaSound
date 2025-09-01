@@ -22,82 +22,104 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ds.h"
-#include "device_info.h"
+#include "dsb.h"
 
-#define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
+HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
 
-HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut);
-
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
+HRESULT DELTACALL dsb_create(allocator* pAlloc, dsb** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    // TODO LOG
-
     HRESULT hr = S_OK;
-    deltasound* instance = NULL;
+    dsb* instance = NULL;
 
-    if (SUCCEEDED(hr = deltasound_allocate(pAlloc, &instance))) {
-        InitializeCriticalSection(&instance->Lock);
+    if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
+        if (SUCCEEDED(hr = idsb_create(&instance->Interface))) {
+            instance->RefCount = 1;
 
-        *ppOut = instance;
+            *ppOut = instance;
+
+            return S_OK;
+        }
     }
 
     return hr;
 }
 
-VOID DELTACALL deltasound_release(deltasound* self) {
+VOID DELTACALL dsb_release(dsb* self) {
     if (self == NULL) {
         return;
     }
 
-    // TODO LOG
-
-    DeleteCriticalSection(&self->Lock);
+    // TODO
 
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL deltasound_create_ds(deltasound* self, REFIID riid, LPDIRECTSOUND* ppOut) {
+ULONG DELTACALL dsb_add_ref(dsb* self) {
+    if (self == NULL) {
+        return 0;
+    }
+
+    return InterlockedIncrement(&self->RefCount);
+}
+
+ULONG DELTACALL dsb_remove_ref(dsb* self) {
+    if (self == NULL) {
+        return 0;
+    }
+
+    LONG count = InterlockedDecrement(&self->RefCount);
+
+    if (count <= 0) {
+        count = 0;
+
+        // TODO release on primary buffer?
+
+        dsb_release(self);
+    }
+
+    return count;
+}
+
+HRESULT DELTACALL dsb_initialize(dsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppOut == NULL) {
+    if (pDS == NULL || pcDesc == NULL) {
         return E_INVALIDARG;
     }
 
-    ds* instance = NULL;
-    HRESULT hr = S_OK;
-
-    EnterCriticalSection(&self->Lock);
-
-    if (SUCCEEDED(hr = ds_create(self->Allocator, &instance))) {
-        instance->Instance = self;
-
-        *ppOut = (LPDIRECTSOUND)instance;
+    if (pcDesc->dwSize != sizeof(dsb_desc_min)
+        && pcDesc->dwSize != sizeof(dsb_desc_max)) {
+        return E_INVALIDARG;
     }
 
-    LeaveCriticalSection(&self->Lock);
+    if (self->Instance != NULL) {
+        return DSERR_ALREADYINITIALIZED;
+    }
 
-    return hr;
+    // TODO set flags, default values, etc
+
+    self->Instance = pDS;
+
+    return S_OK;
 }
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
+HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    deltasound* instance = NULL;
+    dsb* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
-
-        ZeroMemory(instance, sizeof(deltasound));
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsb), &instance))) {
+        ZeroMemory(instance, sizeof(dsb));
 
         instance->Allocator = pAlloc;
 

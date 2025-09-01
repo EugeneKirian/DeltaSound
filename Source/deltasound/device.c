@@ -65,6 +65,7 @@ HRESULT DELTACALL device_create(
 
     HRESULT hr = S_OK;
     device* instance = NULL;
+
     if (SUCCEEDED(hr = device_allocate(pAlloc, &instance))) {
         instance->RefCount = 1;
         CopyMemory(&instance->Info, &dev, sizeof(device_info));
@@ -158,17 +159,16 @@ HRESULT DELTACALL device_allocate(allocator* pAlloc, device** ppOut) {
 
     HRESULT hr = S_OK;
     device* instance = NULL;
-    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(device), &instance))) {
-        return hr;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(device), &instance))) {
+        ZeroMemory(instance, sizeof(device));
+
+        instance->Allocator = pAlloc;
+
+        *ppOut = instance;
     }
 
-    ZeroMemory(instance, sizeof(device));
-
-    instance->Allocator = pAlloc;
-
-    *ppOut = instance;
-
-    return S_OK;
+    return hr;
 }
 
 HRESULT DELTACALL device_initialize(device* self) {

@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ids.h"
 #include "ds.h"
 
 HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);
@@ -97,9 +96,26 @@ ULONG DELTACALL ids_release(ids* self) {
     return ds_remove_ref((ds*)self);
 }
 
-HRESULT DELTACALL ids_create_sound_buffer(ids* self, LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, LPUNKNOWN pUnkOuter) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+HRESULT DELTACALL ids_create_sound_buffer(ids* self,
+    LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, LPUNKNOWN pUnkOuter) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pcDSBufferDesc == NULL || ppDSBuffer == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (pcDSBufferDesc->dwSize != sizeof(dsb_desc_min)
+        && pcDSBufferDesc->dwSize != sizeof(dsb_desc_max)) {
+        return E_INVALIDARG;
+    }
+
+    if (pUnkOuter != NULL) {
+        return DSERR_NOAGGREGATION;
+    }
+
+    return ds_create_dsb((ds*)self, pcDSBufferDesc, ppDSBuffer);
 }
 
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
