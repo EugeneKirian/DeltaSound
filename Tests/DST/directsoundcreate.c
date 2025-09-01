@@ -35,7 +35,7 @@ typedef HRESULT(WINAPI* LPDIRECTSOUNDENUMERATEA)(LPDSENUMCALLBACKA, LPVOID);
 
 typedef struct callback_context {
     UINT    Count;
-    GUID* Items;
+    GUID*   Items;
 } callback_context;
 
 static BOOL CALLBACK EnumerateDeviceCallBackA(LPGUID guid, LPCSTR desc, LPCSTR module, LPVOID ctx) {

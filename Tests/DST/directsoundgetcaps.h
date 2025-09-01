@@ -24,14 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
+#include <windows.h>
 
-typedef struct deltasound {
-    allocator*          Allocator;
-    CRITICAL_SECTION    Lock;
-} deltasound;
-
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
-
-HRESULT DELTACALL deltasound_create_ds(deltasound* pDS, REFIID riid, LPDIRECTSOUND* ppOut);
+BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b);

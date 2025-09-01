@@ -24,9 +24,10 @@ SOFTWARE.
 
 #pragma once
 
-#include <windows.h>
+#include "base.h"
 
 extern const CLSID CLSID_IMMDeviceEnumerator;
 extern const IID IID_IMMDeviceEnumerator;
 extern const IID IID_IAudioClient;
 extern const IID IID_IAudioRenderClient;
+extern const IID IID_IAudioStreamVolume;

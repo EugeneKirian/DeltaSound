@@ -55,6 +55,10 @@ VOID DELTACALL ds_release(ds* self) {
         return;
     }
 
+    if (self->Device != NULL) {
+        device_release(self->Device);
+    }
+
     // TODO cleanup logic
 
     allocator_free(self->Allocator, self);
@@ -77,13 +81,41 @@ ULONG DELTACALL ds_remove_ref(ds* self) {
 
     if (count <= 0) {
         count = 0;
-        // TODO cleanup
-
-
-        allocator_free(self->Allocator, self);
+        ds_release(self);
     }
 
     return count;
+}
+
+HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pDSCaps) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pDSCaps == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    ZeroMemory(pDSCaps, sizeof(DSCAPS));
+
+    pDSCaps->dwSize = sizeof(DSCAPS);
+    pDSCaps->dwFlags = DSCAPS_SECONDARY16BIT | DSCAPS_SECONDARY8BIT
+        | DSCAPS_SECONDARYSTEREO | DSCAPS_SECONDARYMONO
+        | DSCAPS_CONTINUOUSRATE | DSCAPS_PRIMARY16BIT
+        | DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYSTEREO | DSCAPS_PRIMARYMONO;
+
+    pDSCaps->dwMinSecondarySampleRate = 100;
+    pDSCaps->dwMaxSecondarySampleRate = 200000;
+    pDSCaps->dwPrimaryBuffers = 1;
+    pDSCaps->dwMaxHwMixingAllBuffers = 1;
+    pDSCaps->dwMaxHwMixingStaticBuffers = 1;
+    pDSCaps->dwMaxHwMixingStreamingBuffers = 1;
+
+    return S_OK;
 }
 
 HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
@@ -105,29 +137,23 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
     }
 
     HRESULT hr = S_OK;
-    device_info dev;
-    ZeroMemory(&dev, sizeof(device_info));
+    device_info info;
+    ZeroMemory(&info, sizeof(device_info));
 
     if (IsEqualGUID(&DSDEVID_DefaultPlayback, pcGuidDevice) ||
         IsEqualGUID(&DSDEVID_DefaultVoicePlayback, pcGuidDevice)) {
         const DWORD kind = IsEqualGUID(&DSDEVID_DefaultPlayback, pcGuidDevice)
             ? DEVICEKIND_MULTIMEDIA : DEVICEKIND_COMMUNICATION;
 
-        if (FAILED(hr = device_info_get_default_device(DEVICETYPE_AUDIO, kind, &dev))) {
+        if (FAILED(hr = device_info_get_default_device(DEVICETYPE_AUDIO, kind, &info))) {
             return DSERR_NODRIVER;
         }
     }
-    else if (FAILED(hr = device_info_get_device(DEVICETYPE_AUDIO, pcGuidDevice, &dev))) {
+    else if (FAILED(hr = device_info_get_device(DEVICETYPE_AUDIO, pcGuidDevice, &info))) {
         return DSERR_NODRIVER;
     }
 
-    EnterCriticalSection(&self->DeltaSound->Lock);
-
-    if (FAILED(hr = deltasound_get_device(self->DeltaSound, dev.Type, &dev.ID, &self->Device))) {
-        hr = deltasound_create_device(self->DeltaSound, dev.Type, &dev.ID, &self->Device);
-    }
-
-    LeaveCriticalSection(&self->DeltaSound->Lock);
+    hr = device_create(self->Allocator, info.Type, &info.ID, &self->Device);
 
     return hr;
 }

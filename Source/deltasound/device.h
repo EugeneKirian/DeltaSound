@@ -28,11 +28,23 @@ SOFTWARE.
 #include "device_info.h"
 
 typedef struct device {
-    allocator*  Allocator;
-    device_info Info;
+    allocator*              Allocator;
+    LONG                    RefCount;
+    device_info             Info;
+    IMMDevice*              Device;
+    IAudioClient*           AudioClient;
+    IAudioRenderClient*     AudioRenderer;
+    // IAudioStreamVolume*     AudioVolume; //  TODO  Is this needed?
+    PWAVEFORMATEXTENSIBLE   WaveFormat;
+    HANDLE                  AudioEvent;
+    HANDLE                  Thread;
+    BOOL                    Close;
 } device;
 
 HRESULT DELTACALL device_create(
     allocator* pAlloc, DWORD dwType, LPCGUID pcGuidDevice, device** ppOut);
+
+ULONG DELTACALL device_add_ref(device* pDev);
+ULONG DELTACALL device_remove_ref(device* pDev);
 
 VOID DELTACALL device_release(device* pDev);
