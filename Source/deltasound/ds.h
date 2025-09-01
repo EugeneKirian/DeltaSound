@@ -24,15 +24,21 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
 #include "ids.h"
+#include "deltasound.h"
 
 typedef struct ds {
     ids         Interface;
     allocator*  Allocator;
-    GUID        ID;
-    ULONG       RefCount;
+    deltasound* DeltaSound;
+    LONG        RefCount;
+    device*     Device;
 } ds;
 
 HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut);
 VOID DELTACALL ds_release(ds* pDS);
+
+ULONG DELTACALL ds_add_ref(ds* pDS);
+ULONG DELTACALL ds_remove_ref(ds* pDS);
+
+HRESULT DELTACALL ds_initialize(ds* pDS, LPCGUID pcGuidDevice);

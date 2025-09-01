@@ -22,6 +22,7 @@
     <ClInclude Include="allocator.h" />
     <ClInclude Include="base.h" />
     <ClInclude Include="deltasound.h" />
+    <ClInclude Include="device.h" />
     <ClInclude Include="ds.h" />
     <ClInclude Include="ids.h" />
     <ClInclude Include="uuid.h" />
@@ -30,6 +31,7 @@
   <ItemGroup>
     <ClCompile Include="allocator.c" />
     <ClCompile Include="deltasound.c" />
+    <ClCompile Include="device.c" />
     <ClCompile Include="device_info.c" />
     <ClCompile Include="ds.c" />
     <ClCompile Include="ids.c" />

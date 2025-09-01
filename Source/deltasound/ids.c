@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "ids.h"
+#include "ds.h"
 
 HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);
 ULONG DELTACALL ids_add_ref(ids* self);
@@ -81,13 +82,19 @@ HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject)
 }
 
 ULONG DELTACALL ids_add_ref(ids* self) {
-    // TODO NOT IMPLEMENTED
-    return 0;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return ds_add_ref((ds*)self);
 }
 
 ULONG DELTACALL ids_release(ids* self) {
-    // TODO NOT IMPLEMENTED
-    return 0;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return ds_remove_ref((ds*)self);
 }
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self, LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, LPUNKNOWN pUnkOuter) {
@@ -125,7 +132,10 @@ HRESULT DELTACALL ids_set_speaker_config(ids* self, DWORD dwSpeakerConfig) {
 }
 
 HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return ds_initialize((ds*)self, pcGuidDevice);
 }
 

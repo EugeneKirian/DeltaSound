@@ -129,7 +129,7 @@ BOOL TestGetDeviceID(HMODULE a, HMODULE b) {
     LPDIRECTSOUNDENUMERATEA ea = (LPDIRECTSOUNDENUMERATEA)GetProcAddress(a, "DirectSoundEnumerateA");
     LPDIRECTSOUNDENUMERATEA eb = (LPDIRECTSOUNDENUMERATEA)GetProcAddress(b, "DirectSoundEnumerateA");
 
-    if (ga == NULL || gb == NULL) {
+    if (ea == NULL || eb == NULL) {
         return FALSE;
     }
 

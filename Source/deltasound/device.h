@@ -24,30 +24,15 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
+#include "device_info.h"
 
-#define DEVICETYPE_AUDIO            0
-#define DEVICETYPE_RECORD           1
-#define DEVICETYPE_ALL              2
-#define DEVICETYPE_INVALID          (-1)
+typedef struct device {
+    allocator*  Allocator;
+    device_info Info;
+} device;
 
-#define DEVICEKIND_AUDIO            0
-#define DEVICEKIND_MULTIMEDIA       1
-#define DEVICEKIND_COMMUNICATION    2
-#define DEVICEKIND_INVALID          (-1)
+HRESULT DELTACALL device_create(
+    allocator* pAlloc, DWORD dwType, LPCGUID pcGuidDevice, device** ppOut);
 
-#define MAX_DEVICE_ID_LENGTH        128
-
-typedef struct device_info {
-    GUID    ID;
-    DWORD   Type;
-    WCHAR   Name[MAX_DEVICE_ID_LENGTH];
-    WCHAR   Module[MAX_DEVICE_ID_LENGTH];
-} device_info;
-
-HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount);
-HRESULT DELTACALL device_info_get_device(DWORD dwType, LPCGUID pcGuidDevice, device_info* pDevice);
-HRESULT DELTACALL device_info_get_devices(
-    DWORD dwType, UINT* pdwCount, device_info* pDevices);
-HRESULT DELTACALL device_info_get_default_device(
-    DWORD dwType, DWORD dwKind, device_info* pDevice);
+VOID DELTACALL device_release(device* pDev);

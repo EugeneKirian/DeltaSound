@@ -25,8 +25,6 @@ SOFTWARE.
 #include <deltasound.h>
 #include <device_info.h>
 
-#include <dsound.h>
-
 #define DEVICEENUMERATE_ANSI    0
 #define DEVICEENUMERATE_WIDE    1
 
@@ -253,7 +251,7 @@ HRESULT WINAPI GetDeviceID(
             return DSERR_NODRIVER;
         }
 
-        CopyMemory(pGuidDest, &device.uID, sizeof(GUID));
+        CopyMemory(pGuidDest, &device.ID, sizeof(GUID));
 
         return DS_OK;
     }
@@ -270,8 +268,8 @@ HRESULT WINAPI GetDeviceID(
                 for (UINT i = 0; i < count; i++) {
                     device_info* dev = &devices[i];
 
-                    if (IsEqualGUID(pGuidSrc, &dev->uID)) {
-                        CopyMemory(pGuidDest, &dev->uID, sizeof(GUID));
+                    if (IsEqualGUID(pGuidSrc, &dev->ID)) {
+                        CopyMemory(pGuidDest, &dev->ID, sizeof(GUID));
                         allocator_free(alc, devices);
                         return DS_OK;
                     }
@@ -347,7 +345,7 @@ HRESULT DELTACALL enumerate_devices(
                     device_info* dev = &devices[i];
 
                     if (dwWide == DEVICEENUMERATE_WIDE) {
-                        if (!pCallback(&dev->uID, dev->wszName, dev->wszModule, pContext)) {
+                        if (!pCallback(&dev->ID, dev->Name, dev->Module, pContext)) {
                             break;
                         }
                     }
@@ -356,15 +354,15 @@ HRESULT DELTACALL enumerate_devices(
                         ZeroMemory(name, MAX_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->wszName, -1, name, MAX_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->Name, -1, name, MAX_DEVICE_ID_LENGTH, NULL, NULL);
 
                         CHAR module[MAX_DEVICE_ID_LENGTH];
                         ZeroMemory(module, MAX_DEVICE_ID_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->wszModule, -1, module, MAX_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->Module, -1, module, MAX_DEVICE_ID_LENGTH, NULL, NULL);
 
-                        if (!pCallback(&dev->uID, name, module, pContext)) {
+                        if (!pCallback(&dev->ID, name, module, pContext)) {
                             break;
                         }
                     }
