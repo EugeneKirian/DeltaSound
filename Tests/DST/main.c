@@ -26,6 +26,7 @@ SOFTWARE.
 #include "directsoundcaptureenumerate.h"
 #include "getdeviceid.h"
 #include "directsoundcreate.h"
+#include "directsoundcreatesoundbuffer.h"
 #include "directsoundgetcaps.h"
 
 #include <stdio.h>
@@ -64,6 +65,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundCaptureEnumerateW);
     TEST(GetDeviceID);
     TEST(DirectSoundCreate);
+    TEST(DirectSoundCreateSoundBuffer);
     TEST(DirectSoundGetCaps);
 
 exit:

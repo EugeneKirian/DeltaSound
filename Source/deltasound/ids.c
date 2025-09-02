@@ -123,8 +123,17 @@ HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
         return E_POINTER;
     }
 
+    if (pDSCaps == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (pDSCaps->dwSize != sizeof(DSCAPS)) {
+        return E_INVALIDARG;
+    }
+
     return ds_get_caps((ds*)self, pDSCaps);
 }
+
 HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, idsb* pDSBufferOriginal, idsb** ppDSBufferDuplicate) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;

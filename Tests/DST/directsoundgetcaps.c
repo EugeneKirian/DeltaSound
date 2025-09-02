@@ -28,6 +28,84 @@ SOFTWARE.
 
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
+static BOOL TestDirectSoundGetCapsInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    BOOL result = TRUE;
+
+    {
+        HRESULT ra = IDirectSound_GetCaps(a, NULL);
+        HRESULT rb = IDirectSound_GetCaps(b, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        DSCAPS ca;
+        ZeroMemory(&ca, sizeof(DSCAPS));
+
+        DSCAPS cb;
+        ZeroMemory(&cb, sizeof(DSCAPS));
+
+        HRESULT ra = IDirectSound_GetCaps(a, &ca);
+        HRESULT rb = IDirectSound_GetCaps(b, &cb);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        DSCAPS ca;
+        ZeroMemory(&ca, sizeof(DSCAPS));
+
+        ca.dwSize = UINT_MAX;
+
+        DSCAPS cb;
+        ZeroMemory(&cb, sizeof(DSCAPS));
+
+        cb.dwSize = UINT_MAX;
+
+        HRESULT ra = IDirectSound_GetCaps(a, &ca);
+        HRESULT rb = IDirectSound_GetCaps(b, &cb);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundGetCapsValidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    DSCAPS ca;
+    ZeroMemory(&ca, sizeof(DSCAPS));
+
+    ca.dwSize = sizeof(DSCAPS);
+
+    DSCAPS cb;
+    ZeroMemory(&cb, sizeof(DSCAPS));
+
+    cb.dwSize = sizeof(DSCAPS);
+
+    HRESULT ra = IDirectSound_GetCaps(a, &ca);
+    HRESULT rb = IDirectSound_GetCaps(b, &cb);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    return memcmp(&ca, &cb, sizeof(DSCAPS)) == 0;
+}
+
 BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -45,38 +123,26 @@ BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b) {
     LPDIRECTSOUND dsa = NULL;
     LPDIRECTSOUND dsb = NULL;
 
-    DSCAPS ca;
-    ZeroMemory(&ca, sizeof(DSCAPS));
-
-    ca.dwSize = sizeof(DSCAPS);
-
-    DSCAPS cb;
-    ZeroMemory(&cb, sizeof(DSCAPS));
-
-    cb.dwSize = sizeof(DSCAPS);
-
     HRESULT ra = dsca(NULL, &dsa, NULL);
     HRESULT rb = dscb(NULL, &dsb, NULL);
 
     if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa == NULL || dsb == NULL) {
+        return FALSE;
+    }
+
+    if (!TestDirectSoundGetCapsInvalidInputs(dsa, dsb)) {
         result = FALSE;
         goto exit;
     }
 
-    if (dsca == NULL || dscb == NULL) {
+    if (!TestDirectSoundGetCapsValidInputs(dsa, dsb)) {
         result = FALSE;
         goto exit;
     }
-
-    ra = IDirectSound_GetCaps(dsa, &ca);
-    rb = IDirectSound_GetCaps(dsb, &cb);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    result = memcmp(&ca, &cb, sizeof(DSCAPS)) == 0;
 
 exit:
 

@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="directsoundcaptureenumerate.c" />
     <ClCompile Include="directsoundcreate.c" />
+    <ClCompile Include="directsoundcreatesoundbuffer.c" />
     <ClCompile Include="directsoundenumerate.c" />
     <ClCompile Include="directsoundgetcaps.c" />
     <ClCompile Include="getdeviceid.c" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="directsoundcaptureenumerate.h" />
     <ClInclude Include="directsoundcreate.h" />
+    <ClInclude Include="directsoundcreatesoundbuffer.h" />
     <ClInclude Include="directsoundenumerate.h" />
     <ClInclude Include="directsoundgetcaps.h" />
     <ClInclude Include="getdeviceid.h" />
