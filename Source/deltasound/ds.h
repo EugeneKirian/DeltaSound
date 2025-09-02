@@ -24,16 +24,20 @@ SOFTWARE.
 
 #pragma once
 
-#include "ids.h"
 #include "deltasound.h"
-#include "device.h"
-#include "dsb.h"
+
+typedef struct ids ids;
+typedef struct dsb dsb;
+typedef struct device device;
 
 typedef struct ds {
-    ids         Interface;
-    LONG        RefCount;
     allocator*  Allocator;
     deltasound* Instance;
+
+    // TODO resizeable array
+    ids**       Interfaces;
+    LONG        InterfaceCount;
+
     HWND        HWND;
     DWORD       Level;
     device*     Device;
@@ -43,8 +47,8 @@ typedef struct ds {
 HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut);
 VOID DELTACALL ds_release(ds* pDS);
 
-ULONG DELTACALL ds_add_ref(ds* pDS);
-ULONG DELTACALL ds_remove_ref(ds* pDS);
+HRESULT DELTACALL ds_add_ref(ds* pDS, ids* pIDS);
+HRESULT DELTACALL ds_remove_ref(ds* pDS, ids* pIDS);
 
 HRESULT DELTACALL ds_create_dsb(ds* pDS, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
 

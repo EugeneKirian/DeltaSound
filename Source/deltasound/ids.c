@@ -22,11 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "ids.h"
+#include "idsb.h"
 #include "ds.h"
 
 HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);
 ULONG DELTACALL ids_add_ref(ids* self);
-ULONG DELTACALL ids_release(ids* self);
+ULONG DELTACALL ids_remove_ref(ids* self);
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self, LPCDSBUFFERDESC pcDSBufferDesc, idsb** ppDSBuffer, LPUNKNOWN pUnkOuter);
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps);
@@ -54,7 +56,7 @@ typedef struct ids_vft {
 const static ids_vft ids_self = {
     ids_query_interface,
     ids_add_ref,
-    ids_release,
+    ids_remove_ref,
     ids_create_sound_buffer,
     ids_get_caps,
     ids_duplicate_sound_buffer,
@@ -65,14 +67,27 @@ const static ids_vft ids_self = {
     ids_initialize
 };
 
-HRESULT DELTACALL ids_create(ids* self) {
-    if (self == NULL) {
-        return E_POINTER;
+HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut);
+
+HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
     }
 
-    self->Self = &ids_self;
+    HRESULT hr = S_OK;
+    ids* instance = NULL;
 
-    return S_OK;
+    if (SUCCEEDED(hr = ids_allocate(pAlloc, &instance))) {
+        instance->Self = &ids_self;
+        instance->RefCount = 1;
+        *ppOut = instance;
+    }
+
+    return hr;
+}
+
+VOID DELTACALL ids_release(ids* self) {
+    allocator_free(self->Allocator, self);
 }
 
 HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject) {
@@ -82,18 +97,29 @@ HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject)
 
 ULONG DELTACALL ids_add_ref(ids* self) {
     if (self == NULL) {
-        return E_POINTER;
+        return 0;
     }
 
-    return ds_add_ref((ds*)self);
+    return InterlockedIncrement(&self->RefCount);
 }
 
-ULONG DELTACALL ids_release(ids* self) {
+ULONG DELTACALL ids_remove_ref(ids* self) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    return ds_remove_ref((ds*)self);
+    LONG count = InterlockedDecrement(&self->RefCount);
+
+    if (count <= 0) {
+        count = 0;
+
+        if (self->Instance != NULL) {
+            ds_remove_ref(self->Instance, self);
+            ids_release(self);
+        }
+    }
+
+    return count;
 }
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self,
@@ -115,7 +141,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         return DSERR_NOAGGREGATION;
     }
 
-    return ds_create_dsb((ds*)self, pcDesc, (dsb**)ppBuffer);
+    return ds_create_dsb(self->Instance, pcDesc, (dsb**)ppBuffer);
 }
 
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
@@ -131,7 +157,7 @@ HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
         return E_INVALIDARG;
     }
 
-    return ds_get_caps((ds*)self, pDSCaps);
+    return ds_get_caps(self->Instance, pDSCaps);
 }
 
 HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, idsb* pDSBufferOriginal, idsb** ppDSBufferDuplicate) {
@@ -153,7 +179,7 @@ HRESULT DELTACALL ids_set_cooperative_level(ids* self, HWND hwnd, DWORD dwLevel)
         return E_INVALIDARG;
     }
 
-    return ds_set_cooperative_level((ds*)self, hwnd, dwLevel);
+    return ds_set_cooperative_level(self->Instance, hwnd, dwLevel);
 }
 
 HRESULT DELTACALL ids_compact(ids* self) {
@@ -176,6 +202,20 @@ HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice) {
         return E_POINTER;
     }
 
-    return ds_initialize((ds*)self, pcGuidDevice);
+    return ds_initialize(self->Instance, pcGuidDevice);
 }
 
+/* ---------------------------------------------------------------------- */
+
+HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut) {
+    HRESULT hr = S_OK;
+    ids* instance = NULL;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
+        ZeroMemory(instance, sizeof(ids));
+        instance->Allocator = pAlloc;
+        *ppOut = instance;
+    }
+
+    return hr;
+}

@@ -22,8 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "ids.h"
 #include "device_info.h"
 #include "ds.h"
+#include "dsb.h"
+#include "device.h"
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
 
@@ -36,14 +39,19 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
     ds* instance = NULL;
 
     if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
-        if (SUCCEEDED(hr = ids_create(&instance->Interface))) {
-            if (SUCCEEDED(hr = dsb_create(pAlloc, &instance->Main))) {
-                instance->RefCount = 1;
+        ids* intfc = NULL;
 
-                *ppOut = instance;
+        if (SUCCEEDED(hr = ids_create(pAlloc, &intfc))) {
+            if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
+                intfc->Instance = instance;
 
-                return S_OK;
+                if (SUCCEEDED(hr = dsb_create(pAlloc, &instance->Main))) {
+                    *ppOut = instance;
+                    return S_OK;
+                }
             }
+
+            ids_release(intfc);
         }
 
         ds_release(instance);
@@ -53,6 +61,12 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
 }
 
 VOID DELTACALL ds_release(ds* self) {
+    for (LONG i = 0; i < self->InterfaceCount; i++) {
+        ids_release(self->Interfaces[i]);
+    }
+
+    allocator_free(self->Allocator, self->Interfaces);
+
     if (self->Main != NULL) {
         dsb_release(self->Main);
     }
@@ -66,27 +80,50 @@ VOID DELTACALL ds_release(ds* self) {
     allocator_free(self->Allocator, self);
 }
 
-ULONG ds_add_ref(ds* self) {
+HRESULT DELTACALL ds_add_ref(ds* self, ids* pIDS) {
     if (self == NULL) {
-        return 0;
+        return E_POINTER;
     }
 
-    return InterlockedIncrement(&self->RefCount);
+    HRESULT hr = S_OK;
+
+    // TODO synchronization
+
+    if (SUCCEEDED(hr = allocator_reallocate(self->Allocator,
+        self->Interfaces, sizeof(ids*) * (self->InterfaceCount + 1), (LPVOID*)&self->Interfaces))) {
+        self->Interfaces[self->InterfaceCount] = pIDS;
+        self->InterfaceCount++;
+    }
+
+    return hr;
 }
 
-ULONG DELTACALL ds_remove_ref(ds* self) {
+HRESULT DELTACALL ds_remove_ref(ds* self, ids* pIDS) {
     if (self == NULL) {
-        return 0;
+        return E_POINTER;
     }
 
-    LONG count = InterlockedDecrement(&self->RefCount);
+    HRESULT hr = S_OK;
 
-    if (count <= 0) {
-        count = 0;
+    // TODO synchronization
+
+    for (LONG i = 0; i < self->InterfaceCount; i++) {
+        if (self->Interfaces[i] == pIDS) {
+            for (LONG x = i; x < self->InterfaceCount - 1; x++) {
+                self->Interfaces[x] = self->Interfaces[x + 1];
+            }
+
+            self->InterfaceCount--;
+
+            break;
+        }
+    }
+
+    if (self->InterfaceCount <= 0) {
         ds_release(self);
     }
 
-    return count;
+    return hr;
 }
 
 HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
@@ -194,6 +231,9 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
     self->HWND = hwnd;
     self->Level = dwLevel;
 
+    // NOTE. Multiple changes are allowed.
+    // They have to be properly handled.
+
     return S_OK;
 }
 
@@ -204,12 +244,15 @@ HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
     ds* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
-
         ZeroMemory(instance, sizeof(ds));
-
         instance->Allocator = pAlloc;
 
-        *ppOut = instance;
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, (LPVOID*)&instance->Interfaces))) {
+            *ppOut = instance;
+            return S_OK;
+        }
+
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
