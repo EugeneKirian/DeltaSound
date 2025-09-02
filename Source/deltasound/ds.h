@@ -34,6 +34,8 @@ typedef struct ds {
     LONG        RefCount;
     allocator*  Allocator;
     deltasound* Instance;
+    HWND        HWND;
+    DWORD       Level;
     device*     Device;
     dsb*        Main;
 } ds;
@@ -47,5 +49,7 @@ ULONG DELTACALL ds_remove_ref(ds* pDS);
 HRESULT DELTACALL ds_create_dsb(ds* pDS, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
 
 HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
+
+HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel);
 
 HRESULT DELTACALL ds_initialize(ds* pDS, LPCGUID pcGuidDevice);

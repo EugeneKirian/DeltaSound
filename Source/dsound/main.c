@@ -96,19 +96,9 @@ HRESULT WINAPI DirectSoundCreate(
     HRESULT hr = DS_OK;
     LPDIRECTSOUND instance = NULL;
 
-    if (SUCCEEDED(hr = deltasound_create_ds(delta, &IID_IDirectSound, &instance))) {
-        if (SUCCEEDED(hr = IDirectSound_Initialize(instance, pcGuidDevice))) {
-            *ppDS = instance;
-
-            return S_OK;
-        }
-        else if (hr == DSERR_ALREADYINITIALIZED) {
-            *ppDS = instance;
-
-            return S_OK;
-        }
-
-        IDirectSound_Release(instance);
+    if (SUCCEEDED(hr = deltasound_create_directsound(delta,
+        &IID_IDirectSound, pcGuidDevice, &instance))) {
+        *ppDS = instance;
     }
 
     return hr;

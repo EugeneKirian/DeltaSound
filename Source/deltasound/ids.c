@@ -28,14 +28,14 @@ HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject)
 ULONG DELTACALL ids_add_ref(ids* self);
 ULONG DELTACALL ids_release(ids* self);
 
-HRESULT DELTACALL ids_create_sound_buffer(ids* self , LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, LPUNKNOWN pUnkOuter);
-HRESULT DELTACALL ids_get_caps(ids*, LPDSCAPS pDSCaps);
-HRESULT DELTACALL ids_duplicate_sound_buffer(ids*, LPDIRECTSOUNDBUFFER pDSBufferOriginal, LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate);
-HRESULT DELTACALL ids_set_cooperative_level(ids*, HWND hwnd, DWORD dwLevel);
-HRESULT DELTACALL ids_compact(ids*);
-HRESULT DELTACALL ids_get_speaker_config(ids*, LPDWORD pdwSpeakerConfig);
-HRESULT DELTACALL ids_set_speaker_config(ids*, DWORD dwSpeakerConfig);
-HRESULT DELTACALL ids_initialize(ids*, LPCGUID pcGuidDevice);
+HRESULT DELTACALL ids_create_sound_buffer(ids* self, LPCDSBUFFERDESC pcDSBufferDesc, idsb** ppDSBuffer, LPUNKNOWN pUnkOuter);
+HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps);
+HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, idsb* pDSBufferOriginal, idsb** ppDSBufferDuplicate);
+HRESULT DELTACALL ids_set_cooperative_level(ids* self, HWND hwnd, DWORD dwLevel);
+HRESULT DELTACALL ids_compact(ids* self);
+HRESULT DELTACALL ids_get_speaker_config(ids* self, LPDWORD pdwSpeakerConfig);
+HRESULT DELTACALL ids_set_speaker_config(ids* self, DWORD dwSpeakerConfig);
+HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice);
 
 typedef struct ids_vft {
     LPIDSQUERYINTERFACE         QueryInterface;
@@ -97,17 +97,17 @@ ULONG DELTACALL ids_release(ids* self) {
 }
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self,
-    LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, LPUNKNOWN pUnkOuter) {
+    LPCDSBUFFERDESC pcDesc, idsb** ppBuffer, LPUNKNOWN pUnkOuter) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pcDSBufferDesc == NULL || ppDSBuffer == NULL) {
+    if (pcDesc == NULL || ppBuffer == NULL) {
         return E_INVALIDARG;
     }
 
-    if (pcDSBufferDesc->dwSize != sizeof(dsb_desc_min)
-        && pcDSBufferDesc->dwSize != sizeof(dsb_desc_max)) {
+    if (pcDesc->dwSize != sizeof(dsb_desc_min)
+        && pcDesc->dwSize != sizeof(dsb_desc_max)) {
         return E_INVALIDARG;
     }
 
@@ -115,7 +115,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         return DSERR_NOAGGREGATION;
     }
 
-    return ds_create_dsb((ds*)self, pcDSBufferDesc, ppDSBuffer);
+    return ds_create_dsb((ds*)self, pcDesc, (dsb**)ppBuffer);
 }
 
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
@@ -125,14 +125,21 @@ HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
 
     return ds_get_caps((ds*)self, pDSCaps);
 }
-HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, LPDIRECTSOUNDBUFFER pDSBufferOriginal, LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate) {
+HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, idsb* pDSBufferOriginal, idsb** ppDSBufferDuplicate) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
 }
 
 HRESULT DELTACALL ids_set_cooperative_level(ids* self, HWND hwnd, DWORD dwLevel) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (!IsWindow(hwnd) || !(dwLevel & DSSCL_VALID)) {
+        return E_INVALIDARG;
+    }
+
+    return ds_set_cooperative_level((ds*)self, hwnd, dwLevel);
 }
 
 HRESULT DELTACALL ids_compact(ids* self) {

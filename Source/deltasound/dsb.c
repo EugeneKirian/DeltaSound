@@ -27,10 +27,6 @@ SOFTWARE.
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, dsb** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
@@ -84,19 +80,6 @@ ULONG DELTACALL dsb_remove_ref(dsb* self) {
 }
 
 HRESULT DELTACALL dsb_initialize(dsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (pDS == NULL || pcDesc == NULL) {
-        return E_INVALIDARG;
-    }
-
-    if (pcDesc->dwSize != sizeof(dsb_desc_min)
-        && pcDesc->dwSize != sizeof(dsb_desc_max)) {
-        return E_INVALIDARG;
-    }
-
     if (self->Instance != NULL) {
         return DSERR_ALREADYINITIALIZED;
     }
@@ -111,10 +94,6 @@ HRESULT DELTACALL dsb_initialize(dsb* self, deltasound* pDS, LPCDSBUFFERDESC pcD
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 

@@ -53,8 +53,8 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
 }
 
 VOID DELTACALL ds_release(ds* self) {
-    if (self == NULL) {
-        return;
+    if (self->Main != NULL) {
+        dsb_release(self->Main);
     }
 
     if (self->Device != NULL) {
@@ -90,19 +90,6 @@ ULONG DELTACALL ds_remove_ref(ds* self) {
 }
 
 HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (pcDesc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    if (pcDesc->dwSize != sizeof(dsb_desc_min)
-        && pcDesc->dwSize != sizeof(dsb_desc_max)) {
-        return E_INVALIDARG;
-    }
-
     if (self->Device == NULL) {
         return DSERR_UNINITIALIZED;
     }
@@ -123,32 +110,19 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = dsb_create(self->Allocator, &instance))) {
-        if (SUCCEEDED(hr = dsb_initialize(instance, self->Instance, pcDesc))) {
-            *ppOut = instance;
+        if (FAILED(hr = dsb_initialize(instance, self->Instance, pcDesc))) {
+            dsb_release(instance);
 
-            return S_OK;
-        }
-        else if (hr == DSERR_ALREADYINITIALIZED) {
-            *ppOut = instance;
-
-            return S_OK;
+            return hr;
         }
 
-        dsb_release(instance);
+        *ppOut = instance;
     }
 
     return hr;
 }
 
 HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pCaps) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (pCaps == NULL) {
-        return E_INVALIDARG;
-    }
-
     if (self->Device == NULL) {
         return DSERR_UNINITIALIZED;
     }
@@ -172,10 +146,6 @@ HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pCaps) {
 }
 
 HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     if (self->Device != NULL) {
         return DSERR_ALREADYINITIALIZED;
     }
@@ -190,6 +160,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
     }
 
     HRESULT hr = S_OK;
+
     device_info info;
     ZeroMemory(&info, sizeof(device_info));
 
@@ -211,13 +182,22 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
     return hr;
 }
 
+HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    // TODO other validations
+
+    self->HWND = hwnd;
+    self->Level = dwLevel;
+
+    return S_OK;
+}
+
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
     HRESULT hr = S_OK;
     ds* instance = NULL;
 
