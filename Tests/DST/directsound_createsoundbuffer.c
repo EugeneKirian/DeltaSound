@@ -157,7 +157,7 @@ BOOL TestDirectSoundCreateSoundBuffer(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    if (dsca == NULL || dscb == NULL) {
+    if (dsa == NULL || dsb == NULL) {
         return FALSE;
     }
 

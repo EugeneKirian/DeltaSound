@@ -57,6 +57,7 @@ struct idsb {
     const idsb_vft* Self;
 };
 
+// DSBUFFERDESC1
 typedef struct dsb_desc_min {
     DWORD           dwSize;
     DWORD           dwFlags;
@@ -65,6 +66,7 @@ typedef struct dsb_desc_min {
     LPWAVEFORMATEX  lpwfxFormat;
 } dsb_desc_min;
 
+// DSBUFFERDESC
 typedef struct dsb_desc_max {
     DWORD           dwSize;
     DWORD           dwFlags;

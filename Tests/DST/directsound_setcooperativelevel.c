@@ -24,9 +24,338 @@ SOFTWARE.
 
 #include "directsound_setcooperativelevel.h"
 
-BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b)
-{
-    // TODO
+#include <dsound.h>
+
+#define WINDOW_NAME "SetCooperativeLevel"
+
+typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
+
+static ATOM RegisterWindowClass() {
+    WNDCLASSA wnd;
+    ZeroMemory(&wnd, sizeof(WNDCLASSA));
+
+    wnd.lpfnWndProc = DefWindowProcA;
+    wnd.hInstance = GetModuleHandleA(NULL);
+    wnd.lpszClassName = WINDOW_NAME;
+
+    return RegisterClassA(&wnd);
+}
+
+static HWND InitWindow() {
+    return CreateWindowExA(WS_EX_OVERLAPPEDWINDOW, WINDOW_NAME, WINDOW_NAME,
+        WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, NULL, NULL, GetModuleHandleA(NULL), NULL);
+}
+
+static BOOL TestDirectSoundSetCooperativeLevelInvalidParams(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUND dsa = NULL;
+    LPDIRECTSOUND dsb = NULL;
+
+    HRESULT ra = a(NULL, &dsa, NULL);
+    HRESULT rb = b(NULL, &dsb, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa == NULL || dsb == NULL) {
+        return FALSE;
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, NULL, 0);
+        rb = IDirectSound_SetCooperativeLevel(dsb, NULL, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, (HWND)dsa, 0);
+        rb = IDirectSound_SetCooperativeLevel(dsb, (HWND)dsb, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, GetDesktopWindow(), 0);
+        rb = IDirectSound_SetCooperativeLevel(dsb, GetDesktopWindow(), 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, GetDesktopWindow(), DSSCL_WRITEPRIMARY + 1);
+        rb = IDirectSound_SetCooperativeLevel(dsb, GetDesktopWindow(), DSSCL_WRITEPRIMARY + 1);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, 0);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_WRITEPRIMARY + 1);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_WRITEPRIMARY + 1);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    IDirectSound_Release(dsa);
+    IDirectSound_Release(dsb);
 
     return TRUE;
+}
+
+static BOOL TestDirectSoundSetCooperativeLevelValue(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dwLevel) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUND dsa = NULL;
+    LPDIRECTSOUND dsb = NULL;
+
+    HRESULT ra = a(NULL, &dsa, NULL);
+    HRESULT rb = b(NULL, &dsb, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa == NULL || dsb == NULL) {
+        return FALSE;
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, dwLevel);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, dwLevel);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    IDirectSound_Release(dsa);
+    IDirectSound_Release(dsb);
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundSetCooperativeLevelValidParams(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelValue(a, wa, b, wb, DSSCL_NORMAL)) {
+        return FALSE;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelValue(a, wa, b, wb, DSSCL_PRIORITY)) {
+        return FALSE;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelValue(a, wa, b, wb, DSSCL_EXCLUSIVE)) {
+        return FALSE;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelValue(a, wa, b, wb, DSSCL_WRITEPRIMARY)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundSetCooperativeLevelAlreadySet(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUND dsa = NULL;
+    LPDIRECTSOUND dsb = NULL;
+
+    HRESULT ra = a(NULL, &dsa, NULL);
+    HRESULT rb = b(NULL, &dsb, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa == NULL || dsb == NULL) {
+        return FALSE;
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_NORMAL);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_NORMAL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_PRIORITY);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_PRIORITY);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_NORMAL);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_NORMAL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSound_SetCooperativeLevel(dsa, NULL, DSSCL_NORMAL);
+        rb = IDirectSound_SetCooperativeLevel(dsb, NULL, DSSCL_NORMAL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    IDirectSound_Release(dsa);
+    IDirectSound_Release(dsb);
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUND dsa1 = NULL;
+    LPDIRECTSOUND dsb1 = NULL;
+
+    HRESULT ra = a(NULL, &dsa1, NULL);
+    HRESULT rb = b(NULL, &dsb1, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa1 == NULL || dsb1 == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUND dsa2 = NULL;
+    LPDIRECTSOUND dsb2 = NULL;
+
+    ra = a(NULL, &dsa2, NULL);
+    rb = b(NULL, &dsb2, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa2 == NULL || dsb2 == NULL) {
+        return FALSE;
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa1, wa, DSSCL_NORMAL);
+        rb = IDirectSound_SetCooperativeLevel(dsb1, wb, DSSCL_NORMAL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSound_SetCooperativeLevel(dsa2, wa, DSSCL_NORMAL);
+        rb = IDirectSound_SetCooperativeLevel(dsb2, wb, DSSCL_NORMAL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    IDirectSound_Release(dsa1);
+    IDirectSound_Release(dsb1);
+    IDirectSound_Release(dsa2);
+    IDirectSound_Release(dsb2);
+
+    return TRUE;
+}
+
+BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    if (!RegisterWindowClass()) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+
+    if (dsca == NULL || dscb == NULL) {
+        return FALSE;
+    }
+
+    BOOL result = TRUE;
+
+    HWND wa = InitWindow();
+    HWND wb = InitWindow();
+
+    if (wa == NULL || wb == NULL) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelInvalidParams(dsca, wa, dscb, wb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelValidParams(dsca, wa, dscb, wb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelAlreadySet(dsca, wa, dscb, wb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!TestDirectSoundSetCooperativeLevelMultipleInstances(dsca, wa, dscb, wb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+exit:
+    if (wa != NULL) {
+        DestroyWindow(wa);
+    }
+
+    if (wb != NULL) {
+        DestroyWindow(wb);
+    }
+
+    UnregisterClassA(WINDOW_NAME, GetModuleHandleA(NULL));
+
+    return result;
 }

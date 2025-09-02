@@ -144,7 +144,12 @@ HRESULT DELTACALL ids_set_cooperative_level(ids* self, HWND hwnd, DWORD dwLevel)
         return E_POINTER;
     }
 
-    if (!IsWindow(hwnd) || !(dwLevel & DSSCL_VALID)) {
+    if (!IsWindow(hwnd)) {
+        return E_INVALIDARG;
+    }
+
+    if (dwLevel != DSSCL_NORMAL && dwLevel != DSSCL_PRIORITY
+        && dwLevel != DSSCL_EXCLUSIVE && dwLevel != DSSCL_WRITEPRIMARY) {
         return E_INVALIDARG;
     }
 
