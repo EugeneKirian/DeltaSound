@@ -135,9 +135,11 @@ HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pCaps) {
         | DSCAPS_CONTINUOUSRATE | DSCAPS_PRIMARY16BIT
         | DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYSTEREO | DSCAPS_PRIMARYMONO;
 
-    pCaps->dwMinSecondarySampleRate = 100;
-    pCaps->dwMaxSecondarySampleRate = 200000;
+    pCaps->dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+    pCaps->dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+
     pCaps->dwPrimaryBuffers = 1;
+
     pCaps->dwMaxHwMixingAllBuffers = 1;
     pCaps->dwMaxHwMixingStaticBuffers = 1;
     pCaps->dwMaxHwMixingStreamingBuffers = 1;

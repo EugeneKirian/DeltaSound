@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundenumerate.h"
+#include "directsound_enumerate.h"
 
 #define MAX_DIRECTSOUND_DEVICE_NAME_LENGTH  32
 
@@ -30,7 +30,7 @@ typedef BOOL(CALLBACK* LPDSENUMCALLBACKA)(LPGUID, LPCSTR, LPCSTR, LPVOID);
 typedef HRESULT(WINAPI* LPDIRECTSOUNDENUMERATEA)(LPDSENUMCALLBACKA, LPVOID);
 
 #define MAX_STORAGE_COUNT           128
-#define MAX_STORAGE_STRING_LENGTH   512
+#define MAX_STORAGE_STRING_LENGTH   128
 
 typedef struct storage_a {
     GUID    ID;
@@ -41,7 +41,7 @@ typedef struct storage_a {
 
 typedef struct context_a {
     UINT        Count;
-    storage_a* Items;
+    storage_a*  Items;
 } context_a;
 
 static BOOL storage_a_compare(storage_a* a, storage_a* b) {
@@ -85,7 +85,7 @@ static BOOL CALLBACK EnumerateDeviceCallBackA(LPGUID guid, LPCSTR desc, LPCSTR m
     return TRUE;
 }
 
-BOOL TestDirectSoundCaptureEnumerateA(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundEnumerateA(HMODULE a, HMODULE b) {
     BOOL result = TRUE;
 
     context_a ca, cb;
@@ -108,10 +108,10 @@ BOOL TestDirectSoundCaptureEnumerateA(HMODULE a, HMODULE b) {
     ZeroMemory(cb.Items, size);
 
     LPDIRECTSOUNDENUMERATEA aa =
-        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(a, "DirectSoundCaptureEnumerateA");
+        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(a, "DirectSoundEnumerateA");
 
     LPDIRECTSOUNDENUMERATEA ba =
-        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(b, "DirectSoundCaptureEnumerateA");
+        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(b, "DirectSoundEnumerateA");
 
     if (aa == NULL || ba == NULL) {
         result = FALSE;
@@ -205,7 +205,7 @@ static BOOL CALLBACK EnumerateDeviceCallBackW(LPGUID guid, LPCWSTR desc, LPCWSTR
     return TRUE;
 }
 
-BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundEnumerateW(HMODULE a, HMODULE b) {
     BOOL result = TRUE;
 
     context_w ca, cb;
@@ -228,10 +228,10 @@ BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b) {
     ZeroMemory(cb.Items, size);
 
     LPDIRECTSOUNDENUMERATEW aa =
-        (LPDIRECTSOUNDENUMERATEW)GetProcAddress(a, "DirectSoundCaptureEnumerateW");
+        (LPDIRECTSOUNDENUMERATEW)GetProcAddress(a, "DirectSoundEnumerateW");
 
     LPDIRECTSOUNDENUMERATEW ba =
-        (LPDIRECTSOUNDENUMERATEW)GetProcAddress(b, "DirectSoundCaptureEnumerateW");
+        (LPDIRECTSOUNDENUMERATEW)GetProcAddress(b, "DirectSoundEnumerateW");
 
     if (aa == NULL || ba == NULL) {
         result = FALSE;

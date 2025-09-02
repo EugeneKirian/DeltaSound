@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundgetcaps.h"
+#include "directsound_getcaps.h"
 
 #include <dsound.h>
 
