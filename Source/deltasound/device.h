@@ -42,7 +42,7 @@ typedef struct device {
 } device;
 
 HRESULT DELTACALL device_create(
-    allocator* pAlloc, DWORD dwType, LPCGUID pcGuidDevice, device** ppOut);
+    allocator* pAlloc, DWORD dwType, device_info* pInfo, device** ppOut);
 
 ULONG DELTACALL device_add_ref(device* pDev);
 ULONG DELTACALL device_remove_ref(device* pDev);

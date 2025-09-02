@@ -177,7 +177,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         return DSERR_NODRIVER;
     }
 
-    hr = device_create(self->Allocator, info.Type, &info.ID, &self->Device);
+    hr = device_create(self->Allocator, info.Type, &info, &self->Device);
 
     return hr;
 }

@@ -43,7 +43,7 @@ HRESULT DELTACALL device_get_period(device* pDev, LPREFERENCE_TIME pDefaultPerio
 HRESULT DELTACALL device_get_mix_format(device* pDev, LPWAVEFORMATEX* ppWaveFormat);
 
 HRESULT DELTACALL device_create(
-    allocator* pAlloc, DWORD dwType, LPCGUID pcGuidDevice, device** ppOut) {
+    allocator* pAlloc, DWORD dwType, device_info* pInfo, device** ppOut) {
     if (pAlloc == NULL) {
         return E_INVALIDARG;
     }
@@ -52,15 +52,8 @@ HRESULT DELTACALL device_create(
         return E_INVALIDARG;
     }
 
-    if (pcGuidDevice == NULL || ppOut == NULL) {
+    if (pInfo == NULL || ppOut == NULL) {
         return E_INVALIDARG;
-    }
-
-    device_info dev;
-    ZeroMemory(&dev, sizeof(device_info));
-
-    if (FAILED(device_info_get_device(dwType, pcGuidDevice, &dev))) {
-        return DSERR_NODRIVER;
     }
 
     HRESULT hr = S_OK;
@@ -68,7 +61,7 @@ HRESULT DELTACALL device_create(
 
     if (SUCCEEDED(hr = device_allocate(pAlloc, &instance))) {
         instance->RefCount = 1;
-        CopyMemory(&instance->Info, &dev, sizeof(device_info));
+        CopyMemory(&instance->Info, pInfo, sizeof(device_info));
 
         device_thread_context* ctx;
         if (FAILED(hr = allocator_allocate(pAlloc, sizeof(device_thread_context), &ctx))) {
