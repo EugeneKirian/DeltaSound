@@ -201,7 +201,7 @@ HRESULT DELTACALL device_initialize(device* self) {
     }
 
     {
-        const size_t size = sizeof(WAVEFORMATEX) - sizeof(WORD) + wfx->cbSize;
+        const size_t size = sizeof(WAVEFORMATEX) + wfx->cbSize;
 
         if (FAILED(hr = allocator_allocate(self->Allocator, size, &self->WaveFormat))) {
             goto exit;
