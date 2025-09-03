@@ -26,6 +26,17 @@ SOFTWARE.
 
 #include "base.h"
 
+#define DSBCAPS_NONE                    0
+#define DSBCAPS_ALL                     (DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_LOCDEFER | DSBCAPS_MUTE3DATMAXDISTANCE      \
+                                            | DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS | DSBCAPS_STICKYFOCUS   \
+                                            | DSBCAPS_CTRLFX | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_CTRLVOLUME          \
+                                            | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRL3D                  \
+                                            | DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCHARDWARE | DSBCAPS_STATIC                \
+                                            | DSBCAPS_PRIMARYBUFFER)
+
+#define DSBCAPS_INVALID_PRIMARYBUFFER   (DSBCAPS_STATIC | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPOSITIONNOTIFY            \
+                                            | DSBCAPS_CTRLFX | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER)
+
 typedef struct idsb idsb;
 
 typedef HRESULT(DELTACALL* LPIDSBQUERYINTERFACE)(idsb*, REFIID, LPVOID*);
