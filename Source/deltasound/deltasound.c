@@ -22,8 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ds.h"
+#include "deltasound.h"
 #include "device_info.h"
+#include "ds.h"
 
 #define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
 

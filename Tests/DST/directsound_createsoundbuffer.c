@@ -512,6 +512,101 @@ exit:
     return result;
 }
 
+static BOOL TestDirectSoundCreateBufferPrimaryMuliple(LPDIRECTSOUND a, LPDIRECTSOUND b) {
+    BOOL result = TRUE;
+    LPDIRECTSOUNDBUFFER dsba1 = NULL;
+    LPDIRECTSOUNDBUFFER dsba2 = NULL;
+    LPDIRECTSOUNDBUFFER dsbb1 = NULL;
+    LPDIRECTSOUNDBUFFER dsbb2 = NULL;
+
+    DSBUFFERDESC desca;
+    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+    desca.dwSize = sizeof(DSBUFFERDESC);
+    desca.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+    DSBUFFERDESC descb;
+    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+    descb.dwSize = sizeof(DSBUFFERDESC);
+    descb.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+    HRESULT ra1 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba1, NULL);
+    HRESULT ra2 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba2, NULL);
+    HRESULT rb1 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb1, NULL);
+    HRESULT rb2 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb2, NULL);
+
+    if ((ra1 != ra2) || (ra1 != rb1) || (rb1 != rb2)) {
+        return FALSE;
+    }
+
+    if (dsba1 == NULL || dsba2 == NULL || dsbb1 == NULL || dsbb2 == NULL) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (dsba1 != dsba2 || dsbb1 != dsbb2) {
+        result = FALSE;
+        goto exit;
+    }
+
+    {
+        ULONG rca1 = IDirectSoundBuffer_AddRef(dsba1);
+        IDirectSoundBuffer_Release(dsba1);
+
+        ULONG rcb1 = IDirectSoundBuffer_AddRef(dsbb1);
+        IDirectSoundBuffer_Release(dsbb1);
+
+        if (rca1 != rcb1) {
+            result = FALSE;
+            goto exit;
+        }
+    }
+
+    {
+        IDirectSoundBuffer_Release(dsba1);
+        IDirectSoundBuffer_Release(dsba1);
+        ULONG rca1 = IDirectSoundBuffer_Release(dsba1);
+
+        IDirectSoundBuffer_Release(dsbb1);
+        IDirectSoundBuffer_Release(dsbb1);
+        ULONG rcb1 = IDirectSoundBuffer_Release(dsbb1);
+
+        if (rca1 != rcb1) {
+            result = FALSE;
+            goto exit;
+        }
+
+        rca1 = IDirectSoundBuffer_AddRef(dsba1);
+        rcb1 = IDirectSoundBuffer_AddRef(dsbb1);
+
+        if (rca1 != rcb1) {
+            result = FALSE;
+            goto exit;
+        }
+    }
+
+exit:
+
+    if (dsba1 != NULL) {
+        IDirectSoundBuffer_Release(dsba1);
+    }
+
+    if (dsba2 != NULL) {
+        IDirectSoundBuffer_Release(dsba2);
+    }
+
+    if (dsbb1 != NULL) {
+        IDirectSoundBuffer_Release(dsbb1);
+    }
+
+    if (dsbb2 != NULL) {
+        IDirectSoundBuffer_Release(dsbb2);
+    }
+
+    return result;
+}
+
 BOOL TestDirectSoundCreateSoundBuffer(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -551,6 +646,11 @@ BOOL TestDirectSoundCreateSoundBuffer(HMODULE a, HMODULE b) {
     }
 
     if (!TestDirectSoundCreateBufferPrimary(dsa, dsb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!TestDirectSoundCreateBufferPrimaryMuliple(dsa, dsb)) {
         result = FALSE;
         goto exit;
     }

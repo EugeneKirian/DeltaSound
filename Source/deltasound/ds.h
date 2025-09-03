@@ -24,11 +24,12 @@ SOFTWARE.
 
 #pragma once
 
-#include "deltasound.h"
+#include "allocator.h"
 
-typedef struct ids ids;
-typedef struct dsb dsb;
+typedef struct deltasound deltasound;
 typedef struct device device;
+typedef struct dsb dsb;
+typedef struct ids ids;
 
 typedef struct ds {
     allocator*  Allocator;

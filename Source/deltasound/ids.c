@@ -25,10 +25,7 @@ SOFTWARE.
 #include "ids.h"
 #include "idsb.h"
 #include "ds.h"
-
-HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);
-ULONG DELTACALL ids_add_ref(ids* self);
-ULONG DELTACALL ids_remove_ref(ids* self);
+#include "dsb.h"
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self, LPCDSBUFFERDESC pcDSBufferDesc, idsb** ppDSBuffer, LPUNKNOWN pUnkOuter);
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps);
@@ -108,10 +105,8 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
         return E_POINTER;
     }
 
-    LONG count = InterlockedDecrement(&self->RefCount);
-
-    if (count <= 0) {
-        count = 0;
+    if (InterlockedDecrement(&self->RefCount) <= 0) {
+        self->RefCount = 0;
 
         if (self->Instance != NULL) {
             ds_remove_ref(self->Instance, self);
@@ -119,7 +114,7 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
         }
     }
 
-    return count;
+    return self->RefCount;
 }
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self,
@@ -222,7 +217,14 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         return DSERR_NOAGGREGATION;
     }
 
-    return ds_create_dsb(self->Instance, pcDesc, (dsb**)ppBuffer);
+    HRESULT hr = S_OK;
+    dsb* instance = NULL;
+
+    if (SUCCEEDED(hr = ds_create_dsb(self->Instance, pcDesc, &instance))) {
+        *ppBuffer = instance->Interfaces[0];
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {

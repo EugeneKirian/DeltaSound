@@ -116,14 +116,13 @@ ULONG DELTACALL device_remove_ref(device* self) {
         return 0;
     }
 
-    LONG count = InterlockedDecrement(&self->RefCount);
+    if (InterlockedDecrement(&self->RefCount) <= 0) {
+        self->RefCount = 0;
 
-    if (count <= 0) {
-        count = 0;
         device_release(self);
     }
 
-    return count;
+    return self->RefCount;
 }
 
 VOID DELTACALL device_release(device* self) {

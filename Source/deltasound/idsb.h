@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
 
 #define DSBCAPS_NONE                    0
 #define DSBCAPS_ALL                     (DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_LOCDEFER | DSBCAPS_MUTE3DATMAXDISTANCE      \
@@ -37,7 +37,16 @@ SOFTWARE.
 #define DSBCAPS_INVALID_PRIMARYBUFFER   (DSBCAPS_STATIC | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPOSITIONNOTIFY            \
                                             | DSBCAPS_CTRLFX | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER)
 
-typedef struct idsb idsb;
+typedef struct deltasound deltasound;
+typedef struct dsb dsb;
+typedef struct idsb_vft idsb_vft;
+
+typedef struct idsb {
+    const idsb_vft* Self;
+    allocator*      Allocator;
+    LONG            RefCount;
+    dsb*            Instance;
+} idsb;
 
 typedef HRESULT(DELTACALL* LPIDSBQUERYINTERFACE)(idsb*, REFIID, LPVOID*);
 typedef ULONG(DELTACALL* LPIDSBADDREF)(idsb*);
@@ -50,7 +59,7 @@ typedef HRESULT(DELTACALL* LPIDSBGETVOLUME)(idsb*, LPLONG plVolume);
 typedef HRESULT(DELTACALL* LPIDSBGETPAN)(idsb*, LPLONG plPan);
 typedef HRESULT(DELTACALL* LPIDSBGETFREQUENCY)(idsb*, LPDWORD pdwFrequency);
 typedef HRESULT(DELTACALL* LPIDSBGETSTATUS)(idsb*, LPDWORD pdwStatus);
-typedef HRESULT(DELTACALL* LPIDSBINITIALIZE)(idsb*, LPDIRECTSOUND pDirectSound, LPCDSBUFFERDESC pcDSBufferDesc);
+typedef HRESULT(DELTACALL* LPIDSBINITIALIZE)(idsb*, deltasound* pDirectSound, LPCDSBUFFERDESC pcDSBufferDesc);
 typedef HRESULT(DELTACALL* LPIDSBLOCK)(idsb*, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
 typedef HRESULT(DELTACALL* LPIDSBPLAY)(idsb*, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags);
 typedef HRESULT(DELTACALL* LPIDSBSETCURRENTPOSITION)(idsb*, DWORD dwNewPosition);
@@ -61,12 +70,6 @@ typedef HRESULT(DELTACALL* LPIDSBSETFREQUENCY)(idsb*, DWORD dwFrequency);
 typedef HRESULT(DELTACALL* LPIDSBSTOP)(idsb*);
 typedef HRESULT(DELTACALL* LPIDSBUNLOCK)(idsb*, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 typedef HRESULT(DELTACALL* LPIDSBRESTORE)(idsb*);
-
-typedef struct idsb_vft idsb_vft;
-
-struct idsb {
-    const idsb_vft* Self;
-};
 
 // DSBUFFERDESC1
 typedef struct dsb_desc_min {
@@ -87,4 +90,9 @@ typedef struct dsb_desc_max {
     GUID            guid3DAlgorithm;
 } dsb_desc_max;
 
-HRESULT DELTACALL idsb_create(idsb* pIDSB);
+HRESULT DELTACALL idsb_create(allocator* pAlloc, idsb** ppOut);
+VOID DELTACALL idsb_release(idsb* pIDSB);
+
+HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppvObject);
+ULONG DELTACALL idsb_add_ref(idsb* self);
+ULONG DELTACALL idsb_remove_ref(idsb* self);

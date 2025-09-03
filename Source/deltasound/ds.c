@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ids.h"
+#include "device.h"
 #include "device_info.h"
 #include "ds.h"
 #include "dsb.h"
-#include "device.h"
+#include "ids.h"
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
 
@@ -45,7 +45,7 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
             if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
                 intfc->Instance = instance;
 
-                if (SUCCEEDED(hr = dsb_create(pAlloc, &instance->Main))) {
+                if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &instance->Main))) {
                     *ppOut = instance;
                     return S_OK;
                 }
@@ -132,9 +132,25 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     }
 
     if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        // TODO process other flag validations
+        // TODO Refactor to use query interface
+        if (self->Main->InterfaceCount == 0) {
+            HRESULT hr = S_OK;
+            idsb* intfc = NULL;
 
-        dsb_add_ref(self->Main);
+            if (FAILED(hr = idsb_create(self->Allocator, &intfc))) {
+                return hr;
+            }
+
+            intfc->Instance = self->Main;
+
+            if (FAILED(hr = dsb_add_ref(self->Main, intfc))) {
+                idsb_release(intfc);
+                return hr;
+            }
+        }
+        else {
+            idsb_add_ref(self->Main->Interfaces[0]);
+        }
 
         *ppOut = self->Main;
 
@@ -146,14 +162,13 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
-    if (SUCCEEDED(hr = dsb_create(self->Allocator, &instance))) {
-        if (FAILED(hr = dsb_initialize(instance, self->Instance, pcDesc))) {
-            dsb_release(instance);
-
-            return hr;
+    if (SUCCEEDED(hr = dsb_create(self->Allocator, TRUE, &instance))) {
+        if (SUCCEEDED(hr = dsb_initialize(instance, self->Instance, pcDesc))) {
+            *ppOut = instance;
+            return S_OK;
         }
 
-        *ppOut = instance;
+        dsb_release(instance);
     }
 
     return hr;
@@ -216,7 +231,17 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         return DSERR_NODRIVER;
     }
 
-    hr = device_create(self->Allocator, info.Type, &info, &self->Device);
+    if (SUCCEEDED(hr = device_create(self->Allocator, info.Type, &info, &self->Device))) {
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+        if (SUCCEEDED(hr = dsb_initialize(self->Main, self->Instance, &desc))) {
+            return S_OK;
+        }
+    }
 
     return hr;
 }

@@ -24,14 +24,16 @@ SOFTWARE.
 
 #pragma once
 
-#include "deltasound.h"
 #include "idsb.h"
 
 typedef struct dsb {
-    idsb            Interface;
-    LONG            RefCount;
     allocator*      Allocator;
     deltasound*     Instance;
+
+    // TODO resizeable array
+    idsb**          Interfaces;
+    LONG            InterfaceCount;
+
     DWORD           Flags;
     WAVEFORMATEX    Format;
     LONG            Volume;
@@ -39,10 +41,10 @@ typedef struct dsb {
     DWORD           Frequency;
 } dsb;
 
-HRESULT DELTACALL dsb_create(allocator* pAlloc, dsb** ppOut);
+HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut);
 VOID DELTACALL dsb_release(dsb* pDSB);
 
-ULONG DELTACALL dsb_add_ref(dsb* pDSB);
-ULONG DELTACALL dsb_remove_ref(dsb* pDSB);
+HRESULT DELTACALL dsb_add_ref(dsb* pDSB, idsb* pIDSB);
+HRESULT DELTACALL dsb_remove_ref(dsb* pDSB, idsb* pIDSB);
 
 HRESULT DELTACALL dsb_initialize(dsb* pDSB, deltasound* pDS, LPCDSBUFFERDESC pcDesc);

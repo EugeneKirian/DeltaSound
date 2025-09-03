@@ -29,8 +29,8 @@ SOFTWARE.
 #define DSSCL_NONE  0
 #define DSSCL_VALID (DSSCL_WRITEPRIMARY | DSSCL_EXCLUSIVE | DSSCL_PRIORITY | DSSCL_NORMAL)
 
-typedef struct ids_vft ids_vft;
 typedef struct ds ds;
+typedef struct ids_vft ids_vft;
 typedef struct idsb idsb;
 
 typedef struct ids {
@@ -55,3 +55,7 @@ typedef HRESULT(DELTACALL* LPIDSINITIALIZE)(ids*, LPCGUID pcGuidDevice);
 
 HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut);
 VOID DELTACALL ids_release(ids* pIDS);
+
+HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);
+ULONG DELTACALL ids_add_ref(ids* self);
+ULONG DELTACALL ids_remove_ref(ids* self);

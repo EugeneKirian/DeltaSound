@@ -23,10 +23,7 @@ SOFTWARE.
 */
 
 #include "dsb.h"
-
-HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppvObject);
-ULONG DELTACALL idsb_add_ref(idsb* self);
-ULONG DELTACALL idsb_release(idsb* self);
+#include "idsb.h"
 
 HRESULT DELTACALL idsb_get_caps(idsb* self, LPDSBCAPS pCaps);
 HRESULT DELTACALL idsb_get_current_position(idsb* self, LPDWORD pdwCurrentPlayCursor, LPDWORD pdwCurrentWriteCursor);
@@ -35,7 +32,7 @@ HRESULT DELTACALL idsb_get_volume(idsb* self, LPLONG plVolume);
 HRESULT DELTACALL idsb_get_pan(idsb* self, LPLONG plPan);
 HRESULT DELTACALL idsb_get_frequency(idsb* self, LPDWORD pdwFrequency);
 HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus);
-HRESULT DELTACALL idsb_initialize(idsb* self, LPDIRECTSOUND pDS, LPCDSBUFFERDESC pcDesc);
+HRESULT DELTACALL idsb_initialize(idsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc);
 HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
 HRESULT DELTACALL idsb_play(idsb* self, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags);
 HRESULT DELTACALL idsb_set_curent_position(idsb* self, DWORD dwNewPosition);
@@ -74,7 +71,7 @@ typedef struct idsb_vft {
 const static idsb_vft idsb_self = {
     idsb_query_interface,
     idsb_add_ref,
-    idsb_release,
+    idsb_remove_ref,
     idsb_get_caps,
     idsb_get_current_position,
     idsb_get_format,
@@ -95,14 +92,27 @@ const static idsb_vft idsb_self = {
     idsb_restore
 };
 
-HRESULT DELTACALL idsb_create(idsb* self) {
-    if (self == NULL) {
-        return E_POINTER;
+HRESULT DELTACALL idsb_allocate(allocator* pAlloc, idsb** ppOut);
+
+HRESULT DELTACALL idsb_create(allocator* pAlloc, idsb** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
     }
 
-    self->Self = &idsb_self;
+    HRESULT hr = S_OK;
+    idsb* instance = NULL;
 
-    return S_OK;
+    if (SUCCEEDED(hr = idsb_allocate(pAlloc, &instance))) {
+        instance->Self = &idsb_self;
+        instance->RefCount = 1;
+        *ppOut = instance;
+    }
+
+    return hr;
+}
+
+VOID DELTACALL idsb_release(idsb* self) {
+    allocator_free(self->Allocator, self);
 }
 
 HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppvObject) {
@@ -112,17 +122,29 @@ HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppvObjec
 
 ULONG DELTACALL idsb_add_ref(idsb* self) {
     if (self == NULL) {
-        return E_POINTER;
+        return 0;
     }
 
-    return dsb_add_ref((dsb*)self);
+    return InterlockedIncrement(&self->RefCount);
 }
-ULONG DELTACALL idsb_release(idsb* self) {
+
+ULONG DELTACALL idsb_remove_ref(idsb* self) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    return dsb_remove_ref((dsb*)self);
+    if (InterlockedDecrement(&self->RefCount) <= 0) {
+        self->RefCount = 0;
+
+        if (!(self->Instance->Flags & DSBCAPS_PRIMARYBUFFER)) {
+            if (self->Instance != NULL) {
+                dsb_remove_ref(self->Instance, self);
+                idsb_release(self);
+            }
+        }
+    }
+
+    return self->RefCount;
 }
 
 HRESULT DELTACALL idsb_get_caps(idsb* self, LPDSBCAPS pCaps) {
@@ -160,7 +182,7 @@ HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus) {
     return E_NOTIMPL;
 }
 
-HRESULT DELTACALL idsb_initialize(idsb* self, LPDIRECTSOUND pDS, LPCDSBUFFERDESC pcDesc) {
+HRESULT DELTACALL idsb_initialize(idsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -174,7 +196,7 @@ HRESULT DELTACALL idsb_initialize(idsb* self, LPDIRECTSOUND pDS, LPCDSBUFFERDESC
         return E_INVALIDARG;
     }
 
-    return dsb_initialize((dsb*)self, (deltasound*)pDS, pcDesc);
+    return dsb_initialize(self->Instance, pDS, pcDesc);
 }
 
 HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes,
@@ -227,4 +249,19 @@ HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes
 HRESULT DELTACALL idsb_restore(idsb* self) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
+}
+
+/* ---------------------------------------------------------------------- */
+
+HRESULT DELTACALL idsb_allocate(allocator* pAlloc, idsb** ppOut) {
+    HRESULT hr = S_OK;
+    idsb* instance = NULL;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsb), &instance))) {
+        ZeroMemory(instance, sizeof(idsb));
+        instance->Allocator = pAlloc;
+        *ppOut = instance;
+    }
+
+    return hr;
 }

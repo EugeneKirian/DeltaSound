@@ -26,57 +26,93 @@ SOFTWARE.
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
 
-HRESULT DELTACALL dsb_create(allocator* pAlloc, dsb** ppOut) {
+HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut) {
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
-        if (SUCCEEDED(hr = idsb_create(&instance->Interface))) {
-            instance->RefCount = 1;
-
+        if (!bInterface) {
             *ppOut = instance;
-
             return S_OK;
         }
+
+        idsb* intfc = NULL;
+
+        if (SUCCEEDED(hr = idsb_create(pAlloc, &intfc))) {
+            intfc->Instance = instance;
+
+            if (SUCCEEDED(hr = dsb_add_ref(instance, intfc))) {
+                *ppOut = instance;
+                return S_OK;
+            }
+
+            idsb_release(intfc);
+        }
+
+        dsb_release(instance);
     }
 
     return hr;
 }
 
 VOID DELTACALL dsb_release(dsb* self) {
-    if (self == NULL) {
-        return;
+    for (LONG i = 0; i < self->InterfaceCount; i++) {
+        idsb_release(self->Interfaces[i]);
     }
+
+    allocator_free(self->Allocator, self->Interfaces);
 
     // TODO
 
     allocator_free(self->Allocator, self);
 }
 
-ULONG DELTACALL dsb_add_ref(dsb* self) {
+HRESULT DELTACALL dsb_add_ref(dsb* self, idsb* pIDSB) {
     if (self == NULL) {
-        return 0;
+        return E_POINTER;
     }
 
-    return InterlockedIncrement(&self->RefCount);
+    HRESULT hr = S_OK;
+
+    // TODO synchronization
+
+    if (SUCCEEDED(hr = allocator_reallocate(self->Allocator,
+        self->Interfaces, sizeof(idsb*) * (self->InterfaceCount + 1), (LPVOID*)&self->Interfaces))) {
+        self->Interfaces[self->InterfaceCount] = pIDSB;
+        self->InterfaceCount++;
+    }
+
+    return hr;
 }
 
-ULONG DELTACALL dsb_remove_ref(dsb* self) {
+HRESULT DELTACALL dsb_remove_ref(dsb* self, idsb* pIDSB) {
     if (self == NULL) {
-        return 0;
+        return E_POINTER;
     }
 
-    LONG count = InterlockedDecrement(&self->RefCount);
+    HRESULT hr = S_OK;
 
-    if (count <= 0) {
-        count = 0;
+    // TODO synchronization
 
-        // TODO release on primary buffer?
+    for (LONG i = 0; i < self->InterfaceCount; i++) {
+        if (self->Interfaces[i] == pIDSB) {
+            for (LONG x = i; x < self->InterfaceCount - 1; x++) {
+                self->Interfaces[x] = self->Interfaces[x + 1];
+            }
 
-        dsb_release(self);
+            self->InterfaceCount--;
+
+            break;
+        }
     }
 
-    return count;
+    if (self->InterfaceCount <= 0) {
+        if (!(self->Flags & DSBCAPS_PRIMARYBUFFER)) {
+            dsb_release(self);
+        }
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dsb_initialize(dsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc) {
@@ -84,9 +120,11 @@ HRESULT DELTACALL dsb_initialize(dsb* self, deltasound* pDS, LPCDSBUFFERDESC pcD
         return DSERR_ALREADYINITIALIZED;
     }
 
-    // TODO set flags, default values, etc
-
     self->Instance = pDS;
+
+    self->Flags = pcDesc->dwFlags;
+
+    // TODO set flags, default values, etc
 
     return S_OK;
 }
@@ -99,10 +137,14 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsb), &instance))) {
         ZeroMemory(instance, sizeof(dsb));
-
         instance->Allocator = pAlloc;
 
-        *ppOut = instance;
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, (LPVOID*)&instance->Interfaces))) {
+            *ppOut = instance;
+            return S_OK;
+        }
+
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
