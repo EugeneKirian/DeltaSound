@@ -148,6 +148,7 @@
     <ClCompile Include="directsound_setcooperativelevel.c" />
     <ClCompile Include="getdeviceid.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="wnd.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directsoundbuffer_primary.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="directsound_getcaps.h" />
     <ClInclude Include="directsound_setcooperativelevel.h" />
     <ClInclude Include="getdeviceid.h" />
+    <ClInclude Include="wnd.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

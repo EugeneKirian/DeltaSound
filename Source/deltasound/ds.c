@@ -45,8 +45,14 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
             if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
                 intfc->Instance = instance;
 
-                if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &instance->Main))) {
-                    instance->Main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
+                dsb* main = NULL;
+
+                if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &main))) {
+                    // TODO better initialization for main buffer properties
+
+                    main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
+
+                    instance->Main = main;
                     *ppOut = instance;
                     return S_OK;
                 }
@@ -133,6 +139,8 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     }
 
     if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        dsb_set_flags(self->Main, pcDesc->dwFlags | DSBCAPS_LOCSOFTWARE);
+
         // TODO Refactor to use query interface
 
         if (self->Main->InterfaceCount == 0) {
@@ -149,6 +157,22 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
                 idsb_release(intfc);
                 return hr;
             }
+
+            // TODO better way to set primary buffer properties
+
+            WAVEFORMATEX format;
+            ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+            format.wFormatTag = WAVE_FORMAT_PCM;
+            format.nChannels = 2;
+            format.nSamplesPerSec = 22050;
+            format.nAvgBytesPerSec = 44100;
+            format.nBlockAlign = 2;
+            format.wBitsPerSample = 8;
+
+            dsb_set_format(self->Main, &format);
+            dsb_set_pan(self->Main, DSB_CENTER_PAN);
+            dsb_set_volume(self->Main, DSB_MAX_VOLUME);
         }
         else {
             idsb_add_ref(self->Main->Interfaces[0]);

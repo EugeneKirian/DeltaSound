@@ -23,28 +23,13 @@ SOFTWARE.
 */
 
 #include "directsound_setcooperativelevel.h"
+#include "wnd.h"
 
 #include <dsound.h>
 
 #define WINDOW_NAME "SetCooperativeLevel"
 
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
-
-static ATOM RegisterWindowClass() {
-    WNDCLASSA wnd;
-    ZeroMemory(&wnd, sizeof(WNDCLASSA));
-
-    wnd.lpfnWndProc = DefWindowProcA;
-    wnd.hInstance = GetModuleHandleA(NULL);
-    wnd.lpszClassName = WINDOW_NAME;
-
-    return RegisterClassA(&wnd);
-}
-
-static HWND InitWindow() {
-    return CreateWindowExA(WS_EX_OVERLAPPEDWINDOW, WINDOW_NAME, WINDOW_NAME,
-        WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, NULL, NULL, GetModuleHandleA(NULL), NULL);
-}
 
 static BOOL TestDirectSoundSetCooperativeLevelInvalidParams(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
@@ -305,7 +290,7 @@ BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    if (!RegisterWindowClass()) {
+    if (!RegisterWindowClass(WINDOW_NAME)) {
         return FALSE;
     }
 
@@ -318,8 +303,8 @@ BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b) {
 
     BOOL result = TRUE;
 
-    HWND wa = InitWindow();
-    HWND wb = InitWindow();
+    HWND wa = InitWindow(WINDOW_NAME);
+    HWND wb = InitWindow(WINDOW_NAME);
 
     if (wa == NULL || wb == NULL) {
         result = FALSE;

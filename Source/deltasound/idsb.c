@@ -150,18 +150,45 @@ ULONG DELTACALL idsb_remove_ref(idsb* self) {
 }
 
 HRESULT DELTACALL idsb_get_caps(idsb* self, LPDSBCAPS pCaps) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pCaps == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (pCaps->dwSize != sizeof(DSBCAPS)) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_get_caps(self->Instance, pCaps);
 }
 
-HRESULT DELTACALL idsb_get_current_position(idsb* self, LPDWORD pdwCurrentPlayCursor, LPDWORD pdwCurrentWriteCursor) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+HRESULT DELTACALL idsb_get_current_position(idsb* self,
+    LPDWORD pdwCurrentPlayCursor, LPDWORD pdwCurrentWriteCursor) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pdwCurrentPlayCursor == NULL && pdwCurrentWriteCursor == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_get_current_position(self->Instance, pdwCurrentPlayCursor, pdwCurrentWriteCursor);
 }
 
-HRESULT DELTACALL idsb_get_format(idsb* self, LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+HRESULT DELTACALL idsb_get_format(idsb* self,
+    LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pwfxFormat == NULL && pdwSizeWritten == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_get_format(self->Instance, pwfxFormat, dwSizeAllocated, pdwSizeWritten);
 }
 
 HRESULT DELTACALL idsb_get_volume(idsb* self, LPLONG plVolume) {
@@ -184,13 +211,34 @@ HRESULT DELTACALL idsb_get_volume(idsb* self, LPLONG plVolume) {
 }
 
 HRESULT DELTACALL idsb_get_pan(idsb* self, LPLONG plPan) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (plPan == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    FLOAT pan = DSB_CENTER_PAN;
+
+    if (SUCCEEDED(hr = dsb_get_pan(self->Instance, &pan))) {
+        *plPan = (LONG)(pan * DSBPAN_RIGHT);
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL idsb_get_frequency(idsb* self, LPDWORD pdwFrequency) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pdwFrequency == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_get_frequency(self->Instance, pdwFrequency);
 }
 
 HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus) {
