@@ -102,7 +102,7 @@ ULONG DELTACALL ids_add_ref(ids* self) {
 
 ULONG DELTACALL ids_remove_ref(ids* self) {
     if (self == NULL) {
-        return E_POINTER;
+        return 0;
     }
 
     if (InterlockedDecrement(&self->RefCount) <= 0) {

@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="directsoundbuffer_primary.c" />
     <ClCompile Include="directsoundcapture_enumerate.c" />
     <ClCompile Include="directsoundcreate.c" />
     <ClCompile Include="directsound_createsoundbuffer.c" />
@@ -149,6 +150,7 @@
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="directsoundbuffer_primary.h" />
     <ClInclude Include="directsoundcapture_enumerate.h" />
     <ClInclude Include="directsoundcreate.h" />
     <ClInclude Include="directsound_createsoundbuffer.h" />

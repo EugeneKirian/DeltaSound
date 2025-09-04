@@ -25,6 +25,8 @@ SOFTWARE.
 #include "dsb.h"
 #include "idsb.h"
 
+typedef struct ds ds;
+
 HRESULT DELTACALL idsb_get_caps(idsb* self, LPDSBCAPS pCaps);
 HRESULT DELTACALL idsb_get_current_position(idsb* self, LPDWORD pdwCurrentPlayCursor, LPDWORD pdwCurrentWriteCursor);
 HRESULT DELTACALL idsb_get_format(idsb* self, LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten);
@@ -32,7 +34,7 @@ HRESULT DELTACALL idsb_get_volume(idsb* self, LPLONG plVolume);
 HRESULT DELTACALL idsb_get_pan(idsb* self, LPLONG plPan);
 HRESULT DELTACALL idsb_get_frequency(idsb* self, LPDWORD pdwFrequency);
 HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus);
-HRESULT DELTACALL idsb_initialize(idsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc);
+HRESULT DELTACALL idsb_initialize(idsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc);
 HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
 HRESULT DELTACALL idsb_play(idsb* self, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags);
 HRESULT DELTACALL idsb_set_curent_position(idsb* self, DWORD dwNewPosition);
@@ -130,13 +132,13 @@ ULONG DELTACALL idsb_add_ref(idsb* self) {
 
 ULONG DELTACALL idsb_remove_ref(idsb* self) {
     if (self == NULL) {
-        return E_POINTER;
+        return 0;
     }
 
     if (InterlockedDecrement(&self->RefCount) <= 0) {
         self->RefCount = 0;
 
-        if (!(self->Instance->Flags & DSBCAPS_PRIMARYBUFFER)) {
+        if (!(self->Instance->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             if (self->Instance != NULL) {
                 dsb_remove_ref(self->Instance, self);
                 idsb_release(self);
@@ -163,8 +165,22 @@ HRESULT DELTACALL idsb_get_format(idsb* self, LPWAVEFORMATEX pwfxFormat, DWORD d
 }
 
 HRESULT DELTACALL idsb_get_volume(idsb* self, LPLONG plVolume) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (plVolume == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    FLOAT volume = DSB_MIN_VOLUME;
+
+    if (SUCCEEDED(hr = dsb_get_volume(self->Instance, &volume))) {
+        *plVolume = (LONG)((DSB_MAX_VOLUME - volume) * (DSBVOLUME_MIN - DSBVOLUME_MAX));
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL idsb_get_pan(idsb* self, LPLONG plPan) {
@@ -182,7 +198,7 @@ HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus) {
     return E_NOTIMPL;
 }
 
-HRESULT DELTACALL idsb_initialize(idsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc) {
+HRESULT DELTACALL idsb_initialize(idsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     if (self == NULL) {
         return E_POINTER;
     }

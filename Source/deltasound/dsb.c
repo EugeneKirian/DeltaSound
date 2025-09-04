@@ -22,7 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "ds.h"
 #include "dsb.h"
+#include "ids.h"
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
 
@@ -31,6 +33,8 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut) {
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
+        instance->Caps.dwSize = sizeof(DSBCAPS);
+
         if (!bInterface) {
             *ppOut = instance;
             return S_OK;
@@ -107,7 +111,7 @@ HRESULT DELTACALL dsb_remove_ref(dsb* self, idsb* pIDSB) {
     }
 
     if (self->InterfaceCount <= 0) {
-        if (!(self->Flags & DSBCAPS_PRIMARYBUFFER)) {
+        if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             dsb_release(self);
         }
     }
@@ -115,14 +119,36 @@ HRESULT DELTACALL dsb_remove_ref(dsb* self, idsb* pIDSB) {
     return hr;
 }
 
-HRESULT DELTACALL dsb_initialize(dsb* self, deltasound* pDS, LPCDSBUFFERDESC pcDesc) {
+HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume) {
+    if (!self->Caps.dwFlags & DSBCAPS_CTRLVOLUME) {
+        return DSERR_CONTROLUNAVAIL;
+    }
+
+    if (self->Instance == NULL) {
+        return DSERR_UNSUPPORTED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
+    *pfVolume = self->Volume;
+
+    return S_OK;
+}
+
+HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     if (self->Instance != NULL) {
         return DSERR_ALREADYINITIALIZED;
     }
 
     self->Instance = pDS;
 
-    self->Flags = pcDesc->dwFlags;
+    self->Caps.dwFlags = pcDesc->dwFlags;
+
+    if (!self->Caps.dwFlags & (DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCHARDWARE)) {
+        self->Caps.dwFlags |= DSBCAPS_LOCSOFTWARE;
+    }
 
     // TODO set flags, default values, etc
 

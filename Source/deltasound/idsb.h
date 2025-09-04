@@ -38,6 +38,7 @@ SOFTWARE.
                                             | DSBCAPS_CTRLFX | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER)
 
 typedef struct deltasound deltasound;
+typedef struct ds ds;
 typedef struct dsb dsb;
 typedef struct idsb_vft idsb_vft;
 
@@ -59,7 +60,7 @@ typedef HRESULT(DELTACALL* LPIDSBGETVOLUME)(idsb*, LPLONG plVolume);
 typedef HRESULT(DELTACALL* LPIDSBGETPAN)(idsb*, LPLONG plPan);
 typedef HRESULT(DELTACALL* LPIDSBGETFREQUENCY)(idsb*, LPDWORD pdwFrequency);
 typedef HRESULT(DELTACALL* LPIDSBGETSTATUS)(idsb*, LPDWORD pdwStatus);
-typedef HRESULT(DELTACALL* LPIDSBINITIALIZE)(idsb*, deltasound* pDirectSound, LPCDSBUFFERDESC pcDSBufferDesc);
+typedef HRESULT(DELTACALL* LPIDSBINITIALIZE)(idsb*, ds* pDirectSound, LPCDSBUFFERDESC pcDSBufferDesc);
 typedef HRESULT(DELTACALL* LPIDSBLOCK)(idsb*, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
 typedef HRESULT(DELTACALL* LPIDSBPLAY)(idsb*, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags);
 typedef HRESULT(DELTACALL* LPIDSBSETCURRENTPOSITION)(idsb*, DWORD dwNewPosition);

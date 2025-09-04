@@ -46,6 +46,7 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
                 intfc->Instance = instance;
 
                 if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &instance->Main))) {
+                    instance->Main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
                     *ppOut = instance;
                     return S_OK;
                 }
@@ -133,6 +134,7 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
 
     if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
         // TODO Refactor to use query interface
+
         if (self->Main->InterfaceCount == 0) {
             HRESULT hr = S_OK;
             idsb* intfc = NULL;
@@ -163,7 +165,7 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = dsb_create(self->Allocator, TRUE, &instance))) {
-        if (SUCCEEDED(hr = dsb_initialize(instance, self->Instance, pcDesc))) {
+        if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
             *ppOut = instance;
             return S_OK;
         }
@@ -236,9 +238,9 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
         desc.dwSize = sizeof(DSBUFFERDESC);
-        desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+        desc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_LOCSOFTWARE;
 
-        if (SUCCEEDED(hr = dsb_initialize(self->Main, self->Instance, &desc))) {
+        if (SUCCEEDED(hr = dsb_initialize(self->Main, self, &desc))) {
             return S_OK;
         }
     }

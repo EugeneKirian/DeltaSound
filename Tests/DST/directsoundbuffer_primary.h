@@ -24,37 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
-#include "idsb.h"
+#include <windows.h>
 
-#define DSB_MIN_VOLUME  (0.0f)
-#define DSB_MAX_VOLUME  (1.0f)
-
-#define DSB_MAX_PRIMARY_BUFFER_SIZE 32768
-
-typedef struct ds ds;
-
-typedef struct dsb {
-    allocator*      Allocator;
-    ds*             Instance;
-
-    // TODO resizeable array
-    idsb**          Interfaces;
-    LONG            InterfaceCount;
-
-    DSBCAPS         Caps;
-    WAVEFORMATEX    Format;
-    FLOAT           Volume;
-    LONG            Pan;
-    DWORD           Frequency;
-} dsb;
-
-HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut);
-VOID DELTACALL dsb_release(dsb* pDSB);
-
-HRESULT DELTACALL dsb_add_ref(dsb* pDSB, idsb* pIDSB);
-HRESULT DELTACALL dsb_remove_ref(dsb* pDSB, idsb* pIDSB);
-
-HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT plVolume);
-
-HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
+BOOL TestDirectSoundBufferPrimary(HMODULE a, HMODULE b);
