@@ -182,14 +182,26 @@ static BOOL TestDirectSoundBufferProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
         if (ra != rb || fa != fb) {
             return FALSE;
         }
-
-        // TODO DSBFREQUENCY_MIN DSBFREQUENCY_MAX
     }
 
     // GetStatus
+    {
+        DWORD sa = 0, sb = 0;
 
-    // TODO
+        HRESULT ra = IDirectSoundBuffer_GetStatus(a, NULL);
+        HRESULT rb = IDirectSoundBuffer_GetStatus(b, NULL);
 
+        if (ra != rb || sa != sb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetStatus(a, &sa);
+        rb = IDirectSoundBuffer_GetStatus(b, &sb);
+
+        if (ra != rb || sa != sb) {
+            return FALSE;
+        }
+    }
 
     return TRUE;
 }
@@ -219,8 +231,6 @@ static BOOL TestDirectSoundBufferPrimaryDetails(
 
     descb.dwSize = sizeof(DSBUFFERDESC);
     descb.dwFlags = flags;
-
-    // TODO variety of flags for frequency, volume, and pan
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -259,6 +269,14 @@ static BOOL TestDirectSoundBufferPrimaryDetails(
     }
 
 exit:
+
+    if (dsba != NULL) {
+        IDirectSoundBuffer_Release(dsba);
+    }
+
+    if (dsbb != NULL) {
+        IDirectSoundBuffer_Release(dsbb);
+    }
 
     if (dsa != NULL) {
         IDirectSound_Release(dsa);

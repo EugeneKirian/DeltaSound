@@ -60,6 +60,7 @@ typedef struct dsb {
     FLOAT           Volume;
     FLOAT           Pan;
     DWORD           Frequency; // TODO is this separate from the format frequency?
+    DWORD           Status;
 } dsb;
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut);
@@ -78,7 +79,7 @@ HRESULT DELTACALL dsb_get_format(dsb* self,
 HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume);
 HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan);
 HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency);
-// STATUS
+HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus);
 HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat);

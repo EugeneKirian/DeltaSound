@@ -228,6 +228,20 @@ HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency) {
     return S_OK;
 }
 
+HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
+    *pdwStatus = self->Status;
+
+    return S_OK;
+}
+
 HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     if (self->Instance != NULL) {
         return DSERR_ALREADYINITIALIZED;

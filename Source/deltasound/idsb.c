@@ -242,8 +242,15 @@ HRESULT DELTACALL idsb_get_frequency(idsb* self, LPDWORD pdwFrequency) {
 }
 
 HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pdwStatus == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_get_status(self->Instance, pdwStatus);
 }
 
 HRESULT DELTACALL idsb_initialize(idsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
