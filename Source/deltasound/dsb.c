@@ -25,6 +25,7 @@ SOFTWARE.
 #include "ds.h"
 #include "dsb.h"
 #include "ids.h"
+#include "wave_format.h"
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
 
@@ -34,6 +35,18 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut) {
 
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
         instance->Caps.dwSize = sizeof(DSBCAPS);
+
+        instance->Pan = DSB_CENTER_PAN;
+        instance->Volume = DSB_MAX_VOLUME;
+
+        // TODO better way
+        instance->Format->wFormatTag = WAVE_FORMAT_PCM;
+        instance->Format->nChannels = 2;
+        instance->Format->nSamplesPerSec = 22050;
+        instance->Format->nAvgBytesPerSec = 44100;
+        instance->Format->nBlockAlign = 2;
+        instance->Format->wBitsPerSample = 8;
+        instance->Format->cbSize = 0;
 
         if (!bInterface) {
             *ppOut = instance;
@@ -65,6 +78,7 @@ VOID DELTACALL dsb_release(dsb* self) {
     }
 
     allocator_free(self->Allocator, self->Interfaces);
+    allocator_free(self->Allocator, self->Format);
 
     // TODO
 
@@ -75,6 +89,7 @@ HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) {
     self->Caps.dwFlags = dwFlags;
 
     // TODO properly update things when new flags are set
+
     return S_OK;
 }
 
@@ -142,6 +157,7 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
         return DSERR_UNINITIALIZED;
     }
 
+    // TODO is this for primary buffer only?
     if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
         return DSERR_PRIOLEVELNEEDED;
     }
@@ -163,12 +179,14 @@ HRESULT DELTACALL dsb_get_format(dsb* self,
         return DSERR_UNINITIALIZED;
     }
 
+    const size_t size = sizeof(WAVEFORMATEX) + self->Format->cbSize;
+
     if (pwfxFormat != NULL) {
-        CopyMemory(pwfxFormat, self->Format, dwSizeAllocated);
+        CopyMemory(pwfxFormat, self->Format, min(size, dwSizeAllocated));
     }
 
     if (pdwSizeWritten != NULL) {
-        *pdwSizeWritten = sizeof(WAVEFORMATEX);
+        *pdwSizeWritten = size;
     }
 
     return S_OK;
@@ -179,6 +197,7 @@ HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume) {
         return DSERR_UNINITIALIZED;
     }
 
+    // TODO is this for primary buffer only?
     if (self->Instance->Level == DSSCL_NONE) {
         return DSERR_PRIOLEVELNEEDED;
     }
@@ -197,6 +216,7 @@ HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan) {
         return DSERR_UNINITIALIZED;
     }
 
+    // TODO is this for primary buffer only?
     if (self->Instance->Level == DSSCL_NONE) {
         return DSERR_PRIOLEVELNEEDED;
     }
@@ -215,6 +235,7 @@ HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency) {
         return DSERR_UNINITIALIZED;
     }
 
+    // TODO is this for primary buffer only?
     if (self->Instance->Level == DSSCL_NONE) {
         return DSERR_PRIOLEVELNEEDED;
     }
@@ -233,6 +254,7 @@ HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus) {
         return DSERR_UNINITIALIZED;
     }
 
+    // TODO is this for primary buffer only?
     if (self->Instance->Level == DSSCL_NONE) {
         return DSERR_PRIOLEVELNEEDED;
     }
@@ -256,8 +278,23 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     }
 
     // TODO set flags, default values, etc
+    // and format...
 
     return S_OK;
+}
+
+HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        return DSERR_INVALIDCALL;
+    }
+
+    // TODO NOT IMPLEMENTED
+
+    return E_NOTIMPL;
 }
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
@@ -265,25 +302,41 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         return DSERR_UNINITIALIZED;
     }
 
-    HRESULT hr = S_OK;
-    const size_t size = sizeof(WAVEFORMATEX) + pcfxFormat->cbSize;
-
-    if (self->Format == NULL) {
-        if (FAILED(hr = allocator_allocate(self->Allocator, size, &self->Format))) {
-            return hr;
-        }
-    }
-    else if (sizeof(WAVEFORMATEX) + self->Format->cbSize < size) {
-        if (FAILED(hr = allocator_reallocate(self->Allocator, self->Format, size, &self->Format))) {
-            return hr;
-        }
+    if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
+        return DSERR_INVALIDCALL;
     }
 
-    CopyMemory(self->Format, pcfxFormat, size);
+    if (self->Instance->Level == DSSCL_NORMAL) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
 
-    // TODO other updates to playback? Hm?
+    if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        if (self->Status & DSBSTATUS_PLAYING) {
+            // TODO buffer must be stopped by the user
+        }
 
-    return hr;
+        // TODO update format...
+    }
+    else {
+        // TODO stop the buffer, update the format, and resume playback
+    }
+
+    if (self->Instance->Level == DSSCL_NORMAL) {
+        if (pcfxFormat->wFormatTag != WAVE_INVALIDFORMAT
+            && pcfxFormat->wFormatTag != WAVE_FORMAT_PCM) {
+            return E_NOTIMPL;
+        }
+    }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        if (pcfxFormat->wFormatTag == WAVE_INVALIDFORMAT) {
+            return E_NOTIMPL;
+        }
+    }
+
+    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
+    self->Format->cbSize = 0;
+
+    return S_OK;
 }
 
 HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {
@@ -299,7 +352,7 @@ HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {
         return DSERR_CONTROLUNAVAIL;
     }
 
-    self->Volume = min(max(fVolume, DSB_MIN_VOLUME), DSB_MAX_VOLUME);
+    self->Volume = fVolume;
 
     return S_OK;
 }
@@ -332,11 +385,14 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
         ZeroMemory(instance, sizeof(dsb));
         instance->Allocator = pAlloc;
 
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, (LPVOID*)&instance->Interfaces))) {
-            *ppOut = instance;
-            return S_OK;
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX), &instance->Format))) {
+            if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, (LPVOID*)&instance->Interfaces))) {
+                *ppOut = instance;
+                return S_OK;
+            }
         }
 
+        allocator_free(pAlloc, instance->Format);
         allocator_free(pAlloc, instance);
     }
 

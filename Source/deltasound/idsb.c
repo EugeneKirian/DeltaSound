@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "dsb.h"
 #include "idsb.h"
+#include "wave_format.h"
 
 typedef struct ds ds;
 
@@ -283,18 +284,45 @@ HRESULT DELTACALL idsb_play(idsb* self, DWORD dwReserved1, DWORD dwPriority, DWO
 }
 
 HRESULT DELTACALL idsb_set_curent_position(idsb* self, DWORD dwNewPosition) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return dsb_set_current_position(self->Instance, dwNewPosition);
 }
 
 HRESULT DELTACALL idsb_set_format(idsb* self, LPCWAVEFORMATEX pcfxFormat) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pcfxFormat == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (pcfxFormat->wFormatTag == WAVE_FORMAT_PCM) {
+        HRESULT hr = S_OK;
+
+        if (FAILED(hr = wave_format_is_valid(pcfxFormat))) {
+            return hr;
+        }
+    }
+
+    return dsb_set_format(self->Instance, pcfxFormat);
 }
 
 HRESULT DELTACALL idsb_set_volume(idsb* self, LONG lVolume) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (lVolume < DSBVOLUME_MIN || lVolume > DSBVOLUME_MAX) {
+        return E_INVALIDARG;
+    }
+
+    const FLOAT volume = (FLOAT)lVolume / (DSBVOLUME_MAX - DSBVOLUME_MIN);
+
+    return dsb_set_volume(self->Instance, volume);
 }
 
 HRESULT DELTACALL idsb_set_pan(idsb* self, LONG lPan) {

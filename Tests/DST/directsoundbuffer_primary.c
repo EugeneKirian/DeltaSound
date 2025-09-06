@@ -31,7 +31,7 @@ SOFTWARE.
 
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
-static BOOL TestDirectSoundBufferProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
+static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -114,6 +114,19 @@ static BOOL TestDirectSoundBufferProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
 
         ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), &sa);
         rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), &sb);
+
+        if (ra != rb && sa != sb) {
+            return FALSE;
+        }
+
+        if (memcmp(wf1, wf2, sa) != 0) {
+            return FALSE;
+        }
+        
+        sa = 0, sb = 0;
+
+        ra = IDirectSoundBuffer_GetFormat(a, NULL, size, &sa);
+        rb = IDirectSoundBuffer_GetFormat(b, NULL, size, &sb);
 
         if (ra != rb && sa != sb) {
             return FALSE;
@@ -206,7 +219,7 @@ static BOOL TestDirectSoundBufferProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferPrimaryDetails(
+static BOOL TestDirectSoundBufferPrimaryGetDetails(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
@@ -263,7 +276,405 @@ static BOOL TestDirectSoundBufferPrimaryDetails(
         return TRUE;
     }
 
-    if (!TestDirectSoundBufferProperties(dsba, dsbb)) {
+    if (!TestDirectSoundBufferGetProperties(dsba, dsbb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+exit:
+
+    if (dsba != NULL) {
+        IDirectSoundBuffer_Release(dsba);
+    }
+
+    if (dsbb != NULL) {
+        IDirectSoundBuffer_Release(dsbb);
+    }
+
+    if (dsa != NULL) {
+        IDirectSound_Release(dsa);
+    }
+
+    if (dsb != NULL) {
+        IDirectSound_Release(dsb);
+    }
+
+    return result;
+}
+
+static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    DWORD bsa = 0, bsb = 0;
+
+    // SetCurrentPosition
+    {
+        HRESULT ra = IDirectSoundBuffer_SetCurrentPosition(a, 0);
+        HRESULT rb = IDirectSoundBuffer_SetCurrentPosition(b, 0);
+
+        if (ra != rb && ra != DSERR_INVALIDCALL) {
+            return FALSE;
+        }
+    }
+
+    // SetFormat
+    {
+        const size_t size = 2 * sizeof(WAVEFORMATEX);
+        LPWAVEFORMATEX wf1 = malloc(size);
+
+        if (wf1 == NULL) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, size);
+
+        LPWAVEFORMATEX wf2 = malloc(size);
+
+        if (wf2 == NULL) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf2, size);
+
+        HRESULT ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), NULL);
+        HRESULT rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), NULL);
+
+        if (ra != rb || memcmp(wf1, wf2, sizeof(WAVEFORMATEX)) != 0) {
+            return FALSE;
+        }
+
+        LPWAVEFORMATEX wf3 = malloc(size);
+
+        if (wf3 == NULL) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf3, size);
+
+        LPWAVEFORMATEX wf4 = malloc(size);
+
+        if (wf4 == NULL) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf4, size);
+
+        ra = IDirectSoundBuffer_SetFormat(a, NULL);
+        rb = IDirectSoundBuffer_SetFormat(b, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        ra = IDirectSoundBuffer_SetFormat(a, wf3);
+        rb = IDirectSoundBuffer_SetFormat(b, wf4);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, sizeof(WAVEFORMATEX));
+        ZeroMemory(wf2, sizeof(WAVEFORMATEX));
+
+        ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), NULL);
+        rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), NULL);
+
+        if (ra != rb || memcmp(wf1, wf2, sizeof(WAVEFORMATEX)) != 0) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        wf3->wFormatTag = WAVE_FORMAT_2S16;
+        wf4->wFormatTag = WAVE_FORMAT_2S16;
+
+        ra = IDirectSoundBuffer_SetFormat(a, wf3);
+        rb = IDirectSoundBuffer_SetFormat(b, wf4);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, sizeof(WAVEFORMATEX));
+        ZeroMemory(wf2, sizeof(WAVEFORMATEX));
+
+        ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), NULL);
+        rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), NULL);
+
+        if (ra != rb || memcmp(wf1, wf2, sizeof(WAVEFORMATEX)) != 0) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        wf3->wFormatTag = WAVE_FORMAT_PCM;
+        wf3->nChannels = 16;
+
+        wf4->wFormatTag = WAVE_FORMAT_PCM;
+        wf4->nChannels = 16;
+
+        ra = IDirectSoundBuffer_SetFormat(a, wf3);
+        rb = IDirectSoundBuffer_SetFormat(b, wf4);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, sizeof(WAVEFORMATEX));
+        ZeroMemory(wf2, sizeof(WAVEFORMATEX));
+
+        ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), NULL);
+        rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), NULL);
+
+        if (ra != rb || memcmp(wf1, wf2, sizeof(WAVEFORMATEX)) != 0) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        wf3->wFormatTag = WAVE_FORMAT_PCM;
+        wf3->cbSize = -1;
+
+        wf4->wFormatTag = WAVE_FORMAT_PCM;
+        wf4->cbSize = -1;
+
+        ra = IDirectSoundBuffer_SetFormat(a, wf3);
+        rb = IDirectSoundBuffer_SetFormat(b, wf4);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, sizeof(WAVEFORMATEX));
+        ZeroMemory(wf2, sizeof(WAVEFORMATEX));
+
+        ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), NULL);
+        rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), NULL);
+
+        if (ra != rb || memcmp(wf1, wf2, sizeof(WAVEFORMATEX)) != 0) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        wf3->wFormatTag = WAVE_FORMAT_PCM;
+        wf3->nAvgBytesPerSec = 44100;
+        wf3->cbSize = -1;
+
+        wf4->wFormatTag = WAVE_FORMAT_PCM;
+        wf4->nAvgBytesPerSec = 44100;
+        wf4->cbSize = -1;
+
+        ra = IDirectSoundBuffer_SetFormat(a, wf3);
+        rb = IDirectSoundBuffer_SetFormat(b, wf4);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, sizeof(WAVEFORMATEX));
+        ZeroMemory(wf2, sizeof(WAVEFORMATEX));
+
+        ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), NULL);
+        rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), NULL);
+
+        if (ra != rb || memcmp(wf1, wf2, sizeof(WAVEFORMATEX)) != 0) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        wf3->wFormatTag = WAVE_FORMAT_PCM;
+        wf3->nChannels = 2;
+        wf3->nSamplesPerSec = 22050;
+        wf3->nAvgBytesPerSec = 44100 + 1;
+        wf3->nBlockAlign = 2;
+        wf3->wBitsPerSample = 8;
+        wf3->cbSize = -1;
+
+        wf4->wFormatTag = WAVE_FORMAT_PCM;
+        wf4->nChannels = 2;
+        wf4->nSamplesPerSec = 22050;
+        wf4->nAvgBytesPerSec = 44100 + 1;
+        wf4->nBlockAlign = 2;
+        wf4->wBitsPerSample = 8;
+        wf4->cbSize = -1;
+
+        ra = IDirectSoundBuffer_SetFormat(a, wf3);
+        rb = IDirectSoundBuffer_SetFormat(b, wf4);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, sizeof(WAVEFORMATEX));
+        ZeroMemory(wf2, sizeof(WAVEFORMATEX));
+
+        ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), NULL);
+        rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), NULL);
+
+        if (ra != rb || memcmp(wf1, wf2, sizeof(WAVEFORMATEX)) != 0) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        free(wf1);
+        free(wf2);
+        free(wf3);
+        free(wf4);
+    }
+
+    // SetVolume
+    {
+        LONG va1 = 0, vb1 = 0, va2 = 0, vb2 = 0;
+
+        HRESULT ra = IDirectSoundBuffer_GetVolume(a, &va1);
+        HRESULT rb = IDirectSoundBuffer_GetVolume(b, &vb1);
+
+        if (ra != rb || va1 != vb1) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MIN - 1);
+        rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MIN - 1);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetVolume(a, &va1);
+        rb = IDirectSoundBuffer_GetVolume(b, &vb1);
+
+        if (ra != rb || va1 != vb1) {
+            return FALSE;
+        }
+
+        // TODO more tests
+    }
+
+    // GetPan
+    {
+        LONG pa = 0, pb = 0;
+
+        HRESULT ra = IDirectSoundBuffer_GetPan(a, NULL);
+        HRESULT rb = IDirectSoundBuffer_GetPan(b, NULL);
+
+        if (ra != rb || pa != pb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetPan(a, &pa);
+        rb = IDirectSoundBuffer_GetPan(b, &pb);
+
+        if (ra != rb || pa != pb) {
+            return FALSE;
+        }
+    }
+
+    // GetFrequency
+    {
+        DWORD fa = 0, fb = 0;
+
+        HRESULT ra = IDirectSoundBuffer_GetFrequency(a, NULL);
+        HRESULT rb = IDirectSoundBuffer_GetFrequency(b, NULL);
+
+        if (ra != rb || fa != fb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetFrequency(a, &fa);
+        rb = IDirectSoundBuffer_GetFrequency(b, &fb);
+
+        if (ra != rb || fa != fb) {
+            return FALSE;
+        }
+    }
+
+    // GetStatus
+    {
+        DWORD sa = 0, sb = 0;
+
+        HRESULT ra = IDirectSoundBuffer_GetStatus(a, NULL);
+        HRESULT rb = IDirectSoundBuffer_GetStatus(b, NULL);
+
+        if (ra != rb || sa != sb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetStatus(a, &sa);
+        rb = IDirectSoundBuffer_GetStatus(b, &sb);
+
+        if (ra != rb || sa != sb) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundBufferPrimarySetDetails(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
+    if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
+        return FALSE;
+    }
+
+    BOOL result = TRUE;
+
+    LPDIRECTSOUND dsa = NULL;
+    LPDIRECTSOUND dsb = NULL;
+
+    LPDIRECTSOUNDBUFFER dsba = NULL;
+    LPDIRECTSOUNDBUFFER dsbb = NULL;
+
+    DSBUFFERDESC desca;
+    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+    desca.dwSize = sizeof(DSBUFFERDESC);
+    desca.dwFlags = flags;
+
+    DSBUFFERDESC descb;
+    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+    descb.dwSize = sizeof(DSBUFFERDESC);
+    descb.dwFlags = flags;
+
+    HRESULT ra = a(NULL, &dsa, NULL);
+    HRESULT rb = b(NULL, &dsb, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa == NULL || dsb == NULL) {
+        return FALSE;
+    }
+
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, level);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, level);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
+    rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (dsba == NULL && dsbb == NULL) {
+        return TRUE;
+    }
+
+    if (!TestDirectSoundBufferSetProperties(dsba, dsbb)) {
         result = FALSE;
         goto exit;
     }
@@ -334,9 +745,18 @@ BOOL TestDirectSoundBufferPrimary(HMODULE a, HMODULE b) {
         goto exit;
     }
 
+    //for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
+    //    for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
+    //        if (!TestDirectSoundBufferPrimaryGetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
+    //            result = FALSE;
+    //            goto exit;
+    //        }
+    //    }
+    //}
+
     for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
-            if (!TestDirectSoundBufferPrimaryDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
+            if (!TestDirectSoundBufferPrimarySetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
                 result = FALSE;
                 goto exit;
             }

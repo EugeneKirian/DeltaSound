@@ -157,22 +157,6 @@ HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
                 idsb_release(intfc);
                 return hr;
             }
-
-            // TODO better way to set primary buffer properties
-
-            WAVEFORMATEX format;
-            ZeroMemory(&format, sizeof(WAVEFORMATEX));
-
-            format.wFormatTag = WAVE_FORMAT_PCM;
-            format.nChannels = 2;
-            format.nSamplesPerSec = 22050;
-            format.nAvgBytesPerSec = 44100;
-            format.nBlockAlign = 2;
-            format.wBitsPerSample = 8;
-
-            dsb_set_format(self->Main, &format);
-            dsb_set_pan(self->Main, DSB_CENTER_PAN);
-            dsb_set_volume(self->Main, DSB_MAX_VOLUME);
         }
         else {
             idsb_add_ref(self->Main->Interfaces[0]);
@@ -262,7 +246,10 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
         desc.dwSize = sizeof(DSBUFFERDESC);
-        desc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_LOCSOFTWARE;
+        desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+        // TODO proper initialization of the primary buffer
+        // and code clean-up in ds_create_dsb...
 
         if (SUCCEEDED(hr = dsb_initialize(self->Main, self, &desc))) {
             return S_OK;

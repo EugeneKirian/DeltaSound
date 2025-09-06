@@ -29,6 +29,7 @@
     <ClInclude Include="idsb.h" />
     <ClInclude Include="uuid.h" />
     <ClInclude Include="device_info.h" />
+    <ClInclude Include="wave_format.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocator.c" />
@@ -40,6 +41,7 @@
     <ClCompile Include="ids.c" />
     <ClCompile Include="idsb.c" />
     <ClCompile Include="uuid.c" />
+    <ClCompile Include="wave_format.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

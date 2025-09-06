@@ -81,7 +81,13 @@ HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan);
 HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency);
 HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus);
 HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
-
+// LOCK
+// PLAY
+HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition);
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat);
 HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume);
 HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan);
+// SetFrequency
+// Stop
+// Unlock
+// Restore
