@@ -22,8 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "device.h"
 #include "device_info.h"
 #include "ds.h"
+#include "dsb.h"
+#include "ids.h"
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
 
@@ -34,25 +37,45 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
 
     HRESULT hr = S_OK;
     ds* instance = NULL;
-    if (FAILED(hr = ds_allocate(pAlloc, &instance))) {
-        return hr;
-    }
 
-    if (FAILED(hr = ids_create(&instance->Interface))) {
+    if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
+        ids* intfc = NULL;
+
+        if (SUCCEEDED(hr = ids_create(pAlloc, &intfc))) {
+            if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
+                intfc->Instance = instance;
+
+                dsb* main = NULL;
+
+                if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &main))) {
+                    // TODO better initialization for main buffer properties
+
+                    main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
+
+                    instance->Main = main;
+                    *ppOut = instance;
+                    return S_OK;
+                }
+            }
+
+            ids_release(intfc);
+        }
+
         ds_release(instance);
-        return hr;
     }
 
-    instance->RefCount = 1;
-
-    *ppOut = instance;
-
-    return S_OK;
+    return hr;
 }
 
 VOID DELTACALL ds_release(ds* self) {
-    if (self == NULL) {
-        return;
+    for (LONG i = 0; i < self->InterfaceCount; i++) {
+        ids_release(self->Interfaces[i]);
+    }
+
+    allocator_free(self->Allocator, self->Interfaces);
+
+    if (self->Main != NULL) {
+        dsb_release(self->Main);
     }
 
     if (self->Device != NULL) {
@@ -64,65 +87,129 @@ VOID DELTACALL ds_release(ds* self) {
     allocator_free(self->Allocator, self);
 }
 
-ULONG ds_add_ref(ds* self) {
-    if (self == NULL) {
-        return 0;
-    }
-
-    return InterlockedIncrement(&self->RefCount);
-}
-
-ULONG DELTACALL ds_remove_ref(ds* self) {
-    if (self == NULL) {
-        return 0;
-    }
-
-    LONG count = InterlockedDecrement(&self->RefCount);
-
-    if (count <= 0) {
-        count = 0;
-        ds_release(self);
-    }
-
-    return count;
-}
-
-HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pDSCaps) {
+HRESULT DELTACALL ds_add_ref(ds* self, ids* pIDS) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pDSCaps == NULL) {
-        return E_INVALIDARG;
+    HRESULT hr = S_OK;
+
+    // TODO synchronization
+
+    if (SUCCEEDED(hr = allocator_reallocate(self->Allocator,
+        self->Interfaces, sizeof(ids*) * (self->InterfaceCount + 1), (LPVOID*)&self->Interfaces))) {
+        self->Interfaces[self->InterfaceCount] = pIDS;
+        self->InterfaceCount++;
     }
 
+    return hr;
+}
+
+HRESULT DELTACALL ds_remove_ref(ds* self, ids* pIDS) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    HRESULT hr = S_OK;
+
+    // TODO synchronization
+
+    for (LONG i = 0; i < self->InterfaceCount; i++) {
+        if (self->Interfaces[i] == pIDS) {
+            for (LONG x = i; x < self->InterfaceCount - 1; x++) {
+                self->Interfaces[x] = self->Interfaces[x + 1];
+            }
+
+            self->InterfaceCount--;
+
+            break;
+        }
+    }
+
+    if (self->InterfaceCount <= 0) {
+        ds_release(self);
+    }
+
+    return hr;
+}
+
+HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     if (self->Device == NULL) {
         return DSERR_UNINITIALIZED;
     }
 
-    ZeroMemory(pDSCaps, sizeof(DSCAPS));
+    if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        dsb_set_flags(self->Main, pcDesc->dwFlags | DSBCAPS_LOCSOFTWARE);
 
-    pDSCaps->dwSize = sizeof(DSCAPS);
-    pDSCaps->dwFlags = DSCAPS_SECONDARY16BIT | DSCAPS_SECONDARY8BIT
+        // TODO Refactor to use query interface
+
+        if (self->Main->InterfaceCount == 0) {
+            HRESULT hr = S_OK;
+            idsb* intfc = NULL;
+
+            if (FAILED(hr = idsb_create(self->Allocator, &intfc))) {
+                return hr;
+            }
+
+            intfc->Instance = self->Main;
+
+            if (FAILED(hr = dsb_add_ref(self->Main, intfc))) {
+                idsb_release(intfc);
+                return hr;
+            }
+        }
+        else {
+            idsb_add_ref(self->Main->Interfaces[0]);
+        }
+
+        *ppOut = self->Main;
+
+        return S_OK;
+    }
+
+    // TODO process other flags properly
+
+    HRESULT hr = S_OK;
+    dsb* instance = NULL;
+
+    if (SUCCEEDED(hr = dsb_create(self->Allocator, TRUE, &instance))) {
+        if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
+            *ppOut = instance;
+            return S_OK;
+        }
+
+        dsb_release(instance);
+    }
+
+    return hr;
+}
+
+HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pCaps) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    ZeroMemory(pCaps, sizeof(DSCAPS));
+
+    pCaps->dwSize = sizeof(DSCAPS);
+    pCaps->dwFlags = DSCAPS_SECONDARY16BIT | DSCAPS_SECONDARY8BIT
         | DSCAPS_SECONDARYSTEREO | DSCAPS_SECONDARYMONO
         | DSCAPS_CONTINUOUSRATE | DSCAPS_PRIMARY16BIT
         | DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYSTEREO | DSCAPS_PRIMARYMONO;
 
-    pDSCaps->dwMinSecondarySampleRate = 100;
-    pDSCaps->dwMaxSecondarySampleRate = 200000;
-    pDSCaps->dwPrimaryBuffers = 1;
-    pDSCaps->dwMaxHwMixingAllBuffers = 1;
-    pDSCaps->dwMaxHwMixingStaticBuffers = 1;
-    pDSCaps->dwMaxHwMixingStreamingBuffers = 1;
+    pCaps->dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+    pCaps->dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+
+    pCaps->dwPrimaryBuffers = 1;
+
+    pCaps->dwMaxHwMixingAllBuffers = 1;
+    pCaps->dwMaxHwMixingStaticBuffers = 1;
+    pCaps->dwMaxHwMixingStreamingBuffers = 1;
 
     return S_OK;
 }
 
 HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     if (self->Device != NULL) {
         return DSERR_ALREADYINITIALIZED;
     }
@@ -137,6 +224,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
     }
 
     HRESULT hr = S_OK;
+
     device_info info;
     ZeroMemory(&info, sizeof(device_info));
 
@@ -153,29 +241,57 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         return DSERR_NODRIVER;
     }
 
-    hr = device_create(self->Allocator, info.Type, &info.ID, &self->Device);
+    if (SUCCEEDED(hr = device_create(self->Allocator, info.Type, &info, &self->Device))) {
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+        // TODO proper initialization of the primary buffer
+        // and code clean-up in ds_create_dsb...
+
+        if (SUCCEEDED(hr = dsb_initialize(self->Main, self, &desc))) {
+            return S_OK;
+        }
+    }
 
     return hr;
+}
+
+HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    // TODO other validations
+
+    self->HWND = hwnd;
+    self->Level = dwLevel;
+
+    // NOTE. Multiple changes are allowed.
+    // They have to be properly handled.
+
+    return S_OK;
 }
 
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
     HRESULT hr = S_OK;
     ds* instance = NULL;
-    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
-        return hr;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
+        ZeroMemory(instance, sizeof(ds));
+        instance->Allocator = pAlloc;
+
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, (LPVOID*)&instance->Interfaces))) {
+            *ppOut = instance;
+            return S_OK;
+        }
+
+        allocator_free(pAlloc, instance);
     }
 
-    ZeroMemory(instance, sizeof(ds));
-
-    instance->Allocator = pAlloc;
-
-    *ppOut = instance;
-
-    return S_OK;
+    return hr;
 }

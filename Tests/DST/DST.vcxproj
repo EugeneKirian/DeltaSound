@@ -139,19 +139,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="directsoundcaptureenumerate.c" />
+    <ClCompile Include="directsound_createsoundbuffer.c" />
+    <ClCompile Include="directsound_enumerate.c" />
+    <ClCompile Include="directsound_getcaps.c" />
+    <ClCompile Include="directsound_setcooperativelevel.c" />
+    <ClCompile Include="directsoundbuffer_primary_get.c" />
+    <ClCompile Include="directsoundbuffer_primary_set.c" />
+    <ClCompile Include="directsoundcapture_enumerate.c" />
     <ClCompile Include="directsoundcreate.c" />
-    <ClCompile Include="directsoundenumerate.c" />
-    <ClCompile Include="directsoundgetcaps.c" />
     <ClCompile Include="getdeviceid.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="wnd.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="directsoundcaptureenumerate.h" />
+    <ClInclude Include="directsound_createsoundbuffer.h" />
+    <ClInclude Include="directsound_enumerate.h" />
+    <ClInclude Include="directsound_getcaps.h" />
+    <ClInclude Include="directsound_setcooperativelevel.h" />
+    <ClInclude Include="directsoundbuffer_primary_get.h" />
+    <ClInclude Include="directsoundbuffer_primary_set.h" />
+    <ClInclude Include="directsoundcapture_enumerate.h" />
     <ClInclude Include="directsoundcreate.h" />
-    <ClInclude Include="directsoundenumerate.h" />
-    <ClInclude Include="directsoundgetcaps.h" />
     <ClInclude Include="getdeviceid.h" />
+    <ClInclude Include="wnd.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -22,64 +22,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ds.h"
+#include "deltasound.h"
 #include "device_info.h"
+#include "ds.h"
 
 #define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
 
 HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut);
 
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    // TODO LOG
-
     HRESULT hr = S_OK;
     deltasound* instance = NULL;
-    if (FAILED(hr = deltasound_allocate(pAlloc, &instance))) {
-        return hr;
+
+    if (SUCCEEDED(hr = deltasound_allocate(pAlloc, &instance))) {
+        InitializeCriticalSection(&instance->Lock);
+
+        *ppOut = instance;
     }
-
-    InitializeCriticalSection(&instance->Lock);
-
-    *ppOut = instance;
 
     return hr;
 }
 
 VOID DELTACALL deltasound_release(deltasound* self) {
-    if (self == NULL) {
-        return;
-    }
-
-    // TODO LOG
-
     DeleteCriticalSection(&self->Lock);
 
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL deltasound_create_ds(deltasound* self, REFIID riid, LPDIRECTSOUND* ppOut) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (riid == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    ds* instance = NULL;
+HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
+    REFIID riid, LPCGUID pcGuidDevice, LPDIRECTSOUND* ppOut) {
     HRESULT hr = S_OK;
+    ds* instance = NULL;
 
     EnterCriticalSection(&self->Lock);
 
     if (SUCCEEDED(hr = ds_create(self->Allocator, &instance))) {
-        instance->DeltaSound = self;
+        instance->Instance = self;
+        CopyMemory(&self->ID, riid, sizeof(GUID));
+
+        if (SUCCEEDED(hr = ds_initialize(instance, pcGuidDevice))) {
+            *ppOut = (LPDIRECTSOUND)instance->Interfaces[0];
+            goto exit;
+        }
+
+        ds_release(instance);
     }
 
-    *ppOut = (LPDIRECTSOUND)instance;
+exit:
 
     LeaveCriticalSection(&self->Lock);
 
@@ -89,21 +78,17 @@ HRESULT DELTACALL deltasound_create_ds(deltasound* self, REFIID riid, LPDIRECTSO
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
     HRESULT hr = S_OK;
     deltasound* instance = NULL;
-    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
-        return hr;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
+
+        ZeroMemory(instance, sizeof(deltasound));
+
+        instance->Allocator = pAlloc;
+
+        *ppOut = instance;
     }
 
-    ZeroMemory(instance, sizeof(deltasound));
-
-    instance->Allocator = pAlloc;
-
-    *ppOut = instance;
-
-    return S_OK;
+    return hr;
 }

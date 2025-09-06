@@ -22,29 +22,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "wave_format.h"
 
-#include "allocator.h"
-#include "device_info.h"
+HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat) {
+    if (pcfxFormat == NULL) {
+        return E_INVALIDARG;
+    }
 
-typedef struct device {
-    allocator*              Allocator;
-    LONG                    RefCount;
-    device_info             Info;
-    IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
-    // IAudioStreamVolume*     AudioVolume; //  TODO  Is this needed?
-    PWAVEFORMATEXTENSIBLE   WaveFormat;
-    HANDLE                  AudioEvent;
-    HANDLE                  Thread;
-    BOOL                    Close;
-} device;
+    if (pcfxFormat->wFormatTag != WAVE_FORMAT_PCM) {
+        return E_INVALIDARG;
+    }
 
-HRESULT DELTACALL device_create(
-    allocator* pAlloc, DWORD dwType, device_info* pInfo, device** ppOut);
+    if (pcfxFormat->nAvgBytesPerSec == 0) {
+        return E_INVALIDARG;
+    }
 
-ULONG DELTACALL device_add_ref(device* pDev);
-ULONG DELTACALL device_remove_ref(device* pDev);
+    if (pcfxFormat->nSamplesPerSec == 0) {
+        return E_INVALIDARG;
+    }
 
-VOID DELTACALL device_release(device* pDev);
+    if (pcfxFormat->nBlockAlign == 0) {
+        return E_INVALIDARG;
+    }
+
+    if (pcfxFormat->nBlockAlign != pcfxFormat->nChannels * (pcfxFormat->wBitsPerSample / 8)) {
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
+}

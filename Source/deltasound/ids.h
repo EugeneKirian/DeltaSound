@@ -24,27 +24,38 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
 
-typedef struct ids ids;
+#define DSSCL_NONE  0
+#define DSSCL_VALID (DSSCL_WRITEPRIMARY | DSSCL_EXCLUSIVE | DSSCL_PRIORITY | DSSCL_NORMAL)
+
+typedef struct ds ds;
+typedef struct ids_vft ids_vft;
+typedef struct idsb idsb;
+
+typedef struct ids {
+    const ids_vft*  Self;
+    allocator*      Allocator;
+    LONG            RefCount;
+    ds*             Instance;
+} ids;
 
 typedef HRESULT(DELTACALL* LPIDSQUERYINTERFACE)(ids*, REFIID, LPVOID*);
 typedef ULONG(DELTACALL* LPIDSADDREF)(ids*);
 typedef ULONG(DELTACALL* LPIDSRELEASE)(ids*);
 
-typedef HRESULT(DELTACALL* LPIDSCREATESOUNDBUFFER)(ids*, LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, LPUNKNOWN pUnkOuter);
+typedef HRESULT(DELTACALL* LPIDSCREATESOUNDBUFFER)(ids*, LPCDSBUFFERDESC pcDSBufferDesc, idsb** ppDSBuffer, LPUNKNOWN pUnkOuter);
 typedef HRESULT(DELTACALL* LPIDSGETCAPS)(ids*, LPDSCAPS pDSCaps);
-typedef HRESULT(DELTACALL* LPIDSDUPLICATESOUNDBUFFER)(ids*, LPDIRECTSOUNDBUFFER pDSBufferOriginal, LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate);
+typedef HRESULT(DELTACALL* LPIDSDUPLICATESOUNDBUFFER)(ids*, idsb* pDSBufferOriginal, idsb** ppDSBufferDuplicate);
 typedef HRESULT(DELTACALL* LPIDSSETCOOPERATIVELEVEL)(ids*, HWND hwnd, DWORD dwLevel);
 typedef HRESULT(DELTACALL* LPIDSCOMPACT)(ids*);
 typedef HRESULT(DELTACALL* LPIDSGETSPEAKERCONFIG)(ids*, LPDWORD pdwSpeakerConfig);
 typedef HRESULT(DELTACALL* LPIDSSETSPEAKERCONFIG)(ids*, DWORD dwSpeakerConfig);
 typedef HRESULT(DELTACALL* LPIDSINITIALIZE)(ids*, LPCGUID pcGuidDevice);
 
-typedef struct ids_vft ids_vft;
+HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut);
+VOID DELTACALL ids_release(ids* pIDS);
 
-struct ids {
-    const ids_vft* Self;
-};
-
-HRESULT DELTACALL ids_create(ids* pIDS);
+HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);
+ULONG DELTACALL ids_add_ref(ids* self);
+ULONG DELTACALL ids_remove_ref(ids* self);

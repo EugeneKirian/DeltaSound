@@ -22,11 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundenumerate.h"
-#include "directsoundcaptureenumerate.h"
-#include "getdeviceid.h"
+#include "directsound_createsoundbuffer.h"
+#include "directsound_enumerate.h"
+#include "directsound_getcaps.h"
+#include "directsound_setcooperativelevel.h"
+
+#include "directsoundbuffer_primary_get.h"
+#include "directsoundbuffer_primary_set.h"
+
+#include "directsoundcapture_enumerate.h"
+
 #include "directsoundcreate.h"
-#include "directsoundgetcaps.h"
+#include "getdeviceid.h"
 
 #include <stdio.h>
 
@@ -60,11 +67,19 @@ int main(int argc, char** argv) {
 
     TEST(DirectSoundEnumerateA);
     TEST(DirectSoundEnumerateW);
+
     TEST(DirectSoundCaptureEnumerateA);
     TEST(DirectSoundCaptureEnumerateW);
+
     TEST(GetDeviceID);
+
     TEST(DirectSoundCreate);
+    TEST(DirectSoundCreateSoundBuffer);
+    TEST(DirectSoundSetCooperativeLevel);
     TEST(DirectSoundGetCaps);
+
+    TEST(DirectSoundBufferPrimaryGet);
+    TEST(DirectSoundBufferPrimarySet);
 
 exit:
 

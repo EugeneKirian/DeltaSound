@@ -28,10 +28,12 @@ SOFTWARE.
 
 typedef struct deltasound {
     allocator*          Allocator;
-    CRITICAL_SECTION    Lock;
+    GUID                ID;
+    CRITICAL_SECTION    Lock;   // TODO
 } deltasound;
 
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
 VOID DELTACALL deltasound_release(deltasound* pDS);
 
-HRESULT DELTACALL deltasound_create_ds(deltasound* pDS, REFIID riid, LPDIRECTSOUND* ppOut);
+HRESULT DELTACALL deltasound_create_directsound(deltasound* pDS,
+    REFIID riid, LPCGUID pcGuidDevice, LPDIRECTSOUND* ppOut);

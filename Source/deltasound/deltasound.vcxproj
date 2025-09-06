@@ -24,9 +24,12 @@
     <ClInclude Include="deltasound.h" />
     <ClInclude Include="device.h" />
     <ClInclude Include="ds.h" />
+    <ClInclude Include="dsb.h" />
     <ClInclude Include="ids.h" />
+    <ClInclude Include="idsb.h" />
     <ClInclude Include="uuid.h" />
     <ClInclude Include="device_info.h" />
+    <ClInclude Include="wave_format.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocator.c" />
@@ -34,8 +37,11 @@
     <ClCompile Include="device.c" />
     <ClCompile Include="device_info.c" />
     <ClCompile Include="ds.c" />
+    <ClCompile Include="dsb.c" />
     <ClCompile Include="ids.c" />
+    <ClCompile Include="idsb.c" />
     <ClCompile Include="uuid.c" />
+    <ClCompile Include="wave_format.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

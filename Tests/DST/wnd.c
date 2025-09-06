@@ -22,29 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "wnd.h"
 
-#include "allocator.h"
-#include "device_info.h"
+ATOM RegisterWindowClass(LPCSTR lpszName) {
+    WNDCLASSA wnd;
+    ZeroMemory(&wnd, sizeof(WNDCLASSA));
 
-typedef struct device {
-    allocator*              Allocator;
-    LONG                    RefCount;
-    device_info             Info;
-    IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
-    // IAudioStreamVolume*     AudioVolume; //  TODO  Is this needed?
-    PWAVEFORMATEXTENSIBLE   WaveFormat;
-    HANDLE                  AudioEvent;
-    HANDLE                  Thread;
-    BOOL                    Close;
-} device;
+    wnd.lpfnWndProc = DefWindowProcA;
+    wnd.hInstance = GetModuleHandleA(NULL);
+    wnd.lpszClassName = lpszName;
 
-HRESULT DELTACALL device_create(
-    allocator* pAlloc, DWORD dwType, device_info* pInfo, device** ppOut);
+    return RegisterClassA(&wnd);
+}
 
-ULONG DELTACALL device_add_ref(device* pDev);
-ULONG DELTACALL device_remove_ref(device* pDev);
-
-VOID DELTACALL device_release(device* pDev);
+HWND InitWindow(LPCSTR lpszName) {
+    return CreateWindowExA(WS_EX_OVERLAPPEDWINDOW, lpszName, lpszName,
+        WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, NULL, NULL, GetModuleHandleA(NULL), NULL);
+}
