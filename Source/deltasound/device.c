@@ -43,7 +43,7 @@ HRESULT DELTACALL device_get_period(device* pDev, LPREFERENCE_TIME pDefaultPerio
 HRESULT DELTACALL device_get_mix_format(device* pDev, LPWAVEFORMATEX* ppWaveFormat);
 
 HRESULT DELTACALL device_create(
-    allocator* pAlloc, DWORD dwType, LPCGUID pcGuidDevice, device** ppOut) {
+    allocator* pAlloc, DWORD dwType, device_info* pInfo, device** ppOut) {
     if (pAlloc == NULL) {
         return E_INVALIDARG;
     }
@@ -52,22 +52,16 @@ HRESULT DELTACALL device_create(
         return E_INVALIDARG;
     }
 
-    if (pcGuidDevice == NULL || ppOut == NULL) {
+    if (pInfo == NULL || ppOut == NULL) {
         return E_INVALIDARG;
-    }
-
-    device_info dev;
-    ZeroMemory(&dev, sizeof(device_info));
-
-    if (FAILED(device_info_get_device(dwType, pcGuidDevice, &dev))) {
-        return DSERR_NODRIVER;
     }
 
     HRESULT hr = S_OK;
     device* instance = NULL;
+
     if (SUCCEEDED(hr = device_allocate(pAlloc, &instance))) {
         instance->RefCount = 1;
-        CopyMemory(&instance->Info, &dev, sizeof(device_info));
+        CopyMemory(&instance->Info, pInfo, sizeof(device_info));
 
         device_thread_context* ctx;
         if (FAILED(hr = allocator_allocate(pAlloc, sizeof(device_thread_context), &ctx))) {
@@ -122,14 +116,13 @@ ULONG DELTACALL device_remove_ref(device* self) {
         return 0;
     }
 
-    LONG count = InterlockedDecrement(&self->RefCount);
+    if (InterlockedDecrement(&self->RefCount) <= 0) {
+        self->RefCount = 0;
 
-    if (count <= 0) {
-        count = 0;
         device_release(self);
     }
 
-    return count;
+    return self->RefCount;
 }
 
 VOID DELTACALL device_release(device* self) {
@@ -158,17 +151,16 @@ HRESULT DELTACALL device_allocate(allocator* pAlloc, device** ppOut) {
 
     HRESULT hr = S_OK;
     device* instance = NULL;
-    if (FAILED(hr = allocator_allocate(pAlloc, sizeof(device), &instance))) {
-        return hr;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(device), &instance))) {
+        ZeroMemory(instance, sizeof(device));
+
+        instance->Allocator = pAlloc;
+
+        *ppOut = instance;
     }
 
-    ZeroMemory(instance, sizeof(device));
-
-    instance->Allocator = pAlloc;
-
-    *ppOut = instance;
-
-    return S_OK;
+    return hr;
 }
 
 HRESULT DELTACALL device_initialize(device* self) {
@@ -208,7 +200,7 @@ HRESULT DELTACALL device_initialize(device* self) {
     }
 
     {
-        const size_t size = sizeof(WAVEFORMATEX) - sizeof(WORD) + wfx->cbSize;
+        const size_t size = sizeof(WAVEFORMATEX) + wfx->cbSize;
 
         if (FAILED(hr = allocator_allocate(self->Allocator, size, &self->WaveFormat))) {
             goto exit;
