@@ -554,6 +554,8 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
             return FALSE;
         }
 
+        /* ------------------------------------------- */
+
         ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MAX + 1);
         rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MAX + 1);
 
@@ -568,6 +570,8 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
             return FALSE;
         }
 
+        /* ------------------------------------------- */
+
         ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MIN / 2);
         rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MIN / 2);
 
@@ -581,6 +585,8 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
         if (ra != rb || abs(va1 - vb1) >= 20) {
             return FALSE;
         }
+
+        /* ------------------------------------------- */
 
         ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MIN / 3);
         rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MIN / 3);
@@ -598,16 +604,27 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
 
         ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MAX);
         rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MAX);
+
+        if (ra != rb) {
+            return FALSE;
+        }
     }
 
-    // GetPan
+    // SetPan
     {
         LONG pa = 0, pb = 0;
 
-        HRESULT ra = IDirectSoundBuffer_GetPan(a, NULL);
-        HRESULT rb = IDirectSoundBuffer_GetPan(b, NULL);
+        HRESULT ra = IDirectSoundBuffer_GetPan(a, &pa);
+        HRESULT rb = IDirectSoundBuffer_GetPan(b, &pb);
 
         if (ra != rb || pa != pb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetPan(a, DSBPAN_LEFT - 1);
+        rb = IDirectSoundBuffer_SetPan(b, DSBPAN_LEFT - 1);
+
+        if (ra != rb) {
             return FALSE;
         }
 
@@ -617,16 +634,78 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
         if (ra != rb || pa != pb) {
             return FALSE;
         }
+
+        /* ------------------------------------------- */
+
+        ra = IDirectSoundBuffer_SetPan(a, DSBPAN_RIGHT + 1);
+        rb = IDirectSoundBuffer_SetPan(b, DSBPAN_RIGHT + 1);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetPan(a, &pa);
+        rb = IDirectSoundBuffer_GetPan(b, &pb);
+
+        if (ra != rb || pa != pb) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        ra = IDirectSoundBuffer_SetPan(a, DSBPAN_RIGHT / 3);
+        rb = IDirectSoundBuffer_SetPan(b, DSBPAN_RIGHT / 3);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetPan(a, &pa);
+        rb = IDirectSoundBuffer_GetPan(b, &pb);
+
+        if (ra != rb || pa != pb) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        ra = IDirectSoundBuffer_SetPan(a, DSBPAN_LEFT / 2);
+        rb = IDirectSoundBuffer_SetPan(b, DSBPAN_LEFT / 2);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetPan(a, &pa);
+        rb = IDirectSoundBuffer_GetPan(b, &pb);
+
+        if (ra != rb || pa != pb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetPan(a, DSBPAN_CENTER);
+        rb = IDirectSoundBuffer_SetPan(b, DSBPAN_CENTER);
+
+        if (ra != rb) {
+            return FALSE;
+        }
     }
 
-    // GetFrequency
+    // SetFrequency
     {
         DWORD fa = 0, fb = 0;
 
-        HRESULT ra = IDirectSoundBuffer_GetFrequency(a, NULL);
-        HRESULT rb = IDirectSoundBuffer_GetFrequency(b, NULL);
+        HRESULT ra = IDirectSoundBuffer_GetFrequency(a, &fa);
+        HRESULT rb = IDirectSoundBuffer_GetFrequency(b, &fb);
 
         if (ra != rb || fa != fb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetFrequency(a, DSBFREQUENCY_MIN - 1);
+        rb = IDirectSoundBuffer_SetFrequency(b, DSBFREQUENCY_MIN - 1);
+
+        if (ra != rb) {
             return FALSE;
         }
 
@@ -636,23 +715,59 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
         if (ra != rb || fa != fb) {
             return FALSE;
         }
-    }
 
-    // GetStatus
-    {
-        DWORD sa = 0, sb = 0;
+        /* ------------------------------------------- */
 
-        HRESULT ra = IDirectSoundBuffer_GetStatus(a, NULL);
-        HRESULT rb = IDirectSoundBuffer_GetStatus(b, NULL);
+        ra = IDirectSoundBuffer_SetFrequency(a, DSBFREQUENCY_MAX + 1);
+        rb = IDirectSoundBuffer_SetFrequency(b, DSBFREQUENCY_MAX + 1);
 
-        if (ra != rb || sa != sb) {
+        if (ra != rb) {
             return FALSE;
         }
 
-        ra = IDirectSoundBuffer_GetStatus(a, &sa);
-        rb = IDirectSoundBuffer_GetStatus(b, &sb);
+        ra = IDirectSoundBuffer_GetFrequency(a, &fa);
+        rb = IDirectSoundBuffer_GetFrequency(b, &fb);
 
-        if (ra != rb || sa != sb) {
+        if (ra != rb || fa != fb) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        ra = IDirectSoundBuffer_SetFrequency(a, DSBFREQUENCY_MAX / 2);
+        rb = IDirectSoundBuffer_SetFrequency(b, DSBFREQUENCY_MAX / 2);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetFrequency(a, &fa);
+        rb = IDirectSoundBuffer_GetFrequency(b, &fb);
+
+        if (ra != rb || fa != fb) {
+            return FALSE;
+        }
+
+        /* ------------------------------------------- */
+
+        ra = IDirectSoundBuffer_SetFrequency(a, DSBFREQUENCY_MAX / 3);
+        rb = IDirectSoundBuffer_SetFrequency(b, DSBFREQUENCY_MAX / 3);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetFrequency(a, &fa);
+        rb = IDirectSoundBuffer_GetFrequency(b, &fb);
+
+        if (ra != rb || fa != fb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetFrequency(a, DSBFREQUENCY_ORIGINAL);
+        rb = IDirectSoundBuffer_SetFrequency(b, DSBFREQUENCY_ORIGINAL);
+
+        if (ra != rb) {
             return FALSE;
         }
     }
@@ -788,14 +903,14 @@ BOOL TestDirectSoundBufferPrimary(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    //for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
-    //    for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
-    //        if (!TestDirectSoundBufferPrimaryGetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
-    //            result = FALSE;
-    //            goto exit;
-    //        }
-    //    }
-    //}
+    for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
+        for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
+            if (!TestDirectSoundBufferPrimaryGetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
+                result = FALSE;
+                goto exit;
+            }
+        }
+    }
 
     for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {

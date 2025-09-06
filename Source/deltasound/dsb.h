@@ -59,7 +59,7 @@ typedef struct dsb {
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;
     FLOAT           Pan;
-    DWORD           Frequency; // TODO is this separate from the format frequency?
+    DWORD           Frequency;
     DWORD           Status;
 } dsb;
 
@@ -87,7 +87,7 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition);
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat);
 HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume);
 HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan);
-// SetFrequency
+HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency);
 // Stop
 // Unlock
 // Restore

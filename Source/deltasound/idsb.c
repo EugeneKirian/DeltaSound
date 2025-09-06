@@ -326,13 +326,28 @@ HRESULT DELTACALL idsb_set_volume(idsb* self, LONG lVolume) {
 }
 
 HRESULT DELTACALL idsb_set_pan(idsb* self, LONG lPan) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (lPan < DSBPAN_LEFT || lPan > DSBPAN_RIGHT) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_set_pan(self->Instance, (FLOAT)lPan / (FLOAT)DSBPAN_RIGHT);
 }
 
 HRESULT DELTACALL idsb_set_frequency(idsb* self, DWORD dwFrequency) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (dwFrequency != DSBFREQUENCY_ORIGINAL
+        && (dwFrequency < DSBFREQUENCY_MIN || dwFrequency > DSBFREQUENCY_MAX)) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_set_frequency(self->Instance, dwFrequency);
 }
 
 HRESULT DELTACALL idsb_stop(idsb* self) {

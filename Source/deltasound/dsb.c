@@ -36,10 +36,10 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut) {
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
         instance->Caps.dwSize = sizeof(DSBCAPS);
 
+        // TODO better way
         instance->Pan = DSB_CENTER_PAN;
         instance->Volume = DSB_MAX_VOLUME;
 
-        // TODO better way
         instance->Format->wFormatTag = WAVE_FORMAT_PCM;
         instance->Format->nChannels = 2;
         instance->Format->nSamplesPerSec = 22050;
@@ -370,7 +370,25 @@ HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan) {
         return DSERR_CONTROLUNAVAIL;
     }
 
-    self->Pan = min(max(fPan, DSB_LEFT_PAN), DSB_RIGHT_PAN);
+    self->Pan = fPan;
+
+    return S_OK;
+}
+
+HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
+    if (!(self->Caps.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
+        return DSERR_CONTROLUNAVAIL;
+    }
+
+    self->Frequency = dwFrequency;
 
     return S_OK;
 }
