@@ -27,7 +27,8 @@ SOFTWARE.
 #include "directsound_getcaps.h"
 #include "directsound_setcooperativelevel.h"
 
-#include "directsoundbuffer_primary.h"
+#include "directsoundbuffer_primary_get.h"
+#include "directsoundbuffer_primary_set.h"
 
 #include "directsoundcapture_enumerate.h"
 
@@ -77,7 +78,8 @@ int main(int argc, char** argv) {
     TEST(DirectSoundSetCooperativeLevel);
     TEST(DirectSoundGetCaps);
 
-    TEST(DirectSoundBufferPrimary);
+    TEST(DirectSoundBufferPrimaryGet);
+    TEST(DirectSoundBufferPrimarySet);
 
 exit:
 
