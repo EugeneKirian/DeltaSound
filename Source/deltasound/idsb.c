@@ -205,7 +205,7 @@ HRESULT DELTACALL idsb_get_volume(idsb* self, LPLONG plVolume) {
     FLOAT volume = DSB_MIN_VOLUME;
 
     if (SUCCEEDED(hr = dsb_get_volume(self->Instance, &volume))) {
-        *plVolume = (LONG)((DSB_MAX_VOLUME - volume) * (DSBVOLUME_MIN - DSBVOLUME_MAX));
+        *plVolume = (LONG)(volume * (DSBVOLUME_MAX - DSBVOLUME_MIN)) + DSBVOLUME_MIN;
     }
 
     return hr;
@@ -320,7 +320,7 @@ HRESULT DELTACALL idsb_set_volume(idsb* self, LONG lVolume) {
         return E_INVALIDARG;
     }
 
-    const FLOAT volume = (FLOAT)lVolume / (DSBVOLUME_MAX - DSBVOLUME_MIN);
+    const FLOAT volume = DSB_MAX_VOLUME - (FLOAT)lVolume / (DSBVOLUME_MIN - DSBVOLUME_MAX);
 
     return dsb_set_volume(self->Instance, volume);
 }

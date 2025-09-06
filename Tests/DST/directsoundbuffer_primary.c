@@ -554,7 +554,50 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
             return FALSE;
         }
 
-        // TODO more tests
+        ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MAX + 1);
+        rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MAX + 1);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetVolume(a, &va1);
+        rb = IDirectSoundBuffer_GetVolume(b, &vb1);
+
+        if (ra != rb || va1 != vb1) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MIN / 2);
+        rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MIN / 2);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetVolume(a, &va1);
+        rb = IDirectSoundBuffer_GetVolume(b, &vb1);
+
+        if (ra != rb || abs(va1 - vb1) >= 20) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MIN / 3);
+        rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MIN / 3);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_GetVolume(a, &va1);
+        rb = IDirectSoundBuffer_GetVolume(b, &vb1);
+
+        if (ra != rb || abs(va1 - vb1) >= 20) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetVolume(a, DSBVOLUME_MAX);
+        rb = IDirectSoundBuffer_SetVolume(b, DSBVOLUME_MAX);
     }
 
     // GetPan
