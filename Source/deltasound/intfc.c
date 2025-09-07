@@ -105,6 +105,10 @@ HRESULT DELTACALL intfc_query_item(intfc* self, REFIID riid, LPVOID* ppItem) {
         return E_INVALIDARG;
     }
 
+    if (self->Count == 0) {
+        return E_NOINTERFACE;
+    }
+
     LPVOID instance = NULL;
 
     EnterCriticalSection(&self->Lock);
@@ -137,6 +141,7 @@ HRESULT DELTACALL intfc_add_item(intfc* self, REFIID riid, LPVOID pItem) {
     if (self->Capacity < self->Count + 1) {
         HRESULT hr = S_OK;
         if (FAILED(hr = intfc_resize(self))) {
+            LeaveCriticalSection(&self->Lock);
             return hr;
         }
     }
@@ -158,6 +163,10 @@ HRESULT DELTACALL intfc_remove_item(intfc* self, REFIID riid) {
 
     if (riid == NULL) {
         return E_INVALIDARG;
+    }
+
+    if (self->Count == 0) {
+        return S_OK;
     }
 
     EnterCriticalSection(&self->Lock);

@@ -40,26 +40,16 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 
     if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
-            ids* intfc = NULL;
+            dsb* main = NULL;
 
-            if (SUCCEEDED(hr = ids_create(pAlloc, riid, &intfc))) {
-                if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
-                    intfc->Instance = instance;
+            if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &main))) {
+                // TODO better initialization for main buffer properties
 
-                    dsb* main = NULL;
+                main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
 
-                    if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &main))) {
-                        // TODO better initialization for main buffer properties
-
-                        main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
-
-                        instance->Main = main;
-                        *ppOut = instance;
-                        return S_OK;
-                    }
-                }
-
-                ids_release(intfc);
+                instance->Main = main;
+                *ppOut = instance;
+                return S_OK;
             }
         }
 
@@ -95,7 +85,27 @@ VOID DELTACALL ds_release(ds* self) {
 HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, ids** ppOut) {
     // TODO synchronization
 
-    return E_NOTIMPL;
+    ids* instance = NULL;
+
+    if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
+        ids_add_ref(instance);
+        *ppOut = instance;
+        return S_OK;
+    }
+
+    HRESULT hr = S_OK;
+
+    if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
+        if (SUCCEEDED(hr = ds_add_ref(self, instance))) {
+            instance->Instance = self;
+            *ppOut = instance;
+            return S_OK;
+        }
+
+        ids_release(instance);
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL ds_add_ref(ds* self, ids* pIDS) {
