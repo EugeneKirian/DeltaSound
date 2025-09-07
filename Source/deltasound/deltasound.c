@@ -56,13 +56,13 @@ HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = ds_create(self->Allocator, &instance))) {
+    if (SUCCEEDED(hr = ds_create(self->Allocator, riid, &instance))) {
         instance->Instance = self;
-        CopyMemory(&self->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = ds_initialize(instance, pcGuidDevice))) {
-            *ppOut = (LPDIRECTSOUND)instance->Interfaces[0];
-            goto exit;
+            if (SUCCEEDED(hr = ds_query_interface(instance, riid, (ids**)ppOut))) {
+                goto exit;
+            }
         }
 
         ds_release(instance);

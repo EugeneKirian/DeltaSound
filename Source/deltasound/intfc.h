@@ -24,36 +24,17 @@ SOFTWARE.
 
 #pragma once
 
-#include "intfc.h"
+#include "allocator.h"
 
-typedef struct deltasound deltasound;
-typedef struct device device;
-typedef struct dsb dsb;
-typedef struct ids ids;
+typedef struct intfc intfc;
 
-typedef struct ds {
-    allocator*  Allocator;
-    GUID        ID;
-    deltasound* Instance;
-    intfc*      Interfaces;
+HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut);
+VOID DELTACALL intfc_release(intfc* pIntfc);
 
-    HWND        HWND;
-    DWORD       Level;
-    device*     Device;
-    dsb*        Main;
-} ds;
+HRESULT DELTACALL intfc_get_item(intfc* pIntfc, UINT nIndex, LPVOID* ppItem);
+HRESULT DELTACALL intfc_query_item(intfc* pIntfc, REFIID riid, LPVOID* ppItem);
 
-HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut);
-VOID DELTACALL ds_release(ds* pDS);
+HRESULT DELTACALL intfc_add_item(intfc* pIntfc, REFIID riid, LPVOID pItem);
+HRESULT DELTACALL intfc_remove_item(intfc* pIntfc, REFIID riid);
 
-HRESULT DELTACALL ds_query_interface(ds* pDS, REFIID riid, ids** ppOut);
-HRESULT DELTACALL ds_add_ref(ds* pDS, ids* pIDS);
-HRESULT DELTACALL ds_remove_ref(ds* pDS, ids* pIDS);
-
-HRESULT DELTACALL ds_create_dsb(ds* pDS, REFIID riid, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
-
-HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
-
-HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel);
-
-HRESULT DELTACALL ds_initialize(ds* pDS, LPCGUID pcGuidDevice);
+UINT DELTACALL intfc_get_count(intfc* pIntfc);

@@ -66,8 +66,8 @@ const static ids_vft ids_self = {
 
 HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut);
 
-HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
+HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
+    if (pAlloc == NULL || riid  == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
@@ -76,6 +76,7 @@ HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut) {
 
     if (SUCCEEDED(hr = ids_allocate(pAlloc, &instance))) {
         instance->Self = &ids_self;
+        CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
         *ppOut = instance;
     }
@@ -88,8 +89,15 @@ VOID DELTACALL ids_release(ids* self) {
 }
 
 HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (riid == NULL || ppvObject == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return ds_query_interface(self->Instance, riid, (ids**)ppvObject);
 }
 
 ULONG DELTACALL ids_add_ref(ids* self) {
@@ -170,7 +178,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
     }
 
     // dwReserved
-    if(pcDesc->dwReserved != 0) {
+    if (pcDesc->dwReserved != 0) {
         return E_INVALIDARG;
     }
 
@@ -220,8 +228,11 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
-    if (SUCCEEDED(hr = ds_create_dsb(self->Instance, pcDesc, &instance))) {
-        *ppBuffer = instance->Interfaces[0];
+    REFIID id = IsEqualIID(&self->ID, &IID_IDirectSound)
+        ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
+
+    if (SUCCEEDED(hr = ds_create_dsb(self->Instance, id, pcDesc, &instance))) {
+        hr = dsb_query_interface(instance, id, ppBuffer);
     }
 
     return hr;

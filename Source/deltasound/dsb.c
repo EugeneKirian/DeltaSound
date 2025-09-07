@@ -29,41 +29,31 @@ SOFTWARE.
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
 
-HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut) {
+HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
-        instance->Caps.dwSize = sizeof(DSBCAPS);
+        CopyMemory(&instance->ID, riid, sizeof(GUID));
 
-        // TODO better way
-        instance->Pan = DSB_CENTER_PAN;
-        instance->Volume = DSB_MAX_VOLUME;
+        if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            instance->Caps.dwSize = sizeof(DSBCAPS);
 
-        instance->Format->wFormatTag = WAVE_FORMAT_PCM;
-        instance->Format->nChannels = 2;
-        instance->Format->nSamplesPerSec = 22050;
-        instance->Format->nAvgBytesPerSec = 44100;
-        instance->Format->nBlockAlign = 2;
-        instance->Format->wBitsPerSample = 8;
-        instance->Format->cbSize = 0;
+            // TODO better way
+            instance->Pan = DSB_CENTER_PAN;
+            instance->Volume = DSB_MAX_VOLUME;
 
-        if (!bInterface) {
+            instance->Format->wFormatTag = WAVE_FORMAT_PCM;
+            instance->Format->nChannels = 2;
+            instance->Format->nSamplesPerSec = 22050;
+            instance->Format->nAvgBytesPerSec = 44100;
+            instance->Format->nBlockAlign = 2;
+            instance->Format->wBitsPerSample = 8;
+            instance->Format->cbSize = 0;
+
             *ppOut = instance;
+
             return S_OK;
-        }
-
-        idsb* intfc = NULL;
-
-        if (SUCCEEDED(hr = idsb_create(pAlloc, &intfc))) {
-            intfc->Instance = instance;
-
-            if (SUCCEEDED(hr = dsb_add_ref(instance, intfc))) {
-                *ppOut = instance;
-                return S_OK;
-            }
-
-            idsb_release(intfc);
         }
 
         dsb_release(instance);
@@ -73,11 +63,15 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut) {
 }
 
 VOID DELTACALL dsb_release(dsb* self) {
-    for (LONG i = 0; i < self->InterfaceCount; i++) {
-        idsb_release(self->Interfaces[i]);
+    for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
+        idsb* instance = NULL;
+        if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
+            idsb_release(instance);
+        }
     }
 
-    allocator_free(self->Allocator, self->Interfaces);
+    intfc_release(self->Interfaces);
+
     allocator_free(self->Allocator, self->Format);
 
     // TODO
@@ -93,52 +87,47 @@ HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) {
     return S_OK;
 }
 
-HRESULT DELTACALL dsb_add_ref(dsb* self, idsb* pIDSB) {
-    if (self == NULL) {
-        return E_POINTER;
+HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, idsb** ppOut) {
+    // TODO synchronization
+
+    idsb* instance = NULL;
+    const GUID* id = IsEqualIID(riid, &IID_IUnknown) ? &IID_IDirectSoundBuffer : riid;
+
+    if (SUCCEEDED(intfc_query_item(self->Interfaces, id, &instance))) {
+        idsb_add_ref(instance);
+        *ppOut = instance;
+        return S_OK;
     }
 
     HRESULT hr = S_OK;
 
-    // TODO synchronization
+    if (SUCCEEDED(hr = idsb_create(self->Allocator, id, &instance))) {
+        if (SUCCEEDED(hr = dsb_add_ref(self, instance))) {
+            instance->Instance = self;
+            *ppOut = instance;
+            return S_OK;
+        }
 
-    if (SUCCEEDED(hr = allocator_reallocate(self->Allocator,
-        self->Interfaces, sizeof(idsb*) * (self->InterfaceCount + 1), (LPVOID*)&self->Interfaces))) {
-        self->Interfaces[self->InterfaceCount] = pIDSB;
-        self->InterfaceCount++;
+        idsb_release(instance);
     }
 
     return hr;
 }
 
+HRESULT DELTACALL dsb_add_ref(dsb* self, idsb* pIDSB) {
+    return intfc_add_item(self->Interfaces, &pIDSB->ID, pIDSB);
+}
+
 HRESULT DELTACALL dsb_remove_ref(dsb* self, idsb* pIDSB) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
+    intfc_remove_item(self->Interfaces, &pIDSB->ID);
 
-    HRESULT hr = S_OK;
-
-    // TODO synchronization
-
-    for (LONG i = 0; i < self->InterfaceCount; i++) {
-        if (self->Interfaces[i] == pIDSB) {
-            for (LONG x = i; x < self->InterfaceCount - 1; x++) {
-                self->Interfaces[x] = self->Interfaces[x + 1];
-            }
-
-            self->InterfaceCount--;
-
-            break;
-        }
-    }
-
-    if (self->InterfaceCount <= 0) {
+    if (intfc_get_count(self->Interfaces) == 0) {
         if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             dsb_release(self);
         }
     }
 
-    return hr;
+    return S_OK;
 }
 
 HRESULT DELTACALL dsb_get_caps(dsb* self, LPDSBCAPS pCaps) {
