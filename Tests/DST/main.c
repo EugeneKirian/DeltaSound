@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
 
     TEST(DirectSoundCreate);
     TEST(DirectSoundBasics);
+  
     TEST(DirectSoundCreateSoundBuffer);
     TEST(DirectSoundSetCooperativeLevel);
     TEST(DirectSoundGetCaps);
