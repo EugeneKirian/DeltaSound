@@ -60,8 +60,10 @@ HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
         instance->Instance = self;
 
         if (SUCCEEDED(hr = ds_initialize(instance, pcGuidDevice))) {
-            *ppOut = (LPDIRECTSOUND)instance->Interfaces[0];
-            goto exit;
+            // TODO use Interfaces
+            if (SUCCEEDED(hr = intfc_query_item(instance->Interfaces, riid, ppOut))) {
+                goto exit;
+            }
         }
 
         ds_release(instance);

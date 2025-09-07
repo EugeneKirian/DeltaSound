@@ -31,7 +31,7 @@ SOFTWARE.
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
 
 HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
-    if (pAlloc == NULL || riid == NULL|| ppOut == NULL) {
+    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
@@ -39,26 +39,28 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     ds* instance = NULL;
 
     if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
-        ids* intfc = NULL;
+        if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            ids* intfc = NULL;
 
-        if (SUCCEEDED(hr = ids_create(pAlloc, riid, &intfc))) {
-            if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
-                intfc->Instance = instance;
+            if (SUCCEEDED(hr = ids_create(pAlloc, riid, &intfc))) {
+                if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
+                    intfc->Instance = instance;
 
-                dsb* main = NULL;
+                    dsb* main = NULL;
 
-                if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &main))) {
-                    // TODO better initialization for main buffer properties
+                    if (SUCCEEDED(hr = dsb_create(pAlloc, FALSE, &main))) {
+                        // TODO better initialization for main buffer properties
 
-                    main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
+                        main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
 
-                    instance->Main = main;
-                    *ppOut = instance;
-                    return S_OK;
+                        instance->Main = main;
+                        *ppOut = instance;
+                        return S_OK;
+                    }
                 }
-            }
 
-            ids_release(intfc);
+                ids_release(intfc);
+            }
         }
 
         ds_release(instance);
@@ -68,11 +70,14 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 }
 
 VOID DELTACALL ds_release(ds* self) {
-    for (LONG i = 0; i < self->InterfaceCount; i++) {
-        ids_release(self->Interfaces[i]);
+    for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
+        ids* instance = NULL;
+        if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
+            ids_release(instance);
+        }
     }
 
-    allocator_free(self->Allocator, self->Interfaces);
+    intfc_release(self->Interfaces);
 
     if (self->Main != NULL) {
         dsb_release(self->Main);
@@ -87,50 +92,24 @@ VOID DELTACALL ds_release(ds* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL ds_add_ref(ds* self, ids* pIDS) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    HRESULT hr = S_OK;
-
+HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, ids** ppOut) {
     // TODO synchronization
 
-    if (SUCCEEDED(hr = allocator_reallocate(self->Allocator,
-        self->Interfaces, sizeof(ids*) * (self->InterfaceCount + 1), (LPVOID*)&self->Interfaces))) {
-        self->Interfaces[self->InterfaceCount] = pIDS;
-        self->InterfaceCount++;
-    }
+    return E_NOTIMPL;
+}
 
-    return hr;
+HRESULT DELTACALL ds_add_ref(ds* self, ids* pIDS) {
+    return intfc_add_item(self->Interfaces, &pIDS->ID, pIDS);
 }
 
 HRESULT DELTACALL ds_remove_ref(ds* self, ids* pIDS) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
+    intfc_remove_item(self->Interfaces, &pIDS->ID);
 
-    HRESULT hr = S_OK;
-
-    // TODO synchronization
-
-    for (LONG i = 0; i < self->InterfaceCount; i++) {
-        if (self->Interfaces[i] == pIDS) {
-            for (LONG x = i; x < self->InterfaceCount - 1; x++) {
-                self->Interfaces[x] = self->Interfaces[x + 1];
-            }
-
-            self->InterfaceCount--;
-
-            break;
-        }
-    }
-
-    if (self->InterfaceCount <= 0) {
+    if (intfc_get_count(self->Interfaces) == 0) {
         ds_release(self);
     }
 
-    return hr;
+    return S_OK;
 }
 
 HRESULT DELTACALL ds_create_dsb(ds* self, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
