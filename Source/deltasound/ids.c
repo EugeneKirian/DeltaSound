@@ -89,8 +89,15 @@ VOID DELTACALL ids_release(ids* self) {
 }
 
 HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (riid == NULL || ppvObject == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return ds_query_interface(self->Instance, riid, (ids**)ppvObject);
 }
 
 ULONG DELTACALL ids_add_ref(ids* self) {

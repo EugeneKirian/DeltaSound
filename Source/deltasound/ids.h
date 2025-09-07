@@ -57,6 +57,6 @@ typedef HRESULT(DELTACALL* LPIDSINITIALIZE)(ids*, LPCGUID pcGuidDevice);
 HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut);
 VOID DELTACALL ids_release(ids* pIDS);
 
-HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);
-ULONG DELTACALL ids_add_ref(ids* self);
-ULONG DELTACALL ids_remove_ref(ids* self);
+HRESULT DELTACALL ids_query_interface(ids* pIDS, REFIID riid, LPVOID* ppvObject);
+ULONG DELTACALL ids_add_ref(ids* pIDS);
+ULONG DELTACALL ids_remove_ref(ids* pIDS);

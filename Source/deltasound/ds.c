@@ -96,19 +96,25 @@ HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, ids** ppOut) {
         return S_OK;
     }
 
-    HRESULT hr = S_OK;
+    if (IsEqualIID(&IID_IUnknown, riid)
+        || IsEqualIID(&IID_IDirectSound, riid)
+        || (IsEqualIID(&IID_IDirectSound8, &self->ID) && IsEqualIID(&IID_IDirectSound8, riid))) {
+        HRESULT hr = S_OK;
 
-    if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
-        if (SUCCEEDED(hr = ds_add_ref(self, instance))) {
-            instance->Instance = self;
-            *ppOut = instance;
-            return S_OK;
+        if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
+            if (SUCCEEDED(hr = ds_add_ref(self, instance))) {
+                instance->Instance = self;
+                *ppOut = instance;
+                return S_OK;
+            }
+
+            ids_release(instance);
         }
 
-        ids_release(instance);
+        return hr;
     }
 
-    return hr;
+    return E_NOINTERFACE;
 }
 
 HRESULT DELTACALL ds_add_ref(ds* self, ids* pIDS) {

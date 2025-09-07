@@ -95,6 +95,6 @@ typedef struct dsb_desc_max {
 HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut);
 VOID DELTACALL idsb_release(idsb* pIDSB);
 
-HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppvObject);
-ULONG DELTACALL idsb_add_ref(idsb* self);
-ULONG DELTACALL idsb_remove_ref(idsb* self);
+HRESULT DELTACALL idsb_query_interface(idsb* pIDSB, REFIID riid, LPVOID* ppvObject);
+ULONG DELTACALL idsb_add_ref(idsb* pIDSB);
+ULONG DELTACALL idsb_remove_ref(idsb* pIDSB);

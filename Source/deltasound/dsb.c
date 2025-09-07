@@ -91,8 +91,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, idsb** ppOut) {
     // TODO synchronization
 
     idsb* instance = NULL;
+    const GUID* id = IsEqualIID(riid, &IID_IUnknown) ? &IID_IDirectSoundBuffer : riid;
 
-    if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
+    if (SUCCEEDED(intfc_query_item(self->Interfaces, id, &instance))) {
         idsb_add_ref(instance);
         *ppOut = instance;
         return S_OK;
@@ -100,7 +101,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, idsb** ppOut) {
 
     HRESULT hr = S_OK;
 
-    if (SUCCEEDED(hr = idsb_create(self->Allocator, riid, &instance))) {
+    if (SUCCEEDED(hr = idsb_create(self->Allocator, id, &instance))) {
         if (SUCCEEDED(hr = dsb_add_ref(self, instance))) {
             instance->Instance = self;
             *ppOut = instance;

@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "directsound_basics.h"
+#include "directsound_create.h"
 #include "directsound_createsoundbuffer.h"
 #include "directsound_enumerate.h"
 #include "directsound_getcaps.h"
@@ -32,7 +34,6 @@ SOFTWARE.
 
 #include "directsoundcapture_enumerate.h"
 
-#include "directsoundcreate.h"
 #include "getdeviceid.h"
 
 #include <stdio.h>
@@ -74,6 +75,7 @@ int main(int argc, char** argv) {
     TEST(GetDeviceID);
 
     TEST(DirectSoundCreate);
+    TEST(DirectSoundBasics);
     TEST(DirectSoundCreateSoundBuffer);
     TEST(DirectSoundSetCooperativeLevel);
     TEST(DirectSoundGetCaps);
