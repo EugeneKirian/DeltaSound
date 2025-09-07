@@ -45,7 +45,7 @@ typedef struct ds {
     dsb*        Main;
 } ds;
 
-HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut);
+HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut);
 VOID DELTACALL ds_release(ds* pDS);
 
 HRESULT DELTACALL ds_add_ref(ds* pDS, ids* pIDS);

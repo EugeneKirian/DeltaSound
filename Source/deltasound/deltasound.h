@@ -28,7 +28,6 @@ SOFTWARE.
 
 typedef struct deltasound {
     allocator*          Allocator;
-    GUID                ID;
     CRITICAL_SECTION    Lock;   // TODO
 } deltasound;
 

@@ -36,6 +36,7 @@ typedef struct idsb idsb;
 typedef struct ids {
     const ids_vft*  Self;
     allocator*      Allocator;
+    GUID            ID;
     LONG            RefCount;
     ds*             Instance;
 } ids;
@@ -53,7 +54,7 @@ typedef HRESULT(DELTACALL* LPIDSGETSPEAKERCONFIG)(ids*, LPDWORD pdwSpeakerConfig
 typedef HRESULT(DELTACALL* LPIDSSETSPEAKERCONFIG)(ids*, DWORD dwSpeakerConfig);
 typedef HRESULT(DELTACALL* LPIDSINITIALIZE)(ids*, LPCGUID pcGuidDevice);
 
-HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut);
+HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut);
 VOID DELTACALL ids_release(ids* pIDS);
 
 HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject);

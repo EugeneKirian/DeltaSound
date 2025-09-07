@@ -66,8 +66,8 @@ const static ids_vft ids_self = {
 
 HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut);
 
-HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
+HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
+    if (pAlloc == NULL || riid  == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
@@ -76,6 +76,7 @@ HRESULT DELTACALL ids_create(allocator* pAlloc, ids** ppOut) {
 
     if (SUCCEEDED(hr = ids_allocate(pAlloc, &instance))) {
         instance->Self = &ids_self;
+        CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
         *ppOut = instance;
     }

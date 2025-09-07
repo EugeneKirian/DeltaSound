@@ -30,8 +30,8 @@ SOFTWARE.
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
 
-HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
+HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
+    if (pAlloc == NULL || riid == NULL|| ppOut == NULL) {
         return E_INVALIDARG;
     }
 
@@ -41,7 +41,7 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, ds** ppOut) {
     if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
         ids* intfc = NULL;
 
-        if (SUCCEEDED(hr = ids_create(pAlloc, &intfc))) {
+        if (SUCCEEDED(hr = ids_create(pAlloc, riid, &intfc))) {
             if (SUCCEEDED(hr = ds_add_ref(instance, intfc))) {
                 intfc->Instance = instance;
 
