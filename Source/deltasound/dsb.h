@@ -24,8 +24,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
 #include "idsb.h"
+#include "intfc.h"
 
 #define DSB_LEFT_PAN    (-1.0f)
 #define DSB_CENTER_PAN  (0.0f)
@@ -40,11 +40,9 @@ typedef struct ds ds;
 
 typedef struct dsb {
     allocator*      Allocator;
+    GUID            ID;
     ds*             Instance;
-
-    // TODO resizeable array
-    idsb**          Interfaces;
-    LONG            InterfaceCount;
+    intfc*          Interfaces;
 
     DSBCAPS         Caps;
 
@@ -63,11 +61,12 @@ typedef struct dsb {
     DWORD           Status;
 } dsb;
 
-HRESULT DELTACALL dsb_create(allocator* pAlloc, BOOL bInterface, dsb** ppOut);
+HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut);
 VOID DELTACALL dsb_release(dsb* pDSB);
 
 HRESULT DELTACALL dsb_set_flags(dsb* pDSB, DWORD dwFlags);
 
+HRESULT DELTACALL dsb_query_interface(dsb* pDSB, REFIID riid, idsb** ppOut);
 HRESULT DELTACALL dsb_add_ref(dsb* pDSB, idsb* pIDSB);
 HRESULT DELTACALL dsb_remove_ref(dsb* pDSB, idsb* pIDSB);
 

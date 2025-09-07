@@ -171,7 +171,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
     }
 
     // dwReserved
-    if(pcDesc->dwReserved != 0) {
+    if (pcDesc->dwReserved != 0) {
         return E_INVALIDARG;
     }
 
@@ -221,8 +221,11 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
-    if (SUCCEEDED(hr = ds_create_dsb(self->Instance, pcDesc, &instance))) {
-        *ppBuffer = instance->Interfaces[0];
+    REFIID id = IsEqualIID(&self->ID, &IID_IDirectSound)
+        ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
+
+    if (SUCCEEDED(hr = ds_create_dsb(self->Instance, id, pcDesc, &instance))) {
+        hr = dsb_query_interface(instance, id, ppBuffer);
     }
 
     return hr;

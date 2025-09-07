@@ -97,8 +97,8 @@ const static idsb_vft idsb_self = {
 
 HRESULT DELTACALL idsb_allocate(allocator* pAlloc, idsb** ppOut);
 
-HRESULT DELTACALL idsb_create(allocator* pAlloc, idsb** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
+HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut) {
+    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
@@ -107,6 +107,7 @@ HRESULT DELTACALL idsb_create(allocator* pAlloc, idsb** ppOut) {
 
     if (SUCCEEDED(hr = idsb_allocate(pAlloc, &instance))) {
         instance->Self = &idsb_self;
+        CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
         *ppOut = instance;
     }

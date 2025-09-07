@@ -33,6 +33,7 @@ typedef struct ids ids;
 
 typedef struct ds {
     allocator*  Allocator;
+    GUID        ID;
     deltasound* Instance;
     intfc*      Interfaces;
 
@@ -49,7 +50,7 @@ HRESULT DELTACALL ds_query_interface(ds* pDS, REFIID riid, ids** ppOut);
 HRESULT DELTACALL ds_add_ref(ds* pDS, ids* pIDS);
 HRESULT DELTACALL ds_remove_ref(ds* pDS, ids* pIDS);
 
-HRESULT DELTACALL ds_create_dsb(ds* pDS, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
+HRESULT DELTACALL ds_create_dsb(ds* pDS, REFIID riid, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
 
 HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
 
