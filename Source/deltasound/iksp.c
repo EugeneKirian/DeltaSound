@@ -101,6 +101,10 @@ ULONG DELTACALL iksp_remove_ref(iksp* self) {
         return 0;
     }
 
+    if (self->RefCount == 0) {
+        return 0;
+    }
+
     if (InterlockedDecrement(&self->RefCount) <= 0) {
         self->RefCount = 0;
 

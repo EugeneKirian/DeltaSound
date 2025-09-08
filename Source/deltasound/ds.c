@@ -42,17 +42,19 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
-            dsb* main = NULL;
+            if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
+                dsb* main = NULL;
 
-            if (SUCCEEDED(hr = dsb_create(pAlloc,
-                IsEqualIID(&IID_IDirectSound, riid) ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8, &main))) {
-                // TODO better initialization for main buffer properties
+                if (SUCCEEDED(hr = dsb_create(pAlloc,
+                    IsEqualIID(&IID_IDirectSound, riid) ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8, &main))) {
+                    // TODO better initialization for main buffer properties
 
-                main->Caps.dwBufferBytes = DSB_MAX_PRIMARY_BUFFER_SIZE;
+                    main->Caps.dwBufferBytes = DSB_DEFAULT_PRIMARY_BUFFER_SIZE;
 
-                instance->Main = main;
-                *ppOut = instance;
-                return S_OK;
+                    instance->Main = main;
+                    *ppOut = instance;
+                    return S_OK;
+                }
             }
         }
 
@@ -71,6 +73,15 @@ VOID DELTACALL ds_release(ds* self) {
     }
 
     intfc_release(self->Interfaces);
+
+    for (UINT i = arr_get_count(self->Buffers); i != 0; i--) {
+        dsb* instane = NULL;
+        if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instane))) {
+            dsb_release(instane);
+        }
+    }
+
+    arr_release(self->Buffers);
 
     if (self->Main != NULL) {
         dsb_release(self->Main);
@@ -137,23 +148,41 @@ HRESULT DELTACALL ds_create_dsb(ds* self, REFIID riid, LPCDSBUFFERDESC pcDesc, d
     }
 
     if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        dsb_set_flags(self->Main, pcDesc->dwFlags | DSBCAPS_LOCSOFTWARE);
+        const DWORD flags = (pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)
+            ? (pcDesc->dwFlags & (~DSBCAPS_LOCHARDWARE)) : pcDesc->dwFlags;
+        dsb_set_flags(self->Main, flags | DSBCAPS_LOCSOFTWARE);
         *ppOut = self->Main;
         return S_OK;
     }
-
-    // TODO process other flags properly
 
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = dsb_create(self->Allocator, riid, &instance))) {
         if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
-            *ppOut = instance;
-            return S_OK;
+            if (SUCCEEDED(hr = arr_add_item(self->Buffers, instance))) {
+                *ppOut = instance;
+                return S_OK;
+            }
         }
 
         dsb_release(instance);
+    }
+
+    return hr;
+}
+
+HRESULT DELTACALL ds_remove_dsb(ds* self, dsb* pDSB) {
+    HRESULT hr = S_OK;
+
+    for (UINT i = 0; i < arr_get_count(self->Buffers); i++) {
+        dsb* instance = NULL;
+
+        if (SUCCEEDED(hr = arr_get_item(self->Buffers, i, &instance))) {
+            if (instance == pDSB) {
+                return arr_remove_item(self->Buffers, i, NULL);
+            }
+        }
     }
 
     return hr;
@@ -221,10 +250,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
         desc.dwSize = sizeof(DSBUFFERDESC);
-        desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
-
-        // TODO proper initialization of the primary buffer
-        // and code clean-up in ds_create_dsb...
+        desc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_LOCSOFTWARE;
 
         if (SUCCEEDED(hr = dsb_initialize(self->Main, self, &desc))) {
             return S_OK;

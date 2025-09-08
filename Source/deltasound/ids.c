@@ -65,6 +65,8 @@ const static ids_vft ids_self = {
 };
 
 HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut);
+HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc);
+HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc);
 
 HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
     if (pAlloc == NULL || riid  == NULL || ppOut == NULL) {
@@ -113,6 +115,10 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
         return 0;
     }
 
+    if (self->RefCount == 0) {
+        return 0;
+    }
+
     if (InterlockedDecrement(&self->RefCount) <= 0) {
         self->RefCount = 0;
 
@@ -144,19 +150,8 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
 
     // dwFlags
 
-    if (pcDesc->dwFlags == DSBCAPS_NONE
-        || !(pcDesc->dwFlags & DSBCAPS_ALL)) {
-        return E_INVALIDARG;
-    }
-
     if ((pcDesc->dwFlags & DSBCAPS_LOCSOFTWARE)
         && (pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)) {
-        return E_INVALIDARG;
-    }
-
-    const BOOL primary = pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER;
-
-    if (primary && (pcDesc->dwFlags & DSBCAPS_INVALID_PRIMARYBUFFER)) {
         return E_INVALIDARG;
     }
 
@@ -165,47 +160,29 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         return E_INVALIDARG;
     }
 
-    // TODO Other flag validations
-
-    // dwBufferBytes
-    if (primary && pcDesc->dwBufferBytes != 0) {
-        return E_INVALIDARG;
+    HRESULT hr = S_OK;
+    if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (FAILED(hr = ids_validate_primary_buffer_desc(self, pcDesc))) {
+            return hr;
+        }
     }
-
-    if (!primary
-        && (pcDesc->dwBufferBytes < DSBSIZE_MIN || pcDesc->dwBufferBytes > DSBSIZE_MAX)) {
-        return E_INVALIDARG;
+    else {
+        if (FAILED(hr = ids_validate_secondary_buffer_desc(self, pcDesc))) {
+            return hr;
+        }
     }
 
     // dwReserved
+
     if (pcDesc->dwReserved != 0) {
         return E_INVALIDARG;
     }
-
-    // lpwfxFormat
-
-    if (primary && pcDesc->lpwfxFormat != NULL) {
-        return E_INVALIDARG;
-    }
-
-    if (!primary && pcDesc->lpwfxFormat == NULL) {
-        return E_INVALIDARG;
-    }
-
-    // TODO validate lpwfxFormat
 
     // guid3DAlgorithm
 
     if (pcDesc->dwSize == sizeof(dsb_desc_max)
         && !(pcDesc->dwFlags & DSBCAPS_CTRL3D)
         && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &GUID_NULL)) {
-        return E_INVALIDARG;
-    }
-
-    if (primary
-        && pcDesc->dwSize == sizeof(dsb_desc_max)
-        && (pcDesc->dwFlags & DSBCAPS_CTRL3D)
-        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &DS3DALG_DEFAULT)) {
         return E_INVALIDARG;
     }
 
@@ -225,7 +202,6 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         return DSERR_NOAGGREGATION;
     }
 
-    HRESULT hr = S_OK;
     dsb* instance = NULL;
 
     REFIID id = IsEqualIID(&self->ID, &IID_IDirectSound)
@@ -311,4 +287,83 @@ HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut) {
     }
 
     return hr;
+}
+
+HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pcDesc == NULL) {
+        return E_INVALIDARG;
+    }
+
+    // dwFlags
+
+    if (pcDesc->dwFlags & DSBCAPS_INVALID_PRIMARYBUFFER) {
+        return E_INVALIDARG;
+    }
+
+    if (pcDesc->dwFlags & DSBCAPS_CTRLFX) {
+        return E_INVALIDARG;
+    }
+
+    // dwBufferBytes
+
+    if (pcDesc->dwBufferBytes != 0) {
+        return E_INVALIDARG;
+    }
+
+    // lpwfxFormat
+
+    if (pcDesc->lpwfxFormat != NULL) {
+        return E_INVALIDARG;
+    }
+
+    // guid3DAlgorithm
+
+    if (pcDesc->dwSize == sizeof(dsb_desc_max)
+        && (pcDesc->dwFlags & DSBCAPS_CTRL3D)
+        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &DS3DALG_DEFAULT)) {
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
+}
+
+HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pcDesc == NULL) {
+        return E_INVALIDARG;
+    }
+
+    // dwFlags
+
+    if (pcDesc->dwFlags & DSBCAPS_LOCDEFER && !(pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)) {
+        return E_INVALIDARG;
+    }
+
+    if ((pcDesc->dwFlags & DSBCAPS_CTRLFX)
+        && !IsEqualIID(&IID_IDirectSound8, &self->ID)) {
+        return DSERR_DS8_REQUIRED;
+    }
+
+    // dwBufferBytes
+
+    if (pcDesc->dwBufferBytes < DSBSIZE_MIN || pcDesc->dwBufferBytes > DSBSIZE_MAX) {
+        return E_INVALIDARG;
+    }
+
+    // lpwfxFormat
+
+    if (pcDesc->lpwfxFormat == NULL) {
+        return E_INVALIDARG;
+    }
+
+    // TODO validate lpwfxFormat
+
+    return S_OK;
 }

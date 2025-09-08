@@ -22,56 +22,51 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "intfc.h"
+#include "arr.h"
 
 #define DEFAULT_CAPACITY            8
 #define DEFAULT_CAPACITY_MULTIPLIER 2
 
-typedef struct intfc_item {
-    GUID    ID;
-    LPVOID  Item;
-} intfc_item;
-
-struct intfc {
+struct arr {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
 
     UINT                Count;
     UINT                Capacity;
 
-    intfc_item*         Items;
+    LPVOID*             Items;
 };
 
-HRESULT DELTACALL intfc_allocate(allocator* pAlloc, intfc** ppOut);
-HRESULT DELTACALL intfc_resize(intfc* pIntfc);
+HRESULT DELTACALL arr_allocate(allocator* pAlloc, arr** ppOut);
+HRESULT DELTACALL arr_resize(arr* pArray);
 
-HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut) {
+HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    intfc* instance = NULL;
+    arr* instance = NULL;
 
-    if (SUCCEEDED(hr = intfc_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = arr_allocate(pAlloc, &instance))) {
         instance->Count = 0;
         instance->Capacity = DEFAULT_CAPACITY;
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc,
-            instance->Capacity * sizeof(intfc_item), &instance->Items))) {
+            instance->Capacity * sizeof(LPVOID), (LPVOID*)&instance->Items))) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
             return S_OK;
         }
 
-        intfc_release(instance);
+        arr_release(instance);
     }
 
     return hr;
 }
 
-VOID DELTACALL intfc_release(intfc* self) {
+VOID DELTACALL arr_release(arr* self) {
     if (self != NULL) {
         DeleteCriticalSection(&self->Lock);
         allocator_free(self->Allocator, self->Items);
@@ -79,7 +74,35 @@ VOID DELTACALL intfc_release(intfc* self) {
     }
 }
 
-HRESULT DELTACALL intfc_get_item(intfc* self, UINT nIndex, LPVOID* ppItem) {
+HRESULT DELTACALL arr_add_item(arr* self, LPVOID pItem) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pItem == NULL) {
+        return E_INVALIDARG;
+    }
+
+    EnterCriticalSection(&self->Lock);
+
+    if (self->Capacity < self->Count + 1) {
+        HRESULT hr = S_OK;
+        if (FAILED(hr = arr_resize(self))) {
+            LeaveCriticalSection(&self->Lock);
+            return hr;
+        }
+    }
+
+    self->Items[self->Count] = pItem;
+
+    self->Count++;
+
+    LeaveCriticalSection(&self->Lock);
+
+    return S_OK;
+}
+
+HRESULT DELTACALL arr_get_item(arr* self, UINT nIndex, LPVOID* ppItem) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -90,120 +113,55 @@ HRESULT DELTACALL intfc_get_item(intfc* self, UINT nIndex, LPVOID* ppItem) {
 
     EnterCriticalSection(&self->Lock);
 
-    *ppItem = self->Items[nIndex].Item;
+    *ppItem = self->Items[nIndex];
 
     LeaveCriticalSection(&self->Lock);
 
     return S_OK;
 }
 
-HRESULT DELTACALL intfc_query_item(intfc* self, REFIID riid, LPVOID* ppItem) {
+HRESULT DELTACALL arr_remove_item(arr* self, UINT nIndex, LPVOID* ppItem) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppItem == NULL) {
-        return E_INVALIDARG;
-    }
-
-    if (self->Count == 0) {
-        return E_NOINTERFACE;
-    }
-
-    LPVOID instance = NULL;
-
-    EnterCriticalSection(&self->Lock);
-
-    for (UINT i = 0; i < self->Count; i++) {
-        if (IsEqualGUID(riid, &self->Items[i].ID)) {
-            instance = self->Items[i].Item;
-            break;
-        }
-    }
-
-    *ppItem = instance;
-
-    LeaveCriticalSection(&self->Lock);
-
-    return instance == NULL ? E_NOINTERFACE : S_OK;
-}
-
-HRESULT DELTACALL intfc_add_item(intfc* self, REFIID riid, LPVOID pItem) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (riid == NULL || pItem == NULL) {
+    if (self->Count < nIndex + 1) {
         return E_INVALIDARG;
     }
 
     EnterCriticalSection(&self->Lock);
 
-    if (self->Capacity < self->Count + 1) {
-        HRESULT hr = S_OK;
-        if (FAILED(hr = intfc_resize(self))) {
-            LeaveCriticalSection(&self->Lock);
-            return hr;
-        }
+    if (ppItem != NULL) {
+        *ppItem = self->Items[nIndex];
     }
 
-    CopyMemory(&self->Items[self->Count].ID, riid, sizeof(GUID));
-    self->Items[self->Count].Item = pItem;
+    if (self->Count != nIndex + 1) {
+        MoveMemory(&self->Items[nIndex],
+            &self->Items[nIndex + 1], (self->Count - nIndex - 1) * sizeof(LPVOID));
+    }
 
-    self->Count++;
+    self->Count--;
 
     LeaveCriticalSection(&self->Lock);
 
     return S_OK;
 }
 
-HRESULT DELTACALL intfc_remove_item(intfc* self, REFIID riid) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (riid == NULL) {
-        return E_INVALIDARG;
-    }
-
-    if (self->Count == 0) {
-        return S_OK;
-    }
-
-    EnterCriticalSection(&self->Lock);
-
-    for (UINT i = 0; i < self->Count; i++) {
-        if (IsEqualGUID(riid, &self->Items[i].ID)) {
-            for (UINT k = i; k < self->Count - 1; k++) {
-                CopyMemory(&self->Items[k], &self->Items[k + 1], sizeof(intfc_item));
-            }
-
-            self->Count--;
-
-            break;
-        }
-    }
-
-    LeaveCriticalSection(&self->Lock);
-
-    return S_OK;
-}
-
-UINT DELTACALL intfc_get_count(intfc* self) {
+UINT DELTACALL arr_get_count(arr* self) {
     return self == NULL ? 0 : self->Count;
 }
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL intfc_allocate(allocator* pAlloc, intfc** ppOut) {
+HRESULT DELTACALL arr_allocate(allocator* pAlloc, arr** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    intfc* instance = NULL;
+    arr* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(intfc), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(arr), &instance))) {
         instance->Allocator = pAlloc;
 
         *ppOut = instance;
@@ -212,7 +170,7 @@ HRESULT DELTACALL intfc_allocate(allocator* pAlloc, intfc** ppOut) {
     return hr;
 }
 
-HRESULT DELTACALL intfc_resize(intfc* self) {
+HRESULT DELTACALL arr_resize(arr* self) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -220,9 +178,9 @@ HRESULT DELTACALL intfc_resize(intfc* self) {
     HRESULT hr = S_OK;
 
     const UINT capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;
-    const UINT size = capacity * sizeof(intfc_item);
+    const UINT size = capacity * sizeof(LPVOID);
 
-    if (FAILED(hr = allocator_reallocate(self->Allocator, self->Items, size, &self->Items))) {
+    if (FAILED(hr = allocator_reallocate(self->Allocator, self->Items, size, (LPVOID*)&self->Items))) {
         return hr;
     }
 

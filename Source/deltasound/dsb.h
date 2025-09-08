@@ -34,7 +34,7 @@ SOFTWARE.
 #define DSB_MIN_VOLUME  (0.0f)
 #define DSB_MAX_VOLUME  (1.0f)
 
-#define DSB_MAX_PRIMARY_BUFFER_SIZE 32768
+#define DSB_DEFAULT_PRIMARY_BUFFER_SIZE     32768
 
 typedef struct ds ds;
 typedef struct ksp ksp;
