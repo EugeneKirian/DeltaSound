@@ -76,6 +76,8 @@ HRESULT DELTACALL allocator_allocate(allocator* self, size_t nBytes, LPVOID* ppM
         return E_OUTOFMEMORY;
     }
 
+    ZeroMemory(memory, nBytes);
+
     *ppMem = memory;
 
     return S_OK;

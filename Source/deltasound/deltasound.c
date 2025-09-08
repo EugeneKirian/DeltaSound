@@ -51,6 +51,14 @@ VOID DELTACALL deltasound_release(deltasound* self) {
 
 HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
     REFIID riid, LPCGUID pcGuidDevice, LPDIRECTSOUND* ppOut) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (riid == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     ds* instance = NULL;
 
@@ -82,11 +90,7 @@ HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
     deltasound* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
-
-        ZeroMemory(instance, sizeof(deltasound));
-
         instance->Allocator = pAlloc;
-
         *ppOut = instance;
     }
 

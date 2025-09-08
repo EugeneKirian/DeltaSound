@@ -253,8 +253,6 @@ HRESULT WINAPI GetDeviceID(
         device_info* devices = NULL;
 
         if (SUCCEEDED(hr = allocator_allocate(alc, count * sizeof(device_info), &devices))) {
-            ZeroMemory(devices, count * sizeof(device_info));
-
             if (SUCCEEDED(hr = device_info_get_devices(DEVICETYPE_ALL, &count, devices))) {
                 for (UINT i = 0; i < count; i++) {
                     device_info* dev = &devices[i];
@@ -329,8 +327,6 @@ HRESULT DELTACALL enumerate_devices(
         device_info* devices = NULL;
 
         if (SUCCEEDED(hr = allocator_allocate(alc, count * sizeof(device_info), &devices))) {
-            ZeroMemory(devices, count * sizeof(device_info));
-
             if (SUCCEEDED(hr = device_info_get_devices(dwType, &count, devices))) {
                 for (UINT i = 0; i < count; i++) {
                     device_info* dev = &devices[i];

@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="directsoundbuffer_basics.c" />
     <ClCompile Include="directsound_basics.c" />
     <ClCompile Include="directsound_createsoundbuffer.c" />
     <ClCompile Include="directsound_enumerate.c" />
@@ -153,6 +154,7 @@
     <ClCompile Include="wnd.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="directsoundbuffer_basics.h" />
     <ClInclude Include="directsound_basics.h" />
     <ClInclude Include="directsound_createsoundbuffer.h" />
     <ClInclude Include="directsound_enumerate.h" />

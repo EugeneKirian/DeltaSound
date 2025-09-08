@@ -120,8 +120,15 @@ VOID DELTACALL idsb_release(idsb* self) {
 }
 
 HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppvObject) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (riid == NULL || ppvObject == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_query_interface(self->Instance, riid, ppvObject);
 }
 
 ULONG DELTACALL idsb_add_ref(idsb* self) {
@@ -373,7 +380,6 @@ HRESULT DELTACALL idsb_allocate(allocator* pAlloc, idsb** ppOut) {
     idsb* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsb), &instance))) {
-        ZeroMemory(instance, sizeof(idsb));
         instance->Allocator = pAlloc;
         *ppOut = instance;
     }

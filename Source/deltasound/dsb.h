@@ -37,12 +37,14 @@ SOFTWARE.
 #define DSB_MAX_PRIMARY_BUFFER_SIZE 32768
 
 typedef struct ds ds;
+typedef struct ksp ksp;
 
 typedef struct dsb {
     allocator*      Allocator;
     GUID            ID;
     ds*             Instance;
     intfc*          Interfaces;
+    ksp*            PropertySet;
 
     DSBCAPS         Caps;
 
@@ -66,7 +68,7 @@ VOID DELTACALL dsb_release(dsb* pDSB);
 
 HRESULT DELTACALL dsb_set_flags(dsb* pDSB, DWORD dwFlags);
 
-HRESULT DELTACALL dsb_query_interface(dsb* pDSB, REFIID riid, idsb** ppOut);
+HRESULT DELTACALL dsb_query_interface(dsb* pDSB, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dsb_add_ref(dsb* pDSB, idsb* pIDSB);
 HRESULT DELTACALL dsb_remove_ref(dsb* pDSB, idsb* pIDSB);
 

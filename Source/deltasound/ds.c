@@ -257,15 +257,9 @@ HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
     ds* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
-        ZeroMemory(instance, sizeof(ds));
         instance->Allocator = pAlloc;
-
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, (LPVOID*)&instance->Interfaces))) {
-            *ppOut = instance;
-            return S_OK;
-        }
-
-        allocator_free(pAlloc, instance);
+        *ppOut = instance;
+        return S_OK;
     }
 
     return hr;
