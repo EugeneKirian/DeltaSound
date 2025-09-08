@@ -25,11 +25,16 @@ SOFTWARE.
 #include "ds.h"
 #include "dsb.h"
 #include "ids.h"
+#include "ksp.h"
 #include "wave_format.h"
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
+    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
@@ -39,7 +44,7 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             instance->Caps.dwSize = sizeof(DSBCAPS);
 
-            // TODO better way
+            // TODO better way of initialization
             instance->Pan = DSB_CENTER_PAN;
             instance->Volume = DSB_MAX_VOLUME;
 
@@ -72,6 +77,10 @@ VOID DELTACALL dsb_release(dsb* self) {
 
     intfc_release(self->Interfaces);
 
+    if (self->PropertySet != NULL) {
+        ksp_release(self->PropertySet);
+    }
+
     allocator_free(self->Allocator, self->Format);
 
     // TODO
@@ -87,31 +96,52 @@ HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) {
     return S_OK;
 }
 
-HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, idsb** ppOut) {
+HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
     // TODO synchronization
 
-    idsb* instance = NULL;
-    const GUID* id = IsEqualIID(riid, &IID_IUnknown) ? &IID_IDirectSoundBuffer : riid;
+    {
+        idsb* instance = NULL;
 
-    if (SUCCEEDED(intfc_query_item(self->Interfaces, id, &instance))) {
-        idsb_add_ref(instance);
-        *ppOut = instance;
-        return S_OK;
-    }
-
-    HRESULT hr = S_OK;
-
-    if (SUCCEEDED(hr = idsb_create(self->Allocator, id, &instance))) {
-        if (SUCCEEDED(hr = dsb_add_ref(self, instance))) {
-            instance->Instance = self;
+        if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
+            idsb_add_ref(instance);
             *ppOut = instance;
             return S_OK;
         }
-
-        idsb_release(instance);
     }
 
-    return hr;
+    if (IsEqualIID(&IID_IUnknown, riid)
+        || IsEqualIID(&IID_IDirectSoundBuffer, riid)
+        || (IsEqualIID(&IID_IDirectSoundBuffer8, &self->ID) && IsEqualIID(&IID_IDirectSoundBuffer8, riid))) {
+        HRESULT hr = S_OK;
+        idsb* instance = NULL;
+
+        if (SUCCEEDED(hr = idsb_create(self->Allocator, riid, &instance))) {
+            if (SUCCEEDED(hr = dsb_add_ref(self, instance))) {
+                instance->Instance = self;
+                *ppOut = instance;
+                return S_OK;
+            }
+
+            idsb_release(instance);
+        }
+
+        return hr;
+    }
+    else if (IsEqualIID(&IID_IKsPropertySet, riid)) {
+        if (self->PropertySet == NULL) {
+            HRESULT hr = S_OK;
+            ksp* instance = NULL;
+
+            if (SUCCEEDED(hr = ksp_create(self->Allocator, riid, &instance))) {
+                instance->Instance = self;
+                self->PropertySet = instance;
+            }
+        }
+
+        return ksp_query_interface(self->PropertySet, riid, (iksp**)ppOut);
+    }
+
+    return E_NOINTERFACE;
 }
 
 HRESULT DELTACALL dsb_add_ref(dsb* self, idsb* pIDSB) {
@@ -389,14 +419,11 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsb), &instance))) {
-        ZeroMemory(instance, sizeof(dsb));
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX), &instance->Format))) {
-            if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, (LPVOID*)&instance->Interfaces))) {
-                *ppOut = instance;
-                return S_OK;
-            }
+            *ppOut = instance;
+            return S_OK;
         }
 
         allocator_free(pAlloc, instance->Format);

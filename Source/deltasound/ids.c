@@ -306,7 +306,6 @@ HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut) {
     ids* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
-        ZeroMemory(instance, sizeof(ids));
         instance->Allocator = pAlloc;
         *ppOut = instance;
     }

@@ -153,10 +153,7 @@ HRESULT DELTACALL device_allocate(allocator* pAlloc, device** ppOut) {
     device* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(device), &instance))) {
-        ZeroMemory(instance, sizeof(device));
-
         instance->Allocator = pAlloc;
-
         *ppOut = instance;
     }
 
