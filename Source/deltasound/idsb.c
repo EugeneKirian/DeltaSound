@@ -373,8 +373,11 @@ HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes
 }
 
 HRESULT DELTACALL idsb_restore(idsb* self) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return dsb_restore(self->Instance);
 }
 
 /* ---------------------------------------------------------------------- */

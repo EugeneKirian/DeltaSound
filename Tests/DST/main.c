@@ -34,6 +34,9 @@ SOFTWARE.
 #include "directsoundbuffer_primary_get.h"
 #include "directsoundbuffer_primary_set.h"
 
+#include "directsoundbuffer_secondary_get.h"
+#include "directsoundbuffer_secondary_set.h"
+
 #include "directsoundcapture_enumerate.h"
 
 #include "getdeviceid.h"
@@ -87,6 +90,8 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferBasics);
     TEST(DirectSoundBufferPrimaryGet);
     TEST(DirectSoundBufferPrimarySet);
+    TEST(DirectSoundBufferSecondaryGet);
+    //TEST(DirectSoundBufferSecondarySet);
 
 exit:
 
