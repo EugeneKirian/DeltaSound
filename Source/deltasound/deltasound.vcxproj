@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allocator.h" />
+    <ClInclude Include="arr.h" />
     <ClInclude Include="iksp.h" />
     <ClInclude Include="intfc.h" />
     <ClInclude Include="base.h" />
@@ -36,6 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocator.c" />
+    <ClCompile Include="arr.c" />
     <ClCompile Include="iksp.c" />
     <ClCompile Include="intfc.c" />
     <ClCompile Include="deltasound.c" />

@@ -140,8 +140,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="directsoundbuffer_basics.c" />
+    <ClCompile Include="directsoundbuffer_secondary_get.c" />
+    <ClCompile Include="directsoundbuffer_secondary_set.c" />
     <ClCompile Include="directsound_basics.c" />
-    <ClCompile Include="directsound_createsoundbuffer.c" />
+    <ClCompile Include="directsound_createsoundbuffer_primary.c" />
+    <ClCompile Include="directsound_createsoundbuffer_secondary.c" />
     <ClCompile Include="directsound_enumerate.c" />
     <ClCompile Include="directsound_getcaps.c" />
     <ClCompile Include="directsound_setcooperativelevel.c" />
@@ -155,8 +158,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directsoundbuffer_basics.h" />
+    <ClInclude Include="directsoundbuffer_secondary_get.h" />
+    <ClInclude Include="directsoundbuffer_secondary_set.h" />
     <ClInclude Include="directsound_basics.h" />
-    <ClInclude Include="directsound_createsoundbuffer.h" />
+    <ClInclude Include="directsound_createsoundbuffer_primary.h" />
+    <ClInclude Include="directsound_createsoundbuffer_secondary.h" />
     <ClInclude Include="directsound_enumerate.h" />
     <ClInclude Include="directsound_getcaps.h" />
     <ClInclude Include="directsound_setcooperativelevel.h" />

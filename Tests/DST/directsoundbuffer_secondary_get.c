@@ -22,12 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_get.h"
+#include "directsoundbuffer_secondary_get.h"
 #include "wnd.h"
 
 #include <dsound.h>
 
-#define WINDOW_NAME "DirectSound Primary Buffer Get Properties"
+#define WINDOW_NAME "DirectSound Secondary Buffer Get Properties"
 
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
@@ -74,6 +74,15 @@ static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
 
         if (ra != rb || cpca != cpcb || cwca != cwcb) {
             return FALSE;
+        }
+
+        if (ra == DSERR_BUFFERLOST) {
+            ra = IDirectSoundBuffer_Restore(a);
+            rb = IDirectSoundBuffer_Restore(b);
+
+            if (ra != rb) {
+                return FALSE;
+            }
         }
     }
 
@@ -219,13 +228,23 @@ static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferPrimaryGetDetails(
+static BOOL TestDirectSoundBufferSecondaryGetDetails(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
 
     BOOL result = TRUE;
+
+    WAVEFORMATEX format;
+    ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+    format.wFormatTag = WAVE_FORMAT_PCM;
+    format.nChannels = 1;
+    format.nSamplesPerSec = 22050;
+    format.nAvgBytesPerSec = 22050;
+    format.nBlockAlign = 1;
+    format.wBitsPerSample = 8;
 
     LPDIRECTSOUND dsa = NULL;
     LPDIRECTSOUND dsb = NULL;
@@ -238,12 +257,16 @@ static BOOL TestDirectSoundBufferPrimaryGetDetails(
 
     desca.dwSize = sizeof(DSBUFFERDESC);
     desca.dwFlags = flags;
+    desca.dwBufferBytes = 176400;
+    desca.lpwfxFormat = &format;
 
     DSBUFFERDESC descb;
     ZeroMemory(&descb, sizeof(DSBUFFERDESC));
 
     descb.dwSize = sizeof(DSBUFFERDESC);
     descb.dwFlags = flags;
+    descb.dwBufferBytes = 176400;
+    descb.lpwfxFormat = &format;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -267,8 +290,12 @@ static BOOL TestDirectSoundBufferPrimaryGetDetails(
     ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
 
-    if (ra != rb) {
+    if (ra != rb && !(flags & DSBCAPS_LOCHARDWARE)) {
         result = FALSE;
+        goto exit;
+    }
+
+    if (flags & DSBCAPS_LOCHARDWARE) {
         goto exit;
     }
 
@@ -309,20 +336,30 @@ static const DWORD CooperativeLevels[COOPERATIVE_LEVEL_COUNT] = {
     DSSCL_NORMAL, DSSCL_PRIORITY, DSSCL_EXCLUSIVE, DSSCL_WRITEPRIMARY
 };
 
-#define BUFFER_FLAG_COUNT       7
+#define BUFFER_FLAG_COUNT       18
 
-static const DWORD BufferFlags[BUFFER_FLAG_COUNT] =
-{
-    DSBCAPS_PRIMARYBUFFER,
-    DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRL3D,
-    DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLPAN,
-    DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLVOLUME,
-    DSBCAPS_PRIMARYBUFFER | DSBCAPS_GETCURRENTPOSITION2,
-    DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME,
-    DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_GETCURRENTPOSITION2
+static const DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
+    0,
+    DSBCAPS_STATIC,
+    DSBCAPS_LOCHARDWARE,
+    DSBCAPS_LOCSOFTWARE,
+    DSBCAPS_CTRL3D,
+    DSBCAPS_CTRLFREQUENCY,
+    DSBCAPS_CTRLPAN,
+    DSBCAPS_CTRLVOLUME,
+    DSBCAPS_CTRL3D | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME,
+    DSBCAPS_CTRL3D | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPOSITIONNOTIFY,
+    DSBCAPS_CTRLPOSITIONNOTIFY,
+    DSBCAPS_STICKYFOCUS,
+    DSBCAPS_GLOBALFOCUS,
+    DSBCAPS_STICKYFOCUS | DSBCAPS_GLOBALFOCUS,
+    DSBCAPS_GETCURRENTPOSITION2,
+    DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE,
+    DSBCAPS_TRUEPLAYPOSITION,
+    DSBCAPS_LOCHARDWARE | DSBCAPS_LOCDEFER
 };
 
-BOOL TestDirectSoundBufferPrimaryGet(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundBufferSecondaryGet(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -350,7 +387,7 @@ BOOL TestDirectSoundBufferPrimaryGet(HMODULE a, HMODULE b) {
 
     for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
-            if (!TestDirectSoundBufferPrimaryGetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
+            if (!TestDirectSoundBufferSecondaryGetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
                 result = FALSE;
                 goto exit;
             }

@@ -35,9 +35,13 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
     deltasound* instance = NULL;
 
     if (SUCCEEDED(hr = deltasound_allocate(pAlloc, &instance))) {
-        InitializeCriticalSection(&instance->Lock);
+        if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Items))) {
+            InitializeCriticalSection(&instance->Lock);
+            *ppOut = instance;
+            return S_OK;
+        }
 
-        *ppOut = instance;
+        deltasound_release(instance);
     }
 
     return hr;
@@ -45,6 +49,15 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
 
 VOID DELTACALL deltasound_release(deltasound* self) {
     DeleteCriticalSection(&self->Lock);
+
+    for (UINT i = arr_get_count(self->Items); i != 0; i--) {
+        ds* instance = NULL;
+        if (SUCCEEDED(arr_remove_item(self->Items, i - 1, &instance))) {
+            ds_release(instance);
+        }
+    }
+
+    arr_release(self->Items);
 
     allocator_free(self->Allocator, self);
 }
@@ -68,8 +81,13 @@ HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
         instance->Instance = self;
 
         if (SUCCEEDED(hr = ds_initialize(instance, pcGuidDevice))) {
-            if (SUCCEEDED(hr = ds_query_interface(instance, riid, (ids**)ppOut))) {
-                goto exit;
+            ids* intfc = NULL;
+
+            if (SUCCEEDED(hr = ds_query_interface(instance, riid, &intfc))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Items, instance))) {
+                    *ppOut = (LPDIRECTSOUND)intfc;
+                    goto exit;
+                }
             }
         }
 
@@ -81,6 +99,38 @@ exit:
     LeaveCriticalSection(&self->Lock);
 
     return hr;
+}
+
+HRESULT DELTACALL deltasound_remove_ds(deltasound* self, ds* pDS) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pDS == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    for (UINT i = 0; i < arr_get_count(self->Items); i++) {
+        ds* instance = NULL;
+
+        if (SUCCEEDED(hr = arr_get_item(self->Items, i, &instance))) {
+            if (instance == pDS) {
+                return arr_remove_item(self->Items, i, NULL);
+            }
+        }
+    }
+
+    return hr;
+}
+
+HRESULT DELTACALL deltasound_can_unload(deltasound* self) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return arr_get_count(self->Items) == 0 ? S_OK : S_FALSE;
 }
 
 /* ---------------------------------------------------------------------- */

@@ -34,7 +34,7 @@ SOFTWARE.
 #define DSB_MIN_VOLUME  (0.0f)
 #define DSB_MAX_VOLUME  (1.0f)
 
-#define DSB_MAX_PRIMARY_BUFFER_SIZE 32768
+#define DSB_DEFAULT_PRIMARY_BUFFER_SIZE     32768
 
 typedef struct ds ds;
 typedef struct ksp ksp;
@@ -52,9 +52,9 @@ typedef struct dsb {
     // at which it is safe to write new data to the buffer.
     // The write cursor always leads the play cursor,
     // typically by about 15 milliseconds' worth of audio data.
-    DWORD           CurrentPlayCursor;
-    DWORD           CurrentWriteCursor;
-    LPBYTE          Buffer;     // TODO allocate. Size if Caps.dwBufferBytes
+    DWORD           CurrentPlayCursor;  // In bytes
+    DWORD           CurrentWriteCursor; // In bytes
+    LPBYTE          Buffer;
 
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;
@@ -72,23 +72,23 @@ HRESULT DELTACALL dsb_query_interface(dsb* pDSB, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dsb_add_ref(dsb* pDSB, idsb* pIDSB);
 HRESULT DELTACALL dsb_remove_ref(dsb* pDSB, idsb* pIDSB);
 
-HRESULT DELTACALL dsb_get_caps(dsb* self, LPDSBCAPS pCaps);
-HRESULT DELTACALL dsb_get_current_position(dsb* self,
+HRESULT DELTACALL dsb_get_caps(dsb* pDSB, LPDSBCAPS pCaps);
+HRESULT DELTACALL dsb_get_current_position(dsb* pDSB,
     LPDWORD pdwCurrentPlayCursor, LPDWORD pdwCurrentWriteCursor);
-HRESULT DELTACALL dsb_get_format(dsb* self,
+HRESULT DELTACALL dsb_get_format(dsb* pDSB,
     LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten);
-HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume);
-HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan);
-HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency);
-HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus);
+HRESULT DELTACALL dsb_get_volume(dsb* pDSB, PFLOAT pfVolume);
+HRESULT DELTACALL dsb_get_pan(dsb* pDSB, PFLOAT pfPan);
+HRESULT DELTACALL dsb_get_frequency(dsb* pDSB, LPDWORD pdwFrequency);
+HRESULT DELTACALL dsb_get_status(dsb* pDSB, LPDWORD pdwStatus);
 HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
 // LOCK
 // PLAY
-HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition);
-HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat);
-HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume);
-HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan);
-HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency);
+HRESULT DELTACALL dsb_set_current_position(dsb* pDSB, DWORD dwNewPosition);
+HRESULT DELTACALL dsb_set_format(dsb* pDSB, LPCWAVEFORMATEX pcfxFormat);
+HRESULT DELTACALL dsb_set_volume(dsb* pDSB, FLOAT fVolume);
+HRESULT DELTACALL dsb_set_pan(dsb* pDSB, FLOAT fPan);
+HRESULT DELTACALL dsb_set_frequency(dsb* pDSB, DWORD dwFrequency);
 // Stop
 // Unlock
-// Restore
+HRESULT DELTACALL dsb_restore(dsb* pDSB);

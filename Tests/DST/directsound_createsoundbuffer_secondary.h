@@ -24,33 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
-#include "device_info.h"
+#include <windows.h>
 
-typedef struct device {
-    allocator*              Allocator;
-    LONG                    RefCount;
-
-    device_info             Info;
-
-    IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
-    // IAudioStreamVolume*     AudioVolume; //  TODO  Is this needed?
-
-    PWAVEFORMATEXTENSIBLE   WaveFormat;
-
-    HANDLE                  AudioEvent;
-
-    HANDLE                  Thread;
-    HANDLE                  ThreadEvent;
-    BOOL                    Close;
-} device;
-
-HRESULT DELTACALL device_create(
-    allocator* pAlloc, DWORD dwType, device_info* pInfo, device** ppOut);
-
-ULONG DELTACALL device_add_ref(device* pDev);
-ULONG DELTACALL device_remove_ref(device* pDev);
-
-VOID DELTACALL device_release(device* pDev);
+BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b);

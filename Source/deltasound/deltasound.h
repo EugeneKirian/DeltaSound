@@ -24,15 +24,20 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
+#include "arr.h"
+
+typedef struct ds ds;
 
 typedef struct deltasound {
     allocator*          Allocator;
-    CRITICAL_SECTION    Lock;   // TODO
+    CRITICAL_SECTION    Lock;
+    arr*                Items;
 } deltasound;
 
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pDS);
+VOID DELTACALL deltasound_release(deltasound* pD);
 
-HRESULT DELTACALL deltasound_create_directsound(deltasound* pDS,
+HRESULT DELTACALL deltasound_create_directsound(deltasound* pD,
     REFIID riid, LPCGUID pcGuidDevice, LPDIRECTSOUND* ppOut);
+HRESULT DELTACALL deltasound_remove_ds(deltasound* pD, ds* pDS);
+HRESULT DELTACALL deltasound_can_unload(deltasound* pDpD);

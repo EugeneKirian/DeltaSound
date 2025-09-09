@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "arr.h"
 #include "intfc.h"
 
 typedef struct deltasound deltasound;
@@ -40,7 +41,9 @@ typedef struct ds {
     HWND        HWND;
     DWORD       Level;
     device*     Device;
-    dsb*        Main;
+
+    dsb*        Main;       // Primary Buffer
+    arr*        Buffers;    // Secondary Buffers
 } ds;
 
 HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut);
@@ -51,9 +54,10 @@ HRESULT DELTACALL ds_add_ref(ds* pDS, ids* pIDS);
 HRESULT DELTACALL ds_remove_ref(ds* pDS, ids* pIDS);
 
 HRESULT DELTACALL ds_create_dsb(ds* pDS, REFIID riid, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
+HRESULT DELTACALL ds_remove_dsb(ds* pDS, dsb* pDSB);
 
 HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
 
-HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel);
+HRESULT DELTACALL ds_set_cooperative_level(ds* pDS, HWND hwnd, DWORD dwLevel);
 
 HRESULT DELTACALL ds_initialize(ds* pDS, LPCGUID pcGuidDevice);

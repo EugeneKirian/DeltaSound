@@ -81,6 +81,12 @@ HRESULT DELTACALL device_create(
             return E_FAIL;
         }
 
+        instance->ThreadEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+        if (instance->ThreadEvent == NULL) {
+            device_release(instance);
+            return E_FAIL;
+        }
+
         ctx->Device = instance;
 
         instance->Thread = CreateThread(NULL, 0,
@@ -94,6 +100,7 @@ HRESULT DELTACALL device_create(
         SetThreadPriority(instance->Thread, THREAD_PRIORITY_TIME_CRITICAL);
 
         WaitForSingleObject(ctx->Init, INFINITE);
+        CloseHandle(ctx->Init);
 
         // TODO check if thread exited prematurely...
 
@@ -116,6 +123,10 @@ ULONG DELTACALL device_remove_ref(device* self) {
         return 0;
     }
 
+    if (self->RefCount == 0) {
+        return 0;
+    }
+
     if (InterlockedDecrement(&self->RefCount) <= 0) {
         self->RefCount = 0;
 
@@ -132,8 +143,13 @@ VOID DELTACALL device_release(device* self) {
 
     if (self->Thread != NULL) {
         self->Close = TRUE;
+        
+        // NOTE. Cannot wait for thread handle,
+        // because it does not fire when thread is being
+        // terminated through the FreeLibrary function call.
 
-        WaitForSingleObject(self->Thread, INFINITE);
+        WaitForSingleObject(self->ThreadEvent, INFINITE);
+        CloseHandle(self->ThreadEvent);
         CloseHandle(self->Thread);
     }
 
@@ -281,7 +297,7 @@ DWORD WINAPI device_thread(device_thread_context* ctx) {
     SetEvent(ctx->Init);
 
     while (!dev->Close) {
-        
+
         //todo
         Sleep(1);
     }
@@ -300,6 +316,8 @@ DWORD WINAPI device_thread(device_thread_context* ctx) {
 exit:
 
     CoUninitialize();
+
+    SetEvent(dev->ThreadEvent);
 
     return SUCCEEDED(hr) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

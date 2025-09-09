@@ -144,6 +144,10 @@ ULONG DELTACALL idsb_remove_ref(idsb* self) {
         return 0;
     }
 
+    if (self->RefCount == 0) {
+        return 0;
+    }
+
     if (InterlockedDecrement(&self->RefCount) <= 0) {
         self->RefCount = 0;
 
@@ -311,7 +315,7 @@ HRESULT DELTACALL idsb_set_format(idsb* self, LPCWAVEFORMATEX pcfxFormat) {
     if (pcfxFormat->wFormatTag == WAVE_FORMAT_PCM) {
         HRESULT hr = S_OK;
 
-        if (FAILED(hr = wave_format_is_valid(pcfxFormat))) {
+        if (FAILED(hr = wave_format_is_valid(pcfxFormat, FALSE))) {
             return hr;
         }
     }
@@ -369,8 +373,11 @@ HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes
 }
 
 HRESULT DELTACALL idsb_restore(idsb* self) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return dsb_restore(self->Instance);
 }
 
 /* ---------------------------------------------------------------------- */

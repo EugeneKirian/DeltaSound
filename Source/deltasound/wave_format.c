@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "wave_format.h"
 
-HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat) {
+HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat, BOOL bRigid) {
     if (pcfxFormat == NULL) {
         return E_INVALIDARG;
     }
@@ -33,16 +33,34 @@ HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat) {
         return E_INVALIDARG;
     }
 
+    if (pcfxFormat->nChannels != 1 && pcfxFormat->nChannels != 2) {
+        return E_INVALIDARG;
+    }
+
     if (pcfxFormat->nAvgBytesPerSec == 0) {
         return E_INVALIDARG;
     }
 
-    if (pcfxFormat->nSamplesPerSec == 0) {
-        return E_INVALIDARG;
+    if (bRigid) {
+        if (pcfxFormat->nAvgBytesPerSec
+            != pcfxFormat->nSamplesPerSec * pcfxFormat->nChannels * (pcfxFormat->wBitsPerSample / 8)) {
+            return E_INVALIDARG;
+        }
     }
 
     if (pcfxFormat->nBlockAlign == 0) {
         return E_INVALIDARG;
+    }
+
+    if (pcfxFormat->wBitsPerSample == 0 || (pcfxFormat->wBitsPerSample % 8) != 0) {
+        return E_INVALIDARG;
+    }
+
+    if (bRigid) {
+        if (pcfxFormat->nAvgBytesPerSec
+            != pcfxFormat->nSamplesPerSec * pcfxFormat->nBlockAlign) {
+            return E_INVALIDARG;
+        }
     }
 
     if (pcfxFormat->nBlockAlign != pcfxFormat->nChannels * (pcfxFormat->wBitsPerSample / 8)) {

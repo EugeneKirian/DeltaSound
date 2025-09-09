@@ -43,21 +43,7 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             instance->Caps.dwSize = sizeof(DSBCAPS);
-
-            // TODO better way of initialization
-            instance->Pan = DSB_CENTER_PAN;
-            instance->Volume = DSB_MAX_VOLUME;
-
-            instance->Format->wFormatTag = WAVE_FORMAT_PCM;
-            instance->Format->nChannels = 2;
-            instance->Format->nSamplesPerSec = 22050;
-            instance->Format->nAvgBytesPerSec = 44100;
-            instance->Format->nBlockAlign = 2;
-            instance->Format->wBitsPerSample = 8;
-            instance->Format->cbSize = 0;
-
             *ppOut = instance;
-
             return S_OK;
         }
 
@@ -77,13 +63,19 @@ VOID DELTACALL dsb_release(dsb* self) {
 
     intfc_release(self->Interfaces);
 
+    if (self->Instance != NULL) {
+        ds_remove_dsb(self->Instance, self);
+    }
+
     if (self->PropertySet != NULL) {
         ksp_release(self->PropertySet);
     }
 
     allocator_free(self->Allocator, self->Format);
 
-    // TODO
+    if (self->Buffer != NULL) {
+        allocator_free(self->Allocator, self->Buffer);
+    }
 
     allocator_free(self->Allocator, self);
 }
@@ -132,10 +124,12 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
             HRESULT hr = S_OK;
             ksp* instance = NULL;
 
-            if (SUCCEEDED(hr = ksp_create(self->Allocator, riid, &instance))) {
-                instance->Instance = self;
-                self->PropertySet = instance;
+            if (FAILED(hr = ksp_create(self->Allocator, riid, &instance))) {
+                return hr;
             }
+
+            instance->Instance = self;
+            self->PropertySet = instance;
         }
 
         return ksp_query_interface(self->PropertySet, riid, (iksp**)ppOut);
@@ -176,9 +170,13 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
         return DSERR_UNINITIALIZED;
     }
 
-    // TODO is this for primary buffer only?
-    if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
-        return DSERR_PRIOLEVELNEEDED;
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        return DSERR_BUFFERLOST;
     }
 
     if (pdwCurrentPlayCursor != NULL) {
@@ -216,9 +214,10 @@ HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume) {
         return DSERR_UNINITIALIZED;
     }
 
-    // TODO is this for primary buffer only?
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level == DSSCL_NONE) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
     }
 
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLVOLUME)) {
@@ -235,9 +234,10 @@ HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan) {
         return DSERR_UNINITIALIZED;
     }
 
-    // TODO is this for primary buffer only?
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level == DSSCL_NONE) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
     }
 
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -254,16 +254,18 @@ HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency) {
         return DSERR_UNINITIALIZED;
     }
 
-    // TODO is this for primary buffer only?
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level == DSSCL_NONE) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
     }
 
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
         return DSERR_CONTROLUNAVAIL;
     }
 
-    *pdwFrequency = self->Frequency;
+    *pdwFrequency = self->Frequency == DSBFREQUENCY_ORIGINAL
+        ? self->Format->nSamplesPerSec : self->Frequency;
 
     return S_OK;
 }
@@ -273,12 +275,20 @@ HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus) {
         return DSERR_UNINITIALIZED;
     }
 
-    // TODO is this for primary buffer only?
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
+    DWORD status = self->Status;
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level == DSSCL_NONE) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+    else {
+        if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+            status |= DSBSTATUS_BUFFERLOST;
+        }
     }
 
-    *pdwStatus = self->Status;
+    *pdwStatus = status;
 
     return S_OK;
 }
@@ -292,14 +302,30 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
 
     self->Caps.dwFlags = pcDesc->dwFlags;
 
-    if (!self->Caps.dwFlags & (DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCHARDWARE)) {
+    if (!(self->Caps.dwFlags & (DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCHARDWARE))) {
         self->Caps.dwFlags |= DSBCAPS_LOCSOFTWARE;
     }
 
-    // TODO set flags, default values, etc
-    // and format...
+    self->Pan = DSB_CENTER_PAN;
+    self->Volume = DSB_MAX_VOLUME;
 
-    return S_OK;
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        self->Caps.dwBufferBytes = DSB_DEFAULT_PRIMARY_BUFFER_SIZE;
+
+        self->Format->wFormatTag = WAVE_FORMAT_PCM;
+        self->Format->nChannels = 2;
+        self->Format->nSamplesPerSec = 22050;
+        self->Format->nAvgBytesPerSec = 44100;
+        self->Format->nBlockAlign = 2;
+        self->Format->wBitsPerSample = 8;
+        self->Format->cbSize = 0;
+    }
+    else {
+        self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
+        CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
+    }
+
+    return allocator_allocate(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
 }
 
 HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
@@ -310,10 +336,17 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         return DSERR_INVALIDCALL;
     }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        return DSERR_BUFFERLOST;
+    }
 
-    // TODO NOT IMPLEMENTED
+    if (self->Caps.dwBufferBytes < dwNewPosition) {
+        return E_INVALIDARG;
+    }
 
-    return E_NOTIMPL;
+    self->CurrentPlayCursor = dwNewPosition;
+
+    return S_OK;
 }
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
@@ -329,17 +362,6 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         return DSERR_PRIOLEVELNEEDED;
     }
 
-    if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-        if (self->Status & DSBSTATUS_PLAYING) {
-            // TODO buffer must be stopped by the user
-        }
-
-        // TODO update format...
-    }
-    else {
-        // TODO stop the buffer, update the format, and resume playback
-    }
-
     if (self->Instance->Level == DSSCL_NORMAL) {
         if (pcfxFormat->wFormatTag != WAVE_INVALIDFORMAT
             && pcfxFormat->wFormatTag != WAVE_FORMAT_PCM) {
@@ -350,6 +372,17 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         if (pcfxFormat->wFormatTag == WAVE_INVALIDFORMAT) {
             return E_NOTIMPL;
         }
+    }
+
+    if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        if (self->Status & DSBSTATUS_PLAYING) {
+            // TODO buffer must be stopped by the user
+        }
+
+        // TODO update format...
+    }
+    else {
+        // TODO stop the buffer, update the format, and resume playback
     }
 
     CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
@@ -408,6 +441,16 @@ HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency) {
     }
 
     self->Frequency = dwFrequency;
+
+    return S_OK;
+}
+
+HRESULT DELTACALL dsb_restore(dsb* self) {
+    if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
+        if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+            return DSERR_BUFFERLOST;
+        }
+    }
 
     return S_OK;
 }

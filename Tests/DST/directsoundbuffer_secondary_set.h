@@ -26,4 +26,4 @@ SOFTWARE.
 
 #include <windows.h>
 
-BOOL TestDirectSoundCreateSoundBuffer(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferSecondarySet(HMODULE a, HMODULE b);

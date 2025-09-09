@@ -24,7 +24,8 @@ SOFTWARE.
 
 #include "directsound_basics.h"
 #include "directsound_create.h"
-#include "directsound_createsoundbuffer.h"
+#include "directsound_createsoundbuffer_primary.h"
+#include "directsound_createsoundbuffer_secondary.h"
 #include "directsound_enumerate.h"
 #include "directsound_getcaps.h"
 #include "directsound_setcooperativelevel.h"
@@ -32,6 +33,9 @@ SOFTWARE.
 #include "directsoundbuffer_basics.h"
 #include "directsoundbuffer_primary_get.h"
 #include "directsoundbuffer_primary_set.h"
+
+#include "directsoundbuffer_secondary_get.h"
+#include "directsoundbuffer_secondary_set.h"
 
 #include "directsoundcapture_enumerate.h"
 
@@ -78,13 +82,16 @@ int main(int argc, char** argv) {
     TEST(DirectSoundCreate);
     TEST(DirectSoundBasics);
   
-    TEST(DirectSoundCreateSoundBuffer);
+    TEST(DirectSoundCreateSoundBufferPrimary);
+    TEST(DirectSoundCreateSoundBufferSecondary);
     TEST(DirectSoundSetCooperativeLevel);
     TEST(DirectSoundGetCaps);
 
     TEST(DirectSoundBufferBasics);
     TEST(DirectSoundBufferPrimaryGet);
     TEST(DirectSoundBufferPrimarySet);
+    TEST(DirectSoundBufferSecondaryGet);
+    TEST(DirectSoundBufferSecondarySet);
 
 exit:
 
