@@ -315,7 +315,7 @@ HRESULT DELTACALL idsb_set_format(idsb* self, LPCWAVEFORMATEX pcfxFormat) {
     if (pcfxFormat->wFormatTag == WAVE_FORMAT_PCM) {
         HRESULT hr = S_OK;
 
-        if (FAILED(hr = wave_format_is_valid(pcfxFormat))) {
+        if (FAILED(hr = wave_format_is_valid(pcfxFormat, FALSE))) {
             return hr;
         }
     }

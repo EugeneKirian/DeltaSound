@@ -25,8 +25,13 @@ SOFTWARE.
 #include "directsound_createsoundbuffer_primary.h"
 
 #include <dsound.h>
+#include <mmreg.h>
 
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
+
+static const GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {
+    0x0000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
+};
 
 static BOOL TestDirectSoundCreateBufferInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) {
     LPDIRECTSOUNDBUFFER dsba = NULL;
@@ -161,6 +166,27 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
 
         descb.dwSize = sizeof(DSBUFFERDESC1);
         descb.dwBufferBytes = 1;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        DSBUFFERDESC1 desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+
+        desca.dwSize = sizeof(DSBUFFERDESC1);
+        desca.dwBufferBytes = DSBSIZE_MAX + 1;
+
+        DSBUFFERDESC1 descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
+
+        descb.dwSize = sizeof(DSBUFFERDESC1);
+        descb.dwBufferBytes = DSBSIZE_MAX + 1;
 
         HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
         HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
@@ -371,6 +397,238 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFlags(LPDIRECTSOUND a, LP
     }
 
     return result;
+}
+
+static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, LPDIRECTSOUND b) {
+    LPDIRECTSOUNDBUFFER dsba = NULL;
+    LPDIRECTSOUNDBUFFER dsbb = NULL;
+
+    {
+        WAVEFORMATEX format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+        format.wFormatTag = WAVE_FORMAT_PCM;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = &format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = &format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        WAVEFORMATEX format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+        format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = &format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = &format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        WAVEFORMATEX format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+        format.wFormatTag = WAVE_FORMAT_PCM;
+        format.nChannels = 1;
+        format.nSamplesPerSec = 22050;
+        format.nAvgBytesPerSec = 22050 * 8;
+        format.nBlockAlign = 1;
+        format.wBitsPerSample = 8;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = &format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = &format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        WAVEFORMATEX format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+        format.wFormatTag = WAVE_FORMAT_PCM;
+        format.nChannels = 1;
+        format.nSamplesPerSec = 22050;
+        format.nAvgBytesPerSec = 22050;
+        format.nBlockAlign = 1;
+        format.wBitsPerSample = 7;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = &format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = &format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        WAVEFORMATEX format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+        format.wFormatTag = WAVE_FORMAT_PCM;
+        format.nChannels = 4;
+        format.nSamplesPerSec = 22050;
+        format.nAvgBytesPerSec = 22050 * 4;
+        format.nBlockAlign = 4;
+        format.wBitsPerSample = 8;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = &format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = &format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        WAVEFORMATEX format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+        format.wFormatTag = WAVE_FORMAT_PCM;
+        format.nChannels = 4;
+        format.nSamplesPerSec = 88000;
+        format.nAvgBytesPerSec = 352000 * 2;
+        format.nBlockAlign = 4;
+        format.wBitsPerSample = 16;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = &format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = &format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        WAVEFORMATEXTENSIBLE format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEXTENSIBLE));
+
+        format.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        format.Format.nChannels = 1;
+        format.Format.nSamplesPerSec = 22050;
+        format.Format.nAvgBytesPerSec = 22050;
+        format.Format.nBlockAlign = 1;
+        format.Format.wBitsPerSample = 8;
+        format.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+
+        format.dwChannelMask = SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_LEFT;
+        format.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = (LPWAVEFORMATEX)&format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = (LPWAVEFORMATEX)&format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 #define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   15
@@ -593,6 +851,11 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
         }
     }
 
+    if (!TestDirectSoundCreateBufferSecondaryInvalidFormat(dsa, dsb)) {
+        result = FALSE;
+        goto exit;
+    }
+
     for (int i = 0; i < MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT; i++) {
         if (!TestDirectSoundCreateBufferSecondaryFlags(dsa, dsb, CreateSecondaryBufferSuccessFlags[i])) {
             result = FALSE;
@@ -604,17 +867,6 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
         result = FALSE;
         goto exit;
     }
-
-
-    // TODO invalid format
-    /*
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 1;
-    format.nSamplesPerSec = 22050;
-    format.nAvgBytesPerSec = 22050 * 8;
-    format.nBlockAlign = 1;
-    format.wBitsPerSample = 8;
-    */
 
 exit:
 

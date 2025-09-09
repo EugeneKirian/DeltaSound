@@ -26,4 +26,4 @@ SOFTWARE.
 
 #include "base.h"
 
-HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat);
+HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat, BOOL bRigid);

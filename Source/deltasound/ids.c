@@ -26,6 +26,7 @@ SOFTWARE.
 #include "idsb.h"
 #include "ds.h"
 #include "dsb.h"
+#include "wave_format.h"
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self, LPCDSBUFFERDESC pcDSBufferDesc, idsb** ppDSBuffer, LPUNKNOWN pUnkOuter);
 HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps);
@@ -363,7 +364,5 @@ HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC 
         return E_INVALIDARG;
     }
 
-    // TODO validate lpwfxFormat
-
-    return S_OK;
+    return wave_format_is_valid(pcDesc->lpwfxFormat, TRUE);
 }
