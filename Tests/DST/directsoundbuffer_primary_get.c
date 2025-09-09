@@ -273,7 +273,8 @@ static BOOL TestDirectSoundBufferPrimaryGetDetails(
     }
 
     if (dsba == NULL && dsbb == NULL) {
-        return TRUE;
+        result = FALSE;
+        goto exit;
     }
 
     if (!TestDirectSoundBufferGetProperties(dsba, dsbb)) {

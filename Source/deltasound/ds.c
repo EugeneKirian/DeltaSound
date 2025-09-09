@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "deltasound.h"
 #include "device.h"
 #include "device_info.h"
 #include "ds.h"
@@ -89,6 +90,10 @@ VOID DELTACALL ds_release(ds* self) {
 
     if (self->Device != NULL) {
         device_release(self->Device);
+    }
+
+    if (self->Instance != NULL) {
+        deltasound_remove_ds(self->Instance, self);
     }
 
     // TODO cleanup logic

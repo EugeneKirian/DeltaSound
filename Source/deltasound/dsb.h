@@ -54,7 +54,7 @@ typedef struct dsb {
     // typically by about 15 milliseconds' worth of audio data.
     DWORD           CurrentPlayCursor;
     DWORD           CurrentWriteCursor;
-    LPBYTE          Buffer;     // TODO allocate. Size if Caps.dwBufferBytes
+    LPBYTE          Buffer;
 
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;

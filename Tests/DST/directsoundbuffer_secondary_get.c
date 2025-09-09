@@ -22,12 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_get.h"
+#include "directsoundbuffer_secondary_get.h"
 #include "wnd.h"
 
 #include <dsound.h>
 
-#define WINDOW_NAME "DirectSound Primary Buffer Get Properties"
+#define WINDOW_NAME "DirectSound Secondary Buffer Get Properties"
 
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
@@ -300,7 +300,8 @@ static BOOL TestDirectSoundBufferSecondaryGetDetails(
     }
 
     if (dsba == NULL && dsbb == NULL) {
-        return TRUE;
+        result = FALSE;
+        goto exit;
     }
 
     if (!TestDirectSoundBufferGetProperties(dsba, dsbb)) {

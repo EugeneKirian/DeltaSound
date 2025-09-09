@@ -276,8 +276,11 @@ HRESULT WINAPI GetDeviceID(
 }
 
 HRESULT WINAPI DllCanUnloadNow() {
-    // TODO NOT IMPLEMENTED
-    return DS_OK;
+    if (alc == NULL || delta == NULL) {
+        return S_OK;
+    }
+
+    return SUCCEEDED(deltasound_can_unload(delta)) ? S_OK : S_FALSE;
 }
 
 HRESULT DllGetClassObject(

@@ -558,7 +558,8 @@ static BOOL TestDirectSoundBufferPrimarySetDetails(
     }
 
     if (dsba == NULL && dsbb == NULL) {
-        return TRUE;
+        result = FALSE;
+        goto exit;
     }
 
     if (!TestDirectSoundBufferSetProperties(dsba, dsbb)) {
@@ -595,8 +596,7 @@ static const DWORD CooperativeLevels[COOPERATIVE_LEVEL_COUNT] = {
 
 #define BUFFER_FLAG_COUNT       7
 
-static const DWORD BufferFlags[BUFFER_FLAG_COUNT] =
-{
+static const DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
     DSBCAPS_PRIMARYBUFFER,
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRL3D,
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLPAN,

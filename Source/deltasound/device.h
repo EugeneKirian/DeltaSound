@@ -30,14 +30,20 @@ SOFTWARE.
 typedef struct device {
     allocator*              Allocator;
     LONG                    RefCount;
+
     device_info             Info;
+
     IMMDevice*              Device;
     IAudioClient*           AudioClient;
     IAudioRenderClient*     AudioRenderer;
     // IAudioStreamVolume*     AudioVolume; //  TODO  Is this needed?
+
     PWAVEFORMATEXTENSIBLE   WaveFormat;
+
     HANDLE                  AudioEvent;
+
     HANDLE                  Thread;
+    HANDLE                  ThreadEvent;
     BOOL                    Close;
 } device;
 
