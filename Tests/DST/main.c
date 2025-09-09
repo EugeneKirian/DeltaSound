@@ -30,10 +30,11 @@ SOFTWARE.
 #include "directsound_getcaps.h"
 #include "directsound_setcooperativelevel.h"
 
-#include "directsoundbuffer_basics.h"
+#include "directsoundbuffer_primary_basics.h"
 #include "directsoundbuffer_primary_get.h"
 #include "directsoundbuffer_primary_set.h"
 
+#include "directsoundbuffer_secondary_basics.h"
 #include "directsoundbuffer_secondary_get.h"
 #include "directsoundbuffer_secondary_set.h"
 
@@ -87,9 +88,11 @@ int main(int argc, char** argv) {
     TEST(DirectSoundSetCooperativeLevel);
     TEST(DirectSoundGetCaps);
 
-    TEST(DirectSoundBufferBasics);
+    TEST(DirectSoundBufferPrimaryBasics);
     TEST(DirectSoundBufferPrimaryGet);
     TEST(DirectSoundBufferPrimarySet);
+
+    TEST(DirectSoundBufferSecondaryBasics);
     TEST(DirectSoundBufferSecondaryGet);
     TEST(DirectSoundBufferSecondarySet);
 
