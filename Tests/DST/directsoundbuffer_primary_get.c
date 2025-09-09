@@ -108,14 +108,14 @@ static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
         ra = IDirectSoundBuffer_GetFormat(a, NULL, 17, &sa);
         rb = IDirectSoundBuffer_GetFormat(b, NULL, 17, &sb);
 
-        if (ra != rb && sa != sb) {
+        if (ra != rb || sa != sb) {
             return FALSE;
         }
 
         ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX), &sa);
         rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX), &sb);
 
-        if (ra != rb && sa != sb) {
+        if (ra != rb || sa != sb) {
             return FALSE;
         }
 
@@ -129,6 +129,20 @@ static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
         rb = IDirectSoundBuffer_GetFormat(b, NULL, size, &sb);
 
         if (ra != rb && sa != sb) {
+            return FALSE;
+        }
+
+        if (memcmp(wf1, wf2, sa) != 0) {
+            return FALSE;
+        }
+
+        ZeroMemory(wf1, size);
+        ZeroMemory(wf2, size);
+
+        ra = IDirectSoundBuffer_GetFormat(a, wf1, sizeof(WAVEFORMATEX) - 1, &sa);
+        rb = IDirectSoundBuffer_GetFormat(b, wf2, sizeof(WAVEFORMATEX) - 1, &sb);
+
+        if (ra != rb || sa != sb) {
             return FALSE;
         }
 

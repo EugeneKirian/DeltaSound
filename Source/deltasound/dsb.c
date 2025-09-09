@@ -196,17 +196,23 @@ HRESULT DELTACALL dsb_get_format(dsb* self,
         return DSERR_UNINITIALIZED;
     }
 
+    HRESULT hr = S_OK;
     const size_t size = sizeof(WAVEFORMATEX) + self->Format->cbSize;
 
     if (pwfxFormat != NULL) {
-        CopyMemory(pwfxFormat, self->Format, min(size, dwSizeAllocated));
+        if (size <= dwSizeAllocated) {
+            CopyMemory(pwfxFormat, self->Format, min(size, dwSizeAllocated));
+        }
+        else {
+            hr = E_INVALIDARG;
+        }
     }
 
     if (pdwSizeWritten != NULL) {
         *pdwSizeWritten = size;
     }
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume) {
