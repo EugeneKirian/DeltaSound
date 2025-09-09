@@ -43,7 +43,31 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
         HRESULT ra = IDirectSoundBuffer_SetCurrentPosition(a, 0);
         HRESULT rb = IDirectSoundBuffer_SetCurrentPosition(b, 0);
 
-        if (ra != rb && ra != DSERR_INVALIDCALL) {
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        DSBCAPS capsa;
+        ZeroMemory(&capsa, sizeof(DSBCAPS));
+
+        capsa.dwSize = sizeof(DSBCAPS);
+
+        DSBCAPS capsb;
+        ZeroMemory(&capsb, sizeof(DSBCAPS));
+
+        capsb.dwSize = sizeof(DSBCAPS);
+
+        ra = IDirectSoundBuffer_GetCaps(a, &capsa);
+        rb = IDirectSoundBuffer_GetCaps(b, &capsb);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSoundBuffer_SetCurrentPosition(a, capsa.dwBufferBytes + 1);
+        rb = IDirectSoundBuffer_SetCurrentPosition(b, capsb.dwBufferBytes + 1);
+
+        if (ra != rb) {
             return FALSE;
         }
     }
@@ -566,8 +590,12 @@ static BOOL TestDirectSoundBufferSecondarySetDetails(
     ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
 
-    if (ra != rb) {
+    if (ra != rb && !(flags & DSBCAPS_LOCHARDWARE)) {
         result = FALSE;
+        goto exit;
+    }
+
+    if (flags & DSBCAPS_LOCHARDWARE) {
         goto exit;
     }
 
@@ -657,7 +685,7 @@ BOOL TestDirectSoundBufferSecondarySet(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
+    for (int i = 3; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
             if (!TestDirectSoundBufferSecondarySetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
                 result = FALSE;

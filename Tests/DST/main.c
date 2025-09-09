@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferPrimaryGet);
     TEST(DirectSoundBufferPrimarySet);
     TEST(DirectSoundBufferSecondaryGet);
-    //TEST(DirectSoundBufferSecondarySet);
+    TEST(DirectSoundBufferSecondarySet);
 
 exit:
 

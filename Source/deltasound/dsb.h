@@ -52,8 +52,8 @@ typedef struct dsb {
     // at which it is safe to write new data to the buffer.
     // The write cursor always leads the play cursor,
     // typically by about 15 milliseconds' worth of audio data.
-    DWORD           CurrentPlayCursor;
-    DWORD           CurrentWriteCursor;
+    DWORD           CurrentPlayCursor;  // In bytes
+    DWORD           CurrentWriteCursor; // In bytes
     LPBYTE          Buffer;
 
     LPWAVEFORMATEX  Format;

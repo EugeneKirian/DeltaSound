@@ -175,10 +175,8 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
             return DSERR_PRIOLEVELNEEDED;
         }
     }
-    else {
-        if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            return DSERR_BUFFERLOST;
-        }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        return DSERR_BUFFERLOST;
     }
 
     if (pdwCurrentPlayCursor != NULL) {
@@ -338,10 +336,17 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         return DSERR_INVALIDCALL;
     }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        return DSERR_BUFFERLOST;
+    }
 
-    // TODO NOT IMPLEMENTED
+    if (self->Caps.dwBufferBytes < dwNewPosition) {
+        return E_INVALIDARG;
+    }
 
-    return E_NOTIMPL;
+    self->CurrentPlayCursor = dwNewPosition;
+
+    return S_OK;
 }
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
