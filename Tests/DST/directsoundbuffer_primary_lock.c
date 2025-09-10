@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <dsound.h>
 
-#define WINDOW_NAME "DirectSound Primary Buffer Get Properties"
+#define WINDOW_NAME "DirectSound Primary Buffer Lock"
 
 #define INVALID_VALUE   0x11111111
 

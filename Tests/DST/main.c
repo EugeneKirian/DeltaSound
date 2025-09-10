@@ -38,6 +38,7 @@ SOFTWARE.
 #include "directsoundbuffer_secondary_basics.h"
 #include "directsoundbuffer_secondary_get.h"
 #include "directsoundbuffer_secondary_set.h"
+#include "directsoundbuffer_secondary_lock.h"
 
 #include "directsoundcapture_enumerate.h"
 
@@ -97,6 +98,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferSecondaryBasics);
     TEST(DirectSoundBufferSecondaryGet);
     TEST(DirectSoundBufferSecondarySet);
+    TEST(DirectSoundBufferSecondaryLock);
 
 exit:
 

@@ -356,6 +356,10 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
             goto fail;
         }
     }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        hr = DSERR_BUFFERLOST;
+        goto fail;
+    }
 
     if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
         if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
@@ -464,6 +468,7 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
     }
 
     self->CurrentPlayCursor = dwNewPosition;
+    self->CurrentWriteCursor = dwNewPosition;
 
     return S_OK;
 }
@@ -574,6 +579,9 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
             return DSERR_PRIOLEVELNEEDED;
         }
+    }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        return DSERR_BUFFERLOST;
     }
 
     if (pvAudioPtr1 == NULL && pvAudioPtr2 == NULL) {
