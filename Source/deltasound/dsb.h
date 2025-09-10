@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "dsblc.h"
 #include "idsb.h"
 #include "intfc.h"
 
@@ -48,6 +49,8 @@ typedef struct dsb {
 
     DSBCAPS         Caps;
 
+    dsblc*          Locks;
+
     // The write cursor indicates the position
     // at which it is safe to write new data to the buffer.
     // The write cursor always leads the play cursor,
@@ -59,7 +62,7 @@ typedef struct dsb {
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;
     FLOAT           Pan;
-    DWORD           Frequency;
+    DWORD           Frequency;          // Frequency override when not equal to DSBFREQUENCY_ORIGINAL
     DWORD           Status;
 } dsb;
 
@@ -82,7 +85,9 @@ HRESULT DELTACALL dsb_get_pan(dsb* pDSB, PFLOAT pfPan);
 HRESULT DELTACALL dsb_get_frequency(dsb* pDSB, LPDWORD pdwFrequency);
 HRESULT DELTACALL dsb_get_status(dsb* pDSB, LPDWORD pdwStatus);
 HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
-// LOCK
+HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
+    LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1,
+    LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
 // PLAY
 HRESULT DELTACALL dsb_set_current_position(dsb* pDSB, DWORD dwNewPosition);
 HRESULT DELTACALL dsb_set_format(dsb* pDSB, LPCWAVEFORMATEX pcfxFormat);
@@ -90,5 +95,5 @@ HRESULT DELTACALL dsb_set_volume(dsb* pDSB, FLOAT fVolume);
 HRESULT DELTACALL dsb_set_pan(dsb* pDSB, FLOAT fPan);
 HRESULT DELTACALL dsb_set_frequency(dsb* pDSB, DWORD dwFrequency);
 // Stop
-// Unlock
+HRESULT DELTACALL dsb_unlock(dsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL dsb_restore(dsb* pDSB);

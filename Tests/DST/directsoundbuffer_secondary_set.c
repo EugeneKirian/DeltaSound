@@ -72,6 +72,33 @@ static BOOL TestDirectSoundBufferSetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
         }
     }
 
+    {
+        HRESULT ra = IDirectSoundBuffer_SetCurrentPosition(a, 16535);
+        HRESULT rb = IDirectSoundBuffer_SetCurrentPosition(b, 16535);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        DWORD cpca = 0, cwca = 0, cpcb = 0, cwcb = 0;
+
+        ra = IDirectSoundBuffer_GetCurrentPosition(a, &cpca, &cwca);
+        rb = IDirectSoundBuffer_GetCurrentPosition(b, &cpcb, &cwcb);
+
+        if (ra != rb || cpca != cpcb || cwca != cwcb) {
+            return FALSE;
+        }
+    }
+
+    {
+        HRESULT ra = IDirectSoundBuffer_SetCurrentPosition(a, 0);
+        HRESULT rb = IDirectSoundBuffer_SetCurrentPosition(b, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
     // SetFormat
     {
         const size_t size = 2 * sizeof(WAVEFORMATEX);
@@ -685,7 +712,7 @@ BOOL TestDirectSoundBufferSecondarySet(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    for (int i = 3; i < COOPERATIVE_LEVEL_COUNT; i++) {
+    for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
             if (!TestDirectSoundBufferSecondarySetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
                 result = FALSE;

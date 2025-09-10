@@ -278,6 +278,9 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
     // NOTE. Multiple changes are allowed.
     // They have to be properly handled.
 
+    // TODO, if new level is DSSCL_WRITEPRIMARY
+    // then stop all secondary buffers and mark them as lost?
+
     return S_OK;
 }
 

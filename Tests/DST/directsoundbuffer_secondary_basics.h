@@ -24,15 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
+#include <windows.h>
 
-typedef struct arr arr;
-
-HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut);
-VOID DELTACALL arr_release(arr* pArray);
-
-HRESULT DELTACALL arr_add_item(arr* pArray, LPVOID pItem);
-HRESULT DELTACALL arr_get_item(arr* pArray, UINT nIndex, LPVOID* ppItem);
-HRESULT DELTACALL arr_remove_item(arr* pArray, UINT nIndex, LPVOID* ppItem);
-
-UINT DELTACALL arr_get_count(arr* pArray);
+BOOL TestDirectSoundBufferSecondaryBasics(HMODULE a, HMODULE b);

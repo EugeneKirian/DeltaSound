@@ -13,8 +13,8 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WdsblcANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WdsblcANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -26,13 +26,22 @@ SOFTWARE.
 
 #include "allocator.h"
 
-typedef struct arr arr;
+typedef struct dsbl {
+    DWORD   Offset;
+    DWORD   Size;
+    LPVOID  Audio1;
+    DWORD   AudioSize1;
+    LPVOID  Audio2;
+    DWORD   AudioSize2;
+} dsbl;
 
-HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut);
-VOID DELTACALL arr_release(arr* pArray);
+typedef struct dsblc dsblc;
 
-HRESULT DELTACALL arr_add_item(arr* pArray, LPVOID pItem);
-HRESULT DELTACALL arr_get_item(arr* pArray, UINT nIndex, LPVOID* ppItem);
-HRESULT DELTACALL arr_remove_item(arr* pArray, UINT nIndex, LPVOID* ppItem);
+HRESULT DELTACALL dsblc_create(allocator* pAlloc, dsblc** ppOut);
+VOID DELTACALL dsblc_release(dsblc* pLock);
 
-UINT DELTACALL arr_get_count(arr* pArray);
+HRESULT DELTACALL dsblc_add_item(dsblc* pLock, dsbl* pItem);
+HRESULT DELTACALL dsblc_get_item(dsblc* pLock, UINT nIndex, dsbl** ppItem);
+HRESULT DELTACALL dsblc_remove_item(dsblc* pLock, UINT nIndex);
+
+UINT DELTACALL dsblc_get_count(dsblc* pLock);

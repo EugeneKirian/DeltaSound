@@ -26,4 +26,4 @@ SOFTWARE.
 
 #include <windows.h>
 
-BOOL TestDirectSoundBufferBasics(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferSecondaryLock(HMODULE a, HMODULE b);

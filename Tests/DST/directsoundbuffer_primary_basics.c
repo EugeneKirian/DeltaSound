@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_basics.h"
+#include "directsoundbuffer_primary_basics.h"
 
 #include <dsound.h>
 
@@ -478,7 +478,7 @@ static BOOL TestDirectSoundBufferQueryInterface(LPDIRECTSOUNDBUFFER a, LPDIRECTS
     return TRUE;
 }
 
-BOOL TestDirectSoundBufferBasics(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundBufferPrimaryBasics(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }

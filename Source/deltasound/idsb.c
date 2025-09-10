@@ -286,8 +286,23 @@ HRESULT DELTACALL idsb_initialize(idsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
 HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1,
     LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (ppvAudioPtr1 == NULL || pdwAudioBytes1 == NULL) {
+        if (ppvAudioPtr1 != NULL) {
+            *ppvAudioPtr1 = NULL;
+        }
+
+        if (pdwAudioBytes1 != NULL) {
+            *pdwAudioBytes1 = 0;
+        }
+
+        return E_INVALIDARG;
+    }
+
+    return dsb_lock(self->Instance, dwOffset, dwBytes, ppvAudioPtr1, pdwAudioBytes1, ppvAudioPtr2, pdwAudioBytes2, dwFlags);
 }
 
 HRESULT DELTACALL idsb_play(idsb* self, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) {
@@ -368,8 +383,11 @@ HRESULT DELTACALL idsb_stop(idsb* self) {
 }
 
 HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return dsb_unlock(self->Instance, pvAudioPtr1, dwAudioBytes1, pvAudioPtr2, dwAudioBytes2);
 }
 
 HRESULT DELTACALL idsb_restore(idsb* self) {
