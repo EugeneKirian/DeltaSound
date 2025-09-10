@@ -82,7 +82,9 @@ HRESULT DELTACALL dsb_get_pan(dsb* pDSB, PFLOAT pfPan);
 HRESULT DELTACALL dsb_get_frequency(dsb* pDSB, LPDWORD pdwFrequency);
 HRESULT DELTACALL dsb_get_status(dsb* pDSB, LPDWORD pdwStatus);
 HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
-// LOCK
+HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
+    LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1,
+    LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
 // PLAY
 HRESULT DELTACALL dsb_set_current_position(dsb* pDSB, DWORD dwNewPosition);
 HRESULT DELTACALL dsb_set_format(dsb* pDSB, LPCWAVEFORMATEX pcfxFormat);

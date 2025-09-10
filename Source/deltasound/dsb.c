@@ -334,6 +334,45 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     return allocator_allocate(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
 }
 
+HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
+    LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1,
+    LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+
+    if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
+        HRESULT hr = S_OK;
+        if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
+            return hr;
+        }
+    }
+
+    if (dwFlags & DSBLOCK_ENTIREBUFFER) {
+        dwBytes = self->Caps.dwBufferBytes;
+    }
+
+    if (dwBytes == 0 || self->Caps.dwBufferBytes <= dwBytes
+        || self->Caps.dwBufferBytes <= dwOffset + dwBytes) {
+        return E_INVALIDARG;
+    }
+
+    *ppvAudioPtr1 = (LPVOID)((size_t)self->Buffer + dwOffset);
+    *pdwAudioBytes1 = dwBytes;
+
+    if (ppvAudioPtr2 != NULL && pdwAudioBytes2 != NULL) {
+        // TODO NOT IMPLEMENTED
+    }
+
+    return S_OK;
+}
+
 HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;

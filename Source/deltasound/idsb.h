@@ -37,6 +37,8 @@ SOFTWARE.
 #define DSBCAPS_INVALID_PRIMARYBUFFER   (DSBCAPS_STATIC | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPOSITIONNOTIFY            \
                                             | DSBCAPS_CTRLFX | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER)
 
+#define DSBLOCK_NONE                    0
+
 typedef struct deltasound deltasound;
 typedef struct ds ds;
 typedef struct dsb dsb;

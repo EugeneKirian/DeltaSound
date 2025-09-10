@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="directsoundbuffer_primary_basics.c" />
+    <ClCompile Include="directsoundbuffer_primary_lock.c" />
     <ClCompile Include="directsoundbuffer_secondary_basics.c" />
     <ClCompile Include="directsoundbuffer_secondary_get.c" />
     <ClCompile Include="directsoundbuffer_secondary_set.c" />
@@ -159,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directsoundbuffer_primary_basics.h" />
+    <ClInclude Include="directsoundbuffer_primary_lock.h" />
     <ClInclude Include="directsoundbuffer_secondary_basics.h" />
     <ClInclude Include="directsoundbuffer_secondary_get.h" />
     <ClInclude Include="directsoundbuffer_secondary_set.h" />
