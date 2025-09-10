@@ -685,7 +685,7 @@ BOOL TestDirectSoundBufferSecondarySet(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    for (int i = 3; i < COOPERATIVE_LEVEL_COUNT; i++) {
+    for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
             if (!TestDirectSoundBufferSecondarySetDetails(dsca, wa, dscb, wb, BufferFlags[k], CooperativeLevels[i])) {
                 result = FALSE;

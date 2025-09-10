@@ -347,6 +347,10 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         }
     }
 
+    if (ppvAudioPtr2 == NULL && pdwAudioBytes2 != NULL) {
+        return E_INVALIDARG;
+    }
+
     if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
         HRESULT hr = S_OK;
         if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
@@ -358,16 +362,25 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         dwBytes = self->Caps.dwBufferBytes;
     }
 
-    if (dwBytes == 0 || self->Caps.dwBufferBytes <= dwBytes
-        || self->Caps.dwBufferBytes <= dwOffset + dwBytes) {
+    if (dwBytes == 0
+        || self->Caps.dwBufferBytes < dwOffset || self->Caps.dwBufferBytes < dwBytes) {
         return E_INVALIDARG;
     }
 
-    *ppvAudioPtr1 = (LPVOID)((size_t)self->Buffer + dwOffset);
-    *pdwAudioBytes1 = dwBytes;
+    const DWORD extra = self->Caps.dwBufferBytes < dwOffset + dwBytes
+        ? dwOffset + dwBytes - self->Caps.dwBufferBytes : 0;
 
-    if (ppvAudioPtr2 != NULL && pdwAudioBytes2 != NULL) {
-        // TODO NOT IMPLEMENTED
+    const DWORD length = dwBytes - extra;
+
+    *ppvAudioPtr1 = (LPVOID)((size_t)self->Buffer + (size_t)dwOffset);
+    *pdwAudioBytes1 = length;
+
+    if (ppvAudioPtr2 != NULL && extra != 0) {
+        *ppvAudioPtr2 = self->Buffer;
+    }
+
+    if (pdwAudioBytes2 != NULL && extra != 0) {
+        *pdwAudioBytes2 = extra;
     }
 
     return S_OK;

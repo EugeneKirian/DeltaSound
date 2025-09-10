@@ -375,8 +375,12 @@ HRESULT DELTACALL idsb_stop(idsb* self) {
 }
 
 HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
     // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT DELTACALL idsb_restore(idsb* self) {
