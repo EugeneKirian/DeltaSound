@@ -29,6 +29,7 @@ SOFTWARE.
 #include "wave_format.h"
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
+HRESULT DELTACALL dsb_locks_overlap(LONG lStart1, LONG lEnd1, LONG lStart2, LONG lEnd2);
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -41,10 +42,12 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
-        if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
-            instance->Caps.dwSize = sizeof(DSBCAPS);
-            *ppOut = instance;
-            return S_OK;
+        if (SUCCEEDED(hr = dsblc_create(pAlloc, &instance->Locks))) {
+            if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+                instance->Caps.dwSize = sizeof(DSBCAPS);
+                *ppOut = instance;
+                return S_OK;
+            }
         }
 
         dsb_release(instance);
@@ -62,6 +65,10 @@ VOID DELTACALL dsb_release(dsb* self) {
     }
 
     intfc_release(self->Interfaces);
+
+    if (self->Locks != NULL) {
+        dsblc_release(self->Locks);
+    }
 
     if (self->Instance != NULL) {
         ds_remove_dsb(self->Instance, self);
@@ -341,20 +348,19 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         return DSERR_UNINITIALIZED;
     }
 
+    HRESULT hr = S_OK;
+
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
-            return DSERR_PRIOLEVELNEEDED;
+            hr = DSERR_PRIOLEVELNEEDED;
+            goto fail;
         }
     }
 
-    if (ppvAudioPtr2 == NULL && pdwAudioBytes2 != NULL) {
-        return E_INVALIDARG;
-    }
-
     if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
-        HRESULT hr = S_OK;
         if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
-            return hr;
+            hr = E_INVALIDARG;
+            goto fail;
         }
     }
 
@@ -364,26 +370,81 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
 
     if (dwBytes == 0
         || self->Caps.dwBufferBytes < dwOffset || self->Caps.dwBufferBytes < dwBytes) {
-        return E_INVALIDARG;
+        hr = E_INVALIDARG;
+        goto fail;
     }
 
-    const DWORD extra = self->Caps.dwBufferBytes < dwOffset + dwBytes
+    const DWORD wrapped = self->Caps.dwBufferBytes < dwOffset + dwBytes
         ? dwOffset + dwBytes - self->Caps.dwBufferBytes : 0;
 
-    const DWORD length = dwBytes - extra;
+    const DWORD length = dwBytes - wrapped;
 
-    *ppvAudioPtr1 = (LPVOID)((size_t)self->Buffer + (size_t)dwOffset);
-    *pdwAudioBytes1 = length;
+    dsbl lock;
+    ZeroMemory(&lock, sizeof(dsbl));
 
-    if (ppvAudioPtr2 != NULL && extra != 0) {
-        *ppvAudioPtr2 = self->Buffer;
+    lock.Offset = dwOffset;
+    lock.Size = dwBytes;
+    lock.Audio1 = (LPVOID)((size_t)self->Buffer + (size_t)dwOffset);
+    lock.AudioSize1 = length;
+
+    if (wrapped != 0) {
+        lock.Audio2 = self->Buffer;
+
+        if (pdwAudioBytes2 != NULL) {
+            lock.AudioSize2 = wrapped;
+        }
     }
 
-    if (pdwAudioBytes2 != NULL && extra != 0) {
-        *pdwAudioBytes2 = extra;
+    for (UINT i = 0; i < dsblc_get_count(self->Locks); i++) {
+        dsbl* l = NULL;
+        if (SUCCEEDED(dsblc_get_item(self->Locks, i, &l))) {
+            // Match
+            if (l->Audio1 == lock.Audio1 && l->Audio2 == lock.Audio2) {
+                hr = E_INVALIDARG;
+                goto fail;
+            }
+
+            // Overlap
+            if (SUCCEEDED(dsb_locks_overlap(l->Offset, l->Offset + l->Size, lock.Offset, lock.Offset + lock.Size))) {
+                hr = E_INVALIDARG;
+                goto fail;
+            }
+        }
+    }
+
+    dsblc_add_item(self->Locks, &lock);
+
+    *ppvAudioPtr1 = lock.Audio1;
+    *pdwAudioBytes1 = lock.AudioSize1;
+
+    if (ppvAudioPtr2 != NULL) {
+        *ppvAudioPtr2 = lock.Audio2;
+    }
+
+    if (pdwAudioBytes2 != NULL) {
+        *pdwAudioBytes2 = lock.AudioSize2;
     }
 
     return S_OK;
+
+fail:
+    if (ppvAudioPtr1 != NULL) {
+        *ppvAudioPtr1 = NULL;
+    }
+
+    if (pdwAudioBytes1 != NULL) {
+        *pdwAudioBytes1 = 0;
+    }
+
+    if (ppvAudioPtr2 != NULL) {
+        *ppvAudioPtr2 = NULL;
+    }
+
+    if (pdwAudioBytes2 != NULL) {
+        *pdwAudioBytes2 = 0;
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
@@ -503,6 +564,35 @@ HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency) {
     return S_OK;
 }
 
+HRESULT DELTACALL dsb_unlock(dsb* self,
+    LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+
+    if (pvAudioPtr1 == NULL && pvAudioPtr2 == NULL) {
+        return S_OK;
+    }
+
+    for (UINT i = 0; i < dsblc_get_count(self->Locks); i++) {
+        dsbl* l = NULL;
+        if (SUCCEEDED(dsblc_get_item(self->Locks, i, &l))) {
+            if (l->Audio1 == pvAudioPtr1 && l->Audio2 == pvAudioPtr2) {
+                dsblc_remove_item(self->Locks, i);
+                return S_OK;
+            }
+        }
+    }
+
+    return E_INVALIDARG;
+}
+
 HRESULT DELTACALL dsb_restore(dsb* self) {
     if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
@@ -532,4 +622,13 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
     }
 
     return hr;
+}
+
+HRESULT DELTACALL dsb_locks_overlap(LONG lStart1, LONG lEnd1, LONG lStart2, LONG lEnd2) {
+    const LONG l1min = (lStart1 < lEnd1) ? lStart1 : lEnd1;
+    const LONG l1max = (lStart1 > lEnd1) ? lStart1 : lEnd1;
+    const LONG l2min = (lStart2 < lEnd2) ? lStart2 : lEnd2;
+    const LONG l2max = (lStart2 > lEnd2) ? lStart2 : lEnd2;
+
+    return (l1max <= l2min || l2max <= l1min) ? E_FAIL : S_OK;
 }

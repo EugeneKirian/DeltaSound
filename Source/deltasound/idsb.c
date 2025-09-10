@@ -291,6 +291,14 @@ HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes,
     }
 
     if (ppvAudioPtr1 == NULL || pdwAudioBytes1 == NULL) {
+        if (ppvAudioPtr1 != NULL) {
+            *ppvAudioPtr1 = NULL;
+        }
+
+        if (pdwAudioBytes1 != NULL) {
+            *pdwAudioBytes1 = 0;
+        }
+
         return E_INVALIDARG;
     }
 
@@ -379,8 +387,7 @@ HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes
         return E_POINTER;
     }
 
-    // TODO NOT IMPLEMENTED
-    return S_OK;
+    return dsb_unlock(self->Instance, pvAudioPtr1, dwAudioBytes1, pvAudioPtr2, dwAudioBytes2);
 }
 
 HRESULT DELTACALL idsb_restore(idsb* self) {

@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "dsblc.h"
 #include "idsb.h"
 #include "intfc.h"
 
@@ -48,6 +49,8 @@ typedef struct dsb {
 
     DSBCAPS         Caps;
 
+    dsblc*          Locks;
+
     // The write cursor indicates the position
     // at which it is safe to write new data to the buffer.
     // The write cursor always leads the play cursor,
@@ -59,7 +62,7 @@ typedef struct dsb {
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;
     FLOAT           Pan;
-    DWORD           Frequency;
+    DWORD           Frequency;          // Frequency override when not equal to DSBFREQUENCY_ORIGINAL
     DWORD           Status;
 } dsb;
 
@@ -92,5 +95,5 @@ HRESULT DELTACALL dsb_set_volume(dsb* pDSB, FLOAT fVolume);
 HRESULT DELTACALL dsb_set_pan(dsb* pDSB, FLOAT fPan);
 HRESULT DELTACALL dsb_set_frequency(dsb* pDSB, DWORD dwFrequency);
 // Stop
-// Unlock
+HRESULT DELTACALL dsb_unlock(dsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL dsb_restore(dsb* pDSB);

@@ -73,30 +73,30 @@ int main(int argc, char** argv) {
         goto exit;
     }
 
-    //TEST(DirectSoundEnumerateA);
-    //TEST(DirectSoundEnumerateW);
+    TEST(DirectSoundEnumerateA);
+    TEST(DirectSoundEnumerateW);
 
-    //TEST(DirectSoundCaptureEnumerateA);
-    //TEST(DirectSoundCaptureEnumerateW);
+    TEST(DirectSoundCaptureEnumerateA);
+    TEST(DirectSoundCaptureEnumerateW);
 
-    //TEST(GetDeviceID);
+    TEST(GetDeviceID);
 
-    //TEST(DirectSoundCreate);
-    //TEST(DirectSoundBasics);
+    TEST(DirectSoundCreate);
+    TEST(DirectSoundBasics);
   
-    //TEST(DirectSoundCreateSoundBufferPrimary);
-    //TEST(DirectSoundCreateSoundBufferSecondary);
-    //TEST(DirectSoundSetCooperativeLevel);
-    //TEST(DirectSoundGetCaps);
+    TEST(DirectSoundCreateSoundBufferPrimary);
+    TEST(DirectSoundCreateSoundBufferSecondary);
+    TEST(DirectSoundSetCooperativeLevel);
+    TEST(DirectSoundGetCaps);
 
-    //TEST(DirectSoundBufferPrimaryBasics);
-    //TEST(DirectSoundBufferPrimaryGet);
-    //TEST(DirectSoundBufferPrimarySet);
+    TEST(DirectSoundBufferPrimaryBasics);
+    TEST(DirectSoundBufferPrimaryGet);
+    TEST(DirectSoundBufferPrimarySet);
     TEST(DirectSoundBufferPrimaryLock);
 
-    //TEST(DirectSoundBufferSecondaryBasics);
-    //TEST(DirectSoundBufferSecondaryGet);
-    //TEST(DirectSoundBufferSecondarySet);
+    TEST(DirectSoundBufferSecondaryBasics);
+    TEST(DirectSoundBufferSecondaryGet);
+    TEST(DirectSoundBufferSecondarySet);
 
 exit:
 

@@ -29,6 +29,8 @@ SOFTWARE.
 
 #define WINDOW_NAME "DirectSound Primary Buffer Get Properties"
 
+#define INVALID_VALUE   0x11111111
+
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
 static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
@@ -89,7 +91,7 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
     }
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = NULL, a21 = (LPVOID)INVALID_VALUE, a22 = NULL;
         DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
 
         ra = IDirectSoundBuffer_Lock(a, 0, 0, &a11, NULL, NULL, NULL, 0);
@@ -102,11 +104,15 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         if (a11 != a21) {
             return FALSE;
         }
+
+        if (a11 != NULL || a21 != NULL) {
+            return FALSE;
+        }
     }
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = NULL, a21 = (LPVOID)INVALID_VALUE, a22 = NULL;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = 0, al22 = 0;
 
         ra = IDirectSoundBuffer_Lock(a, 0, 0, &a11, &al11, NULL, NULL, 0);
         rb = IDirectSoundBuffer_Lock(b, 0, 0, &a21, &al12, NULL, NULL, 0);
@@ -118,11 +124,15 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         if (a11 != a21 || al11 != al12) {
             return FALSE;
         }
+
+        if (a11 != NULL || a21 != NULL || al11 != 0 || al12 != 0) {
+            return FALSE;
+        }
     }
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = 0, al22 = 0;
 
         ra = IDirectSoundBuffer_Lock(a, 0, 0, &a11, &al11, &a12, NULL, 0);
         rb = IDirectSoundBuffer_Lock(b, 0, 0, &a21, &al12, &a22, NULL, 0);
@@ -134,11 +144,16 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         if (a11 != a21 || al11 != al12 || a12 != a22) {
             return FALSE;
         }
+
+        if (a11 != NULL || a21 != NULL || al11 != 0 || al12 != 0
+            || a12 != NULL || a22 != NULL) {
+            return FALSE;
+        }
     }
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
 
         ra = IDirectSoundBuffer_Lock(a, 0, 0, &a11, &al11, &a12, &al21, 0);
         rb = IDirectSoundBuffer_Lock(b, 0, 0, &a21, &al12, &a22, &al22, 0);
@@ -150,11 +165,16 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         if (a11 != a21 || al11 != al12 || a12 != a22 || al21 != al22) {
             return FALSE;
         }
+
+        if (a11 != NULL || a21 != NULL || al11 != 0 || al12 != 0
+            || a12 != NULL || a22 != NULL || al21 != 0 || al22 != 0) {
+            return FALSE;
+        }
     }
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
 
         ra = IDirectSoundBuffer_Lock(a, 0, capsa.dwBufferBytes + 1, &a11, &al11, &a12, &al21, 0);
         rb = IDirectSoundBuffer_Lock(b, 0, capsb.dwBufferBytes + 1, &a21, &al12, &a22, &al22, 0);
@@ -174,11 +194,16 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         if (al11 != al12 || al21 != al22) {
             return FALSE;
         }
+
+        if (a11 != NULL || a21 != NULL || al11 != 0 || al12 != 0
+            || a12 != NULL || a22 != NULL || al21 != 0 || al22 != 0) {
+            return FALSE;
+        }
     }
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
 
         ra = IDirectSoundBuffer_Lock(a, 11111, 0, &a11, &al11, &a12, &al21, 0);
         rb = IDirectSoundBuffer_Lock(b, 11111, 0, &a21, &al12, &a22, &al22, 0);
@@ -196,6 +221,11 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         }
 
         if (al11 != al12 || al21 != al22) {
+            return FALSE;
+        }
+
+        if (a11 != NULL || a21 != NULL || al11 != 0 || al12 != 0
+            || a12 != NULL || a22 != NULL || al21 != 0 || al22 != 0) {
             return FALSE;
         }
     }
@@ -249,8 +279,8 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
     }
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
 
         ra = IDirectSoundBuffer_Lock(a, capsa.dwBufferBytes + 1, capsa.dwBufferBytes, &a11, &al11, &a12, &al21, 0);
         rb = IDirectSoundBuffer_Lock(b, capsb.dwBufferBytes + 1, capsb.dwBufferBytes, &a21, &al12, &a22, &al22, 0);
@@ -268,6 +298,11 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         }
 
         if (al11 != al12 || al21 != al22) {
+            return FALSE;
+        }
+
+        if (a11 != NULL || a21 != NULL || al11 != 0 || al12 != 0
+            || a12 != NULL || a22 != NULL || al21 != 0 || al22 != 0) {
             return FALSE;
         }
     }
@@ -299,8 +334,8 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
     // DSBLOCK_FROMWRITECURSOR
 
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
 
         ra = IDirectSoundBuffer_Lock(a, 0, 0, &a11, &al11, &a12, &al21, DSBLOCK_FROMWRITECURSOR);
         rb = IDirectSoundBuffer_Lock(b, 0, 0, &a21, &al12, &a22, &al22, DSBLOCK_FROMWRITECURSOR);
@@ -320,11 +355,16 @@ static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOU
         if (ra != rb || ra == S_OK) {
             return FALSE;
         }
+
+        if (a11 != NULL || a21 != NULL || al11 != 0 || al12 != 0
+            || a12 != NULL || a22 != NULL || al21 != 0 || al22 != 0) {
+            return FALSE;
+        }
     }
 
     // DSBLOCK_ENTIREBUFFER
 
-
+    // DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER
 
     return TRUE;
 }
@@ -675,7 +715,7 @@ static BOOL TestDirectSoundBufferValidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
             }
         }
     }
-    
+
     // DSBLOCK_FROMWRITECURSOR
 
     {
@@ -744,8 +784,6 @@ static BOOL TestDirectSoundBufferValidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
         }
     }
 
-
-
     {
         LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
         DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
@@ -780,6 +818,39 @@ static BOOL TestDirectSoundBufferValidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     }
 
     // DSBLOCK_ENTIREBUFFER
+
+    {
+        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
+        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+
+        ra = IDirectSoundBuffer_Lock(a, 0, 0, &a11, &al11, &a12, &al21, DSBLOCK_ENTIREBUFFER);
+        rb = IDirectSoundBuffer_Lock(b, 0, 0, &a21, &al12, &a22, &al22, DSBLOCK_ENTIREBUFFER);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
+            return FALSE;
+        }
+
+        if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
+            return FALSE;
+        }
+
+        if (al11 != al12 || al21 != al22) {
+            return FALSE;
+        }
+
+        if (ra == S_OK || rb == S_OK) {
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
 
     {
         LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
@@ -884,6 +955,113 @@ static BOOL TestDirectSoundBufferValidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
         }
     }
 
+    // DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER
+
+    {
+        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
+        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+
+        ra = IDirectSoundBuffer_Lock(a, 0, 0, &a11, &al11, &a12, &al21,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+        rb = IDirectSoundBuffer_Lock(b, 0, 0, &a21, &al12, &a22, &al22,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
+            return FALSE;
+        }
+
+        if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
+            return FALSE;
+        }
+
+        if (al11 != al12 || al21 != al22) {
+            return FALSE;
+        }
+
+        if (ra == S_OK || rb == S_OK) {
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    {
+        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
+        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+
+        ra = IDirectSoundBuffer_Lock(a, 0, capsa.dwBufferBytes + 1, &a11, &al11, &a12, &al21,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+        rb = IDirectSoundBuffer_Lock(b, 0, capsb.dwBufferBytes + 1, &a21, &al12, &a22, &al22,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
+            return FALSE;
+        }
+
+        if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
+            return FALSE;
+        }
+
+        if (al11 != al12 || al21 != al22) {
+            return FALSE;
+        }
+
+        if (ra == S_OK || rb == S_OK) {
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    {
+        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
+        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+
+        ra = IDirectSoundBuffer_Lock(a, capsa.dwBufferBytes, capsa.dwBufferBytes + 1, &a11, &al11, &a12, &al21,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+        rb = IDirectSoundBuffer_Lock(b, capsb.dwBufferBytes, capsb.dwBufferBytes + 1, &a21, &al12, &a22, &al22,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
+            return FALSE;
+        }
+
+        if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
+            return FALSE;
+        }
+
+        if (al11 != al12 || al21 != al22) {
+            return FALSE;
+        }
+
+        if (ra == S_OK || rb == S_OK) {
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
     return TRUE;
 }
 
@@ -927,8 +1105,8 @@ static BOOL TestDirectSoundBufferDuplicateLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTS
 
     // Lock
     {
-        LPVOID a11 = NULL, a12 = NULL, a21 = NULL, a22 = NULL;
-        DWORD al11 = 0, al12 = 0, al21 = 0, al22 = 0;
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
 
         const HRESULT ra1 = IDirectSoundBuffer_Lock(a, 0, 10111, &a11, &al11, &a12, &al21, 0);
         const HRESULT rb1 = IDirectSoundBuffer_Lock(b, 0, 10111, &a21, &al12, &a22, &al22, 0);
@@ -937,15 +1115,19 @@ static BOOL TestDirectSoundBufferDuplicateLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTS
             return FALSE;
         }
 
-        // Lock with the same offset and length
         if (ra1 == S_OK || rb1 == S_OK) {
-            // NOTE. Cannot lock the same bytes multiple times.
-            // Expected result: E_INVALIDARG
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
 
-            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 0, 10111, &a11, &al11, &a12, &al21, 0);
-            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 0, 10111, &a21, &al12, &a22, &al22, 0);
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 0, 10111, &b11, &bl11, &b12, &bl21, 0);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 0, 10111, &b21, &bl12, &b22, &bl22, 0);
 
             if (ra2 != rb2) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
                 return FALSE;
             }
 
@@ -955,11 +1137,397 @@ static BOOL TestDirectSoundBufferDuplicateLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTS
             if (ra != rb) {
                 return FALSE;
             }
+        }
+    }
 
-            if (ra1 == ra2 || rb1 == rb2) {
+    {
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
+
+        const HRESULT ra1 = IDirectSoundBuffer_Lock(a, cwa, capsa.dwBufferBytes + 1, &a11, &al11, &a12, &al21,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+        const HRESULT rb1 = IDirectSoundBuffer_Lock(b, cwb, capsb.dwBufferBytes + 1, &a21, &al12, &a22, &al22,
+            DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+        if (ra1 == S_OK || rb1 == S_OK) {
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
+
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, capsa.dwBufferBytes + 1, capsa.dwBufferBytes + 1, &b11, &bl11, &b12, &bl21,
+                DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, capsb.dwBufferBytes + 1, capsb.dwBufferBytes + 1, &b21, &bl12, &b22, &bl22,
+                DSBLOCK_FROMWRITECURSOR | DSBLOCK_ENTIREBUFFER);
+
+            if (ra2 != rb2) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
+                return FALSE;
+            }
+
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
                 return FALSE;
             }
         }
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundBufferOverlappedLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    // GetCaps
+    DSBCAPS capsa;
+    ZeroMemory(&capsa, sizeof(DSBCAPS));
+    capsa.dwSize = sizeof(DSBCAPS);
+
+    DSBCAPS capsb;
+    ZeroMemory(&capsb, sizeof(DSBCAPS));
+    capsb.dwSize = sizeof(DSBCAPS);
+
+    HRESULT ra = IDirectSoundBuffer_GetCaps(a, &capsa);
+    HRESULT rb = IDirectSoundBuffer_GetCaps(b, &capsb);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+        return FALSE;
+    }
+
+    DWORD cpa = 0, cpb = 0, cwa = 0, cwb = 0;
+
+    ra = IDirectSoundBuffer_GetCurrentPosition(a, &cpa, &cwa);
+    rb = IDirectSoundBuffer_GetCurrentPosition(b, &cpb, &cwb);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (cpa != cpb || cwa != cwb) {
+        return FALSE;
+    }
+
+    // Lock
+    {
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
+
+        const HRESULT ra1 = IDirectSoundBuffer_Lock(a, 0, 10111, &a11, &al11, &a12, &al21, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Lock(b, 0, 10111, &a21, &al12, &a22, &al22, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+        if (ra1 == S_OK || rb1 == S_OK) {
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
+
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 0, 10110, &b11, &bl11, &b12, &bl21, 0);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 0, 10110, &b21, &bl12, &b22, &bl22, 0);
+
+            if (ra2 != rb2 || ra2 == S_OK || rb2 == S_OK) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
+                return FALSE;
+            }
+
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    {
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
+
+        const HRESULT ra1 = IDirectSoundBuffer_Lock(a, 0, 10111, &a11, &al11, &a12, &al21, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Lock(b, 0, 10111, &a21, &al12, &a22, &al22, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+        if (ra1 == S_OK || rb1 == S_OK) {
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
+
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 1, 10111, &b11, &bl11, &b12, &bl21, 0);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 1, 10111, &b21, &bl12, &b22, &bl22, 0);
+
+            if (ra2 != rb2 || ra2 == S_OK || rb2 == S_OK) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
+                return FALSE;
+            }
+
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    {
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
+
+        const HRESULT ra1 = IDirectSoundBuffer_Lock(a, 0, 10111, &a11, &al11, &a12, &al21, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Lock(b, 0, 10111, &a21, &al12, &a22, &al22, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+        if (ra1 == S_OK || rb1 == S_OK) {
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
+
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 1, 10110, &b11, &bl11, &b12, &bl21, 0);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 1, 10110, &b21, &bl12, &b22, &bl22, 0);
+
+            if (ra2 != rb2 || ra2 == S_OK || rb2 == S_OK) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
+                return FALSE;
+            }
+
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    {
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
+
+        const HRESULT ra1 = IDirectSoundBuffer_Lock(a, 0, 10111, &a11, &al11, &a12, &al21, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Lock(b, 0, 10111, &a21, &al12, &a22, &al22, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+        if (ra1 == S_OK || rb1 == S_OK) {
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
+
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 7, 30110, &b11, &bl11, &b12, &bl21, 0);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 7, 30110, &b21, &bl12, &b22, &bl22, 0);
+
+            if (ra2 != rb2 || ra2 == S_OK || rb2 == S_OK) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
+                return FALSE;
+            }
+
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    {
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
+
+        const HRESULT ra1 = IDirectSoundBuffer_Lock(a, 0, 10111, &a11, &al11, &a12, &al21, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Lock(b, 0, 10111, &a21, &al12, &a22, &al22, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+        if (ra1 == S_OK || rb1 == S_OK) {
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
+
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 10110, 17894, &b11, &bl11, &b12, &bl21, 0);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 10110, 17894, &b21, &bl12, &b22, &bl22, 0);
+
+            if (ra2 != rb2 || ra2 == S_OK || rb2 == S_OK) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
+                return FALSE;
+            }
+
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    {
+        LPVOID a11 = (LPVOID)INVALID_VALUE, a12 = (LPVOID)INVALID_VALUE, a21 = (LPVOID)INVALID_VALUE, a22 = (LPVOID)INVALID_VALUE;
+        DWORD al11 = INVALID_VALUE, al12 = INVALID_VALUE, al21 = INVALID_VALUE, al22 = INVALID_VALUE;
+
+        const HRESULT ra1 = IDirectSoundBuffer_Lock(a, 128, 1024, &a11, &al11, &a12, &al21, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Lock(b, 128, 1024, &a21, &al12, &a22, &al22, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+        if (ra1 == S_OK || rb1 == S_OK) {
+            LPVOID b11 = (LPVOID)INVALID_VALUE, b12 = (LPVOID)INVALID_VALUE, b21 = (LPVOID)INVALID_VALUE, b22 = (LPVOID)INVALID_VALUE;
+            DWORD bl11 = INVALID_VALUE, bl12 = INVALID_VALUE, bl21 = INVALID_VALUE, bl22 = INVALID_VALUE;
+
+            const HRESULT ra2 = IDirectSoundBuffer_Lock(a, 64, 1024, &b11, &bl11, &b12, &bl21, 0);
+            const HRESULT rb2 = IDirectSoundBuffer_Lock(b, 64, 1024, &b21, &bl12, &b22, &bl22, 0);
+
+            if (ra2 != rb2 || ra2 == S_OK || rb2 == S_OK) {
+                return FALSE;
+            }
+
+            if (b11 != NULL || b21 != NULL || bl11 != 0 || bl12 != 0
+                || b12 != NULL || b22 != NULL || bl21 != 0 || bl22 != 0) {
+                return FALSE;
+            }
+
+            ra = IDirectSoundBuffer_Unlock(a, a11, al11, a12, al21);
+            rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundBufferUnlock(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    // GetCaps
+    DSBCAPS capsa;
+    ZeroMemory(&capsa, sizeof(DSBCAPS));
+    capsa.dwSize = sizeof(DSBCAPS);
+
+    DSBCAPS capsb;
+    ZeroMemory(&capsb, sizeof(DSBCAPS));
+    capsb.dwSize = sizeof(DSBCAPS);
+
+    HRESULT ra = IDirectSoundBuffer_GetCaps(a, &capsa);
+    HRESULT rb = IDirectSoundBuffer_GetCaps(b, &capsb);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+        return FALSE;
+    }
+
+    DWORD cpa = 0, cpb = 0, cwa = 0, cwb = 0;
+
+    ra = IDirectSoundBuffer_GetCurrentPosition(a, &cpa, &cwa);
+    rb = IDirectSoundBuffer_GetCurrentPosition(b, &cpb, &cwb);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (cpa != cpb || cwa != cwb) {
+        return FALSE;
+    }
+
+    // Unlock
+    {
+        const HRESULT ra1 = IDirectSoundBuffer_Unlock(a, NULL, 0, NULL, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Unlock(b, NULL, 0, NULL, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+    }
+
+    {
+        const HRESULT ra1 = IDirectSoundBuffer_Unlock(a, (LPVOID)INVALID_VALUE, 0, NULL, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Unlock(b, (LPVOID)INVALID_VALUE, 0, NULL, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+    }
+
+    {
+        const HRESULT ra1 = IDirectSoundBuffer_Unlock(a, (LPVOID)INVALID_VALUE, 175, NULL, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Unlock(b, (LPVOID)INVALID_VALUE, 175, NULL, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+    }
+
+    {
+        const HRESULT ra1 = IDirectSoundBuffer_Unlock(a, (LPVOID)INVALID_VALUE, 376, (LPVOID)INVALID_VALUE, 0);
+        const HRESULT rb1 = IDirectSoundBuffer_Unlock(b, (LPVOID)INVALID_VALUE, 376, (LPVOID)INVALID_VALUE, 0);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
+    }
+
+    {
+        const HRESULT ra1 = IDirectSoundBuffer_Unlock(a, (LPVOID)INVALID_VALUE, 376, (LPVOID)INVALID_VALUE, 1024);
+        const HRESULT rb1 = IDirectSoundBuffer_Unlock(b, (LPVOID)INVALID_VALUE, 376, (LPVOID)INVALID_VALUE, 1024);
+
+        if (ra1 != rb1) {
+            return FALSE;
+        }
+
     }
 
     return TRUE;
@@ -1023,10 +1591,6 @@ static BOOL TestDirectSoundBufferPrimaryLockDetails(
         goto exit;
     }
 
-    if (level == 4 && flags == 1) {
-        int kkk = 1; // TODO
-    }
-
     if (!TestDirectSoundBufferInvalidLocks(dsba, dsbb)) {
         result = FALSE;
         goto exit;
@@ -1042,14 +1606,20 @@ static BOOL TestDirectSoundBufferPrimaryLockDetails(
         goto exit;
     }
 
-    // todo lock of overlapping offset and length
+    if (!TestDirectSoundBufferOverlappedLocks(dsba, dsbb)) {
+        result = FALSE;
+        goto exit;
+    }
 
-    // TODO Unlock tests
+    if (!TestDirectSoundBufferUnlock(dsba, dsbb)) {
+        result = FALSE;
+        goto exit;
+    }
 
-    //if (!TestDirectSoundBufferUnlockable(dsba, dsbb)) {
-    //    result = FALSE;
-    //    goto exit;
-    //}
+    if (!TestDirectSoundBufferUnlockable(dsba, dsbb)) {
+        result = FALSE;
+        goto exit;
+    }
 
 exit:
 
