@@ -24,11 +24,7 @@ SOFTWARE.
 
 #include "directsoundbuffer_secondary_basics.h"
 
-#include <dsound.h>
-
 typedef IReferenceClock* LPREFERENCECLOCK;
-
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
 static BOOL TestDirectSoundBufferAddRef(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {

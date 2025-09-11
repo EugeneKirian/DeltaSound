@@ -24,8 +24,6 @@ SOFTWARE.
 
 #include "getdeviceid.h"
 
-#include <dsound.h>
-
 typedef HRESULT(WINAPI* LPGETDEVICEID)(LPCGUID pGuidSrc, LPGUID pGuidDest);
 
 typedef BOOL(CALLBACK* LPDSENUMCALLBACKA)(LPGUID, LPCSTR, LPCSTR, LPVOID);

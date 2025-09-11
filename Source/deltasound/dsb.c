@@ -588,6 +588,10 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
         return S_OK;
     }
 
+    if (pvAudioPtr2 == NULL && dwAudioBytes2 != 0) {
+        return E_INVALIDARG;
+    }
+
     for (UINT i = 0; i < dsblc_get_count(self->Locks); i++) {
         dsbl* l = NULL;
         if (SUCCEEDED(dsblc_get_item(self->Locks, i, &l))) {

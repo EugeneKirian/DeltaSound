@@ -25,11 +25,7 @@ SOFTWARE.
 #include "directsoundbuffer_secondary_lock.h"
 #include "wnd.h"
 
-#include <dsound.h>
-
 #define WINDOW_NAME "DirectSound Secondary Buffer Lock"
-
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
 static BOOL TestDirectSoundBufferValidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {

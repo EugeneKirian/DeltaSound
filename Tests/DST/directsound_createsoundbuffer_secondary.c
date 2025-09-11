@@ -24,11 +24,6 @@ SOFTWARE.
 
 #include "directsound_createsoundbuffer_primary.h"
 
-#include <dsound.h>
-#include <mmreg.h>
-
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
-
 static const GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {
     0x0000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
 };

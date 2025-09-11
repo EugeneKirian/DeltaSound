@@ -25,11 +25,7 @@ SOFTWARE.
 #include "directsound_setcooperativelevel.h"
 #include "wnd.h"
 
-#include <dsound.h>
-
-#define WINDOW_NAME "SetCooperativeLevel"
-
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
+#define WINDOW_NAME "Set Cooperative Level"
 
 static BOOL TestDirectSoundSetCooperativeLevelInvalidParams(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {

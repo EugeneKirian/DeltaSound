@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include <windows.h>
+#include "base.h"
 
 BOOL TestDirectSoundCaptureEnumerateA(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b);

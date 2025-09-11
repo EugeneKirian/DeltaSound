@@ -25,11 +25,7 @@ SOFTWARE.
 #include "directsoundbuffer_primary_get.h"
 #include "wnd.h"
 
-#include <dsound.h>
-
 #define WINDOW_NAME "DirectSound Primary Buffer Get Properties"
-
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
 static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {

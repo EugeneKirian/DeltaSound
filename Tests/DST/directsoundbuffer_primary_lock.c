@@ -22,16 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_get.h"
+#include "directsoundbuffer_primary_lock.h"
 #include "wnd.h"
-
-#include <dsound.h>
 
 #define WINDOW_NAME "DirectSound Primary Buffer Lock"
 
 #define INVALID_VALUE   0x11111111
-
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
 
 static BOOL TestDirectSoundBufferInvalidLocks(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {

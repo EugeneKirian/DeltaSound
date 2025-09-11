@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include <windows.h>
+#include "base.h"
 
 ATOM RegisterWindowClass(LPCSTR lpszName);
 HWND InitWindow(LPCSTR lpszName);

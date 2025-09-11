@@ -24,6 +24,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include <windows.h>
+#include <dsound.h>
+#include <mmreg.h>
 
-BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
