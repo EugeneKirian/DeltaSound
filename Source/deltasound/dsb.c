@@ -451,6 +451,52 @@ fail:
     return hr;
 }
 
+HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        return DSERR_BUFFERLOST;
+    }
+
+    if (!(self->Caps.dwFlags & DSBCAPS_LOCDEFER)) {
+        if (dwPriority != 0) {
+            return E_INVALIDARG;
+        }
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (!(dwFlags & DSBPLAY_LOOPING)) {
+            return E_INVALIDARG;
+        }
+    }
+
+    self->PlayPriority = dwPriority;
+
+    self->Status = self->Status | DSBSTATUS_PLAYING;
+    if (dwFlags & DSBPLAY_LOOPING) {
+        self->Status = self->Status | DSBSTATUS_LOOPING;
+    }
+
+    // TODO DSBSTATUS_LOCSOFTWARE 
+    // TODO DSBSTATUS_LOCHARDWARE
+
+    // TODO Verify
+    // DSBPLAY_LOCHARDWARE 
+    // DSBPLAY_LOCSOFTWARE 
+
+
+
+    // TODO
+    return S_OK;
+}
+
 HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;

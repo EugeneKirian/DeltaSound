@@ -30,10 +30,10 @@ SOFTWARE.
 
 #define WINDOW_NAME "DirectSound Primary Buffer Play"
 
-static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
+static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
     LPVOID wave, DWORD wavelen, DWORD checkpoint, DWORD priority, DWORD flags) {
     if (buff == NULL || wave == NULL || wavelen == 0) {
-        DebugBreak(); return FALSE;
+        DebugBreak(); return E_ABORT;
     }
 
     UINT iter = 0;
@@ -46,22 +46,20 @@ static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
     DWORD audio1len = 0, audio2len = 0;
 
     DWORD status = 0;
-    HRESULT ra = IDirectSoundBuffer_GetStatus(buff, &status);
+    HRESULT hr = IDirectSoundBuffer_GetStatus(buff, &status);
     printf("\r\nBuffer size %8d Status %8d\r\n", wavelen, status);
 
     // And fill the buffer in chunks until the end of the buffer.
-    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(buff, 0, priority, flags))) {
-        ra = IDirectSoundBuffer_GetStatus(buff, &status);
+    if (SUCCEEDED(hr = IDirectSoundBuffer_Play(buff, 0, priority, flags))) {
+        hr = IDirectSoundBuffer_GetStatus(buff, &status);
         while (total_write < wavelen
-            && SUCCEEDED(ra = IDirectSoundBuffer_GetCurrentPosition(buff, &current_play, &current_write))) {
-            ra = IDirectSoundBuffer_GetStatus(buff, &status);
+            && SUCCEEDED(hr = IDirectSoundBuffer_GetCurrentPosition(buff, &current_play, &current_write))) {
+            hr = IDirectSoundBuffer_GetStatus(buff, &status);
 
             if (last_write == current_write) {
                 Sleep(1);
                 continue;
             }
-
-            // TODO move to another function
 
             const unsigned pd = current_play < last_play
                 ? caps->dwBufferBytes - last_play + current_play : current_play - last_play;
@@ -85,13 +83,11 @@ static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
             const ptrdiff_t left = wavelen - total_write;
 
             if (checkpoint < total_write && left > 0) {
-                ra = IDirectSoundBuffer_Lock(buff, current_write, 0, &audio1, &audio1len, &audio2, &audio2len, DSBLOCK_ENTIREBUFFER);
-
-                if (ra != S_OK) {
-                    DebugBreak(); return FALSE;
+                if (FAILED(hr = IDirectSoundBuffer_Lock(buff, current_write, 0, &audio1, &audio1len, &audio2, &audio2len, DSBLOCK_ENTIREBUFFER))) {
+                    DebugBreak(); return hr;
                 }
 
-                const size_t written1 = audio1len < left ? audio1len : left;
+                const size_t written1 = (ptrdiff_t)audio1len < left ? audio1len : left;
 
                 {
                     // Copy the data
@@ -102,7 +98,8 @@ static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                 }
 
                 const ptrdiff_t left2 = wavelen - total_write - written1;
-                const size_t written2 = audio2 == NULL ? 0 : (audio2len < left2 ? audio2len : left2);
+                const size_t written2 = audio2 == NULL
+                    ? 0 : ((ptrdiff_t)audio2len < left2 ? audio2len : left2);
 
                 if (audio2 != NULL)
                 {
@@ -121,10 +118,8 @@ static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                 printf("\tL1 %8d L2 %8d W1 %8d W2 %8d N.Pos %8d\r\n\r\n",
                     audio1len, audio2len, written1, written2, checkpoint);
 
-                ra = IDirectSoundBuffer_Unlock(buff, audio1, written1, audio2, written2);
-
-                if (ra != S_OK) {
-                    DebugBreak(); return FALSE;
+                if (FAILED(hr = IDirectSoundBuffer_Unlock(buff, audio1, written1, audio2, written2))) {
+                    DebugBreak(); return hr;
                 }
             }
         }
@@ -132,7 +127,7 @@ static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
         printf("\r\n\tPLAY!!\r\n");
 
         // Wait for the buffer to play to the end.
-        while (SUCCEEDED(ra = IDirectSoundBuffer_GetCurrentPosition(buff, &current_play, &current_write))) {
+        while (SUCCEEDED(hr = IDirectSoundBuffer_GetCurrentPosition(buff, &current_play, &current_write))) {
             total_play += current_play;
             total_write += current_write;
 
@@ -149,7 +144,17 @@ static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
 
     printf("--------------------------------------\r\n");
 
-    return TRUE;
+    // Stop
+
+    if (FAILED(hr = IDirectSoundBuffer_Stop(buff))) {
+        DebugBreak(); return hr;
+    }
+
+    hr = IDirectSoundBuffer_GetStatus(buff, &status);
+
+    printf("\r\nStop Status %8d\r\n", status);
+
+    return hr;
 }
 
 static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
@@ -238,30 +243,14 @@ static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBU
     }
 
     // Play A
-    const BOOL playa = TestPlayBuffer(a, &capsa, wavea, wavelena, al11 * 2 / 3, priority, flags);
+    ra = TestPlayBuffer(a, &capsa, wavea, wavelena, al11 * 2 / 3, priority, flags);
 
     // Play B
-
-    // TODO
-
-    // Stop
-
-    ra = IDirectSoundBuffer_Stop(a);
-    rb = IDirectSoundBuffer_Stop(b);
+    rb = TestPlayBuffer(b, &capsb, waveb, wavelenb, al12 * 2 / 3, priority, flags);
 
     if (ra != rb) {
         DebugBreak(); return FALSE;
     }
-
-    DWORD sa = 0, sb = 0;
-    ra = IDirectSoundBuffer_GetStatus(a, &sa);
-    rb = IDirectSoundBuffer_GetStatus(b, &sb);
-
-    if (ra != rb) {
-        DebugBreak(); return FALSE;
-    }
-
-    printf("\r\nStop Status A %8d B %8d\r\n", sa, sb);
 
     return TRUE;
 }

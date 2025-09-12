@@ -306,8 +306,15 @@ HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes,
 }
 
 HRESULT DELTACALL idsb_play(idsb* self, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (dwReserved1 != 0) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_play(self->Instance, dwPriority, dwFlags);
 }
 
 HRESULT DELTACALL idsb_set_curent_position(idsb* self, DWORD dwNewPosition) {

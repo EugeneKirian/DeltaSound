@@ -51,6 +51,8 @@ typedef struct dsb {
 
     dsblc*          Locks;
 
+    DWORD           PlayPriority;
+
     // The write cursor indicates the position
     // at which it is safe to write new data to the buffer.
     // The write cursor always leads the play cursor,
@@ -88,7 +90,7 @@ HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
 HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1,
     LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
-// PLAY
+HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags);
 HRESULT DELTACALL dsb_set_current_position(dsb* pDSB, DWORD dwNewPosition);
 HRESULT DELTACALL dsb_set_format(dsb* pDSB, LPCWAVEFORMATEX pcfxFormat);
 HRESULT DELTACALL dsb_set_volume(dsb* pDSB, FLOAT fVolume);
