@@ -30,6 +30,128 @@ SOFTWARE.
 
 #define WINDOW_NAME "DirectSound Primary Buffer Play"
 
+static BOOL TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
+    LPVOID wave, DWORD wavelen, DWORD checkpoint, DWORD priority, DWORD flags) {
+    if (buff == NULL || wave == NULL || wavelen == 0) {
+        DebugBreak(); return FALSE;
+    }
+
+    UINT iter = 0;
+
+    DWORD last_play = 0, last_write = 0;
+    DWORD total_play = 0, total_write = 0;
+    DWORD current_play = 0, current_write = 0;
+
+    LPVOID audio1 = NULL, audio2 = NULL;
+    DWORD audio1len = 0, audio2len = 0;
+
+    DWORD status = 0;
+    HRESULT ra = IDirectSoundBuffer_GetStatus(buff, &status);
+    printf("\r\nBuffer size %8d Status %8d\r\n", wavelen, status);
+
+    // And fill the buffer in chunks until the end of the buffer.
+    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(buff, 0, priority, flags))) {
+        ra = IDirectSoundBuffer_GetStatus(buff, &status);
+        while (total_write < wavelen
+            && SUCCEEDED(ra = IDirectSoundBuffer_GetCurrentPosition(buff, &current_play, &current_write))) {
+            ra = IDirectSoundBuffer_GetStatus(buff, &status);
+
+            if (last_write == current_write) {
+                Sleep(1);
+                continue;
+            }
+
+            // TODO move to another function
+
+            const unsigned pd = current_play < last_play
+                ? caps->dwBufferBytes - last_play + current_play : current_play - last_play;
+            const unsigned wd = current_write < last_write
+                ? caps->dwBufferBytes - last_write + current_write : current_write - last_write;
+
+            last_write = current_write;
+            last_play = current_play;
+
+            total_play += pd;
+            total_write += wd;
+
+            iter++;
+
+            printf("It %8d, St %8d, Play %8d, Write %8d, Tot.Play %8d Tot.Write %8d N.Pos %8d\r\n",
+                iter, status, current_play, current_write, total_play, total_write, checkpoint);
+
+            // If the current write position is larger than the monitored buffer usage
+            // then fill the buffer with more data and update the checkpoint position.
+
+            const ptrdiff_t left = wavelen - total_write;
+
+            if (checkpoint < total_write && left > 0) {
+                ra = IDirectSoundBuffer_Lock(buff, current_write, 0, &audio1, &audio1len, &audio2, &audio2len, DSBLOCK_ENTIREBUFFER);
+
+                if (ra != S_OK) {
+                    DebugBreak(); return FALSE;
+                }
+
+                const size_t written1 = audio1len < left ? audio1len : left;
+
+                {
+                    // Copy the data
+                    CopyMemory(audio1, (LPVOID)((size_t)wave + total_write), written1);
+
+                    // TODO need to generate silence
+                    ZeroMemory((LPVOID)((size_t)audio1 + written1), audio1len - written1);
+                }
+
+                const ptrdiff_t left2 = wavelen - total_write - written1;
+                const size_t written2 = audio2 == NULL ? 0 : (audio2len < left2 ? audio2len : left2);
+
+                if (audio2 != NULL)
+                {
+                    // Copy the data
+                    CopyMemory(audio2, (LPVOID)((size_t)wave + total_write + written1), written2);
+
+                    // TODO need to generate silence
+                    ZeroMemory((LPVOID)((size_t)audio2 + written2), audio2len - written2);
+                }
+
+                printf("\r\n\tTot.Write %8d Left %d8 W1 %8d W2 %8d To %8d\r\n",
+                    total_write, left, written1, written2, total_write + written1 + written2);
+
+                checkpoint = total_write + (written1 + written2) * 2 / 3;
+
+                printf("\tL1 %8d L2 %8d W1 %8d W2 %8d N.Pos %8d\r\n\r\n",
+                    audio1len, audio2len, written1, written2, checkpoint);
+
+                ra = IDirectSoundBuffer_Unlock(buff, audio1, written1, audio2, written2);
+
+                if (ra != S_OK) {
+                    DebugBreak(); return FALSE;
+                }
+            }
+        }
+
+        printf("\r\n\tPLAY!!\r\n");
+
+        // Wait for the buffer to play to the end.
+        while (SUCCEEDED(ra = IDirectSoundBuffer_GetCurrentPosition(buff, &current_play, &current_write))) {
+            total_play += current_play;
+            total_write += current_write;
+
+            iter++;
+
+            printf("It %8d, Play %8d, Write %8d, Tot.Play %8d Tot.Write %8d Len %d8\r\n",
+                iter, current_play, current_write, total_play, total_write, wavelen);
+
+            if (wavelen < total_play) {
+                break;
+            }
+        }
+    }
+
+    printf("--------------------------------------\r\n");
+
+    return TRUE;
+}
+
 static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
     LPVOID wavea, DWORD wavelena, LPVOID waveb, DWORD wavelenb, DWORD priority, DWORD flags) {
     if (a == NULL || b == NULL || wavea == NULL || wavelena == 0 || waveb == NULL || wavelenb == 0) {
@@ -103,9 +225,8 @@ static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBU
 
     // Copy
 
-    DWORD check_point1 = al11, check_point2 = al12;
-    CopyMemory(a11, wavea, check_point1);
-    CopyMemory(a21, waveb, check_point2);
+    CopyMemory(a11, wavea, al11);
+    CopyMemory(a21, waveb, al12);
 
     // Unlock
 
@@ -116,115 +237,8 @@ static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBU
         DebugBreak(); return FALSE;
     }
 
-    // Adjust the position when buffer has to be refilled at 2/3rds of the size.
-    check_point1 = check_point1 * 2 / 3;
-    check_point2 = check_point2 * 2 / 3;
-
-    UINT ita = 0, itb = 0;
-
-    DWORD lpa = 0, lwa = 0, lpb = 0, lwb = 0;
-    DWORD tpa = 0, twa = 0, tpb = 0, twb = 0;
-
     // Play A
-    printf("\r\nBuffer size %8d\r\n", wavelena);
-
-    // And fill the buffer in chunks until the end of the buffer.
-    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, priority, flags))) {
-        while (twa < wavelena
-            && SUCCEEDED(ra = IDirectSoundBuffer_GetCurrentPosition(a, &cpa, &cwa))) {
-
-            if (lwa == cwa) {
-                Sleep(1);
-                continue;
-            }
-
-            // TODO move to another function
-
-            const unsigned pd = cpa < lpa
-                ? capsa.dwBufferBytes - lpa + cpa : cpa - lpa;
-            const unsigned wd = cwa < lwa
-                ? capsa.dwBufferBytes - lwa + cwa : cwa - lwa;
-
-            lwa = cwa;
-            lpa = cpa;
-
-            tpa += pd;
-            twa += wd;
-
-            ita++;
-
-            printf("It %8d, Play %8d, Write %8d, Tot.Play %8d Tot.Write %8d N.Pos %8d\r\n",
-                ita, cpa, cwa, tpa, twa, check_point1);
-
-            // If the current write position is larger than the monitored buffer usage
-            // then fill the buffer with more data and update the checkpoint position.
-
-            const ptrdiff_t left = wavelena - twa;
-
-            if (check_point1 < twa && left > 0) {
-                ra = IDirectSoundBuffer_Lock(a, cwa, 0, &a11, &al11, &a12, &al21, DSBLOCK_ENTIREBUFFER);
-
-                if (ra != S_OK) {
-                    DebugBreak(); return FALSE;
-                }
-
-                const size_t written1 = al11 < left ? al11 : left;
-
-                {
-                    // Copy the data
-                    CopyMemory(a11, (LPVOID)((size_t)wavea + twa), written1);
-
-                    // TODO need to generate silence
-                    ZeroMemory((LPVOID)((size_t)a11 + written1), al11 - written1);
-                }
-
-                const ptrdiff_t left2 = wavelena - twa - written1;
-                const size_t written2 = a12 == NULL ? 0 : (al21 < left2 ? al21 : left2);
-
-                if (a12 != NULL)
-                {
-                    // Copy the data
-                    CopyMemory(a12, (LPVOID)((size_t)wavea + twa + written1), written2);
-
-                    // TODO need to generate silence
-                    ZeroMemory((LPVOID)((size_t)a12 + written2), al21 - written2);
-                }
-
-                printf("\r\n\tTot.Write %8d Left %d8 W1 %8d W2 %8d To %8d\r\n",
-                    twa, left, written1, written2, twa + written1 + written2);
-
-                check_point1 = twa + (written1 + written2) * 2 / 3;
-
-                printf("\tL1 %8d L2 %8d W1 %8d W2 %8d N.Pos %8d\r\n\r\n",
-                    al11, al21, written1, written2, check_point1);
-
-                ra = IDirectSoundBuffer_Unlock(a, a11, written1, a12, written2);
-
-                if (ra != S_OK) {
-                    DebugBreak(); return FALSE;
-                }
-            }
-        }
-
-        printf("\r\n\tPLAY!!\r\n");
-
-        // Wait for the buffer to play to the end.
-        while (SUCCEEDED(ra = IDirectSoundBuffer_GetCurrentPosition(a, &cpa, &cwa))) {
-            tpa += cpa;
-            twa += cwa;
-
-            ita++;
-
-            printf("It %8d, Play %8d, Write %8d, Tot.Play %8d Tot.Write %8d Len %d8\r\n",
-                ita, cpa, cwa, tpa, twa, wavelena);
-
-            if (wavelena < tpa) {
-                break;
-            }
-        }
-    }
-
-    printf("--------------------------------------\r\n");
+    const BOOL playa = TestPlayBuffer(a, &capsa, wavea, wavelena, al11 * 2 / 3, priority, flags);
 
     // Play B
 
@@ -238,6 +252,16 @@ static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBU
     if (ra != rb) {
         DebugBreak(); return FALSE;
     }
+
+    DWORD sa = 0, sb = 0;
+    ra = IDirectSoundBuffer_GetStatus(a, &sa);
+    rb = IDirectSoundBuffer_GetStatus(b, &sb);
+
+    if (ra != rb) {
+        DebugBreak(); return FALSE;
+    }
+
+    printf("\r\nStop Status A %8d B %8d\r\n", sa, sb);
 
     return TRUE;
 }
