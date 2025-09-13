@@ -250,7 +250,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         return DSERR_NODRIVER;
     }
 
-    if (SUCCEEDED(hr = device_create(self->Allocator, info.Type, &info, &self->Device))) {
+    if (SUCCEEDED(hr = device_create(self->Allocator, self, info.Type, &info, &self->Device))) {
         DSBUFFERDESC desc;
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 

@@ -27,9 +27,15 @@ SOFTWARE.
 #include "allocator.h"
 #include "device_info.h"
 
+// TODO rename this to ds_device
+// so that there can be dsc_device for capture...
+
+typedef struct ds ds;
+
 typedef struct device {
     allocator*              Allocator;
-    LONG                    RefCount;
+    LONG                    RefCount;   // TODO is RefCount needed here??? Device isn't shared...
+    ds*                     Instance;
 
     device_info             Info;
 
@@ -37,6 +43,8 @@ typedef struct device {
     IAudioClient*           AudioClient;
     IAudioRenderClient*     AudioRenderer;
     // IAudioStreamVolume*     AudioVolume; //  TODO  Is this needed?
+
+    UINT32                  AudioClientBufferSize;  // In frames
 
     PWAVEFORMATEXTENSIBLE   WaveFormat;
 
@@ -48,7 +56,7 @@ typedef struct device {
 } device;
 
 HRESULT DELTACALL device_create(
-    allocator* pAlloc, DWORD dwType, device_info* pInfo, device** ppOut);
+    allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, device** ppOut);
 
 ULONG DELTACALL device_add_ref(device* pDev);
 ULONG DELTACALL device_remove_ref(device* pDev);

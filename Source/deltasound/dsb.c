@@ -491,7 +491,7 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
     // DSBPLAY_LOCHARDWARE 
     // DSBPLAY_LOCSOFTWARE 
 
-
+    self->CurrentWriteCursor = 1000; // TODO come up with formula based on the format
 
     // TODO
     return S_OK;
@@ -555,10 +555,18 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         // TODO stop the buffer, update the format, and resume playback
     }
 
-    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
+    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX)); // TODO see note below
     self->Format->cbSize = 0;
 
     return S_OK;
+
+    // TODO
+    // WAVEFORMATEXTENSIBLE can safely be cast to WAVEFORMATEX,
+    // because it simply configures the extra bytes specified by WAVEFORMATEX.cbSize.
+    // DirectSound recognizes the WAVE_FORMAT_EXTENSIBLE format tag
+    // and correctly plays multiple-channel and compressed formats in hardware buffers, as long as these formats are supported by the driver.
+
+    // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee419020(v=vs.85)
 }
 
 HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {
