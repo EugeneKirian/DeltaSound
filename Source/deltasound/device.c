@@ -42,7 +42,7 @@ DWORD WINAPI device_thread(device_thread_context* ctx);
 
 HRESULT DELTACALL device_allocate(allocator* pAlloc, device** ppOut);
 HRESULT DELTACALL device_initialize(device* pDev);
-HRESULT DELTACALL device_get_period(device* pDev, LPREFERENCE_TIME pDefaultPeriod, LPREFERENCE_TIME pMinPeriod);
+HRESULT DELTACALL device_get_period(device* pDev, LPREFERENCE_TIME pDefaultPeriod, LPREFERENCE_TIME pMinPeriod); // TODO is this needed ?
 HRESULT DELTACALL device_get_mix_format(device* pDev, LPWAVEFORMATEX* ppWaveFormat);
 
 HRESULT DELTACALL device_play(device* pDev); // TODO
@@ -150,7 +150,7 @@ VOID DELTACALL device_release(device* self) {
 
     if (self->Thread != NULL) {
         self->Close = TRUE;
-        
+
         // NOTE. Cannot wait for thread handle,
         // because it does not fire when thread is being
         // terminated through the FreeLibrary function call.
@@ -190,7 +190,7 @@ HRESULT DELTACALL device_initialize(device* self) {
 
     HRESULT hr = S_OK;
     IMMDeviceEnumerator* enumerator = NULL;
-    REFERENCE_TIME period = 0;
+    REFERENCE_TIME period = 0;// TODO is this needed?
     LPWAVEFORMATEX wfx = NULL;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_IMMDeviceEnumerator,
@@ -273,7 +273,7 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL device_get_period(device* self, LPREFERENCE_TIME pDefaultPeriod, LPREFERENCE_TIME pMinPeriod) {
+HRESULT DELTACALL device_get_period(device* self, LPREFERENCE_TIME pDefaultPeriod, LPREFERENCE_TIME pMinPeriod) { // TODO is this needed?
     if (self == NULL) {
         return E_POINTER;
     }
@@ -294,6 +294,8 @@ HRESULT DELTACALL device_get_mix_format(device* self, LPWAVEFORMATEX* ppWaveForm
 }
 
 // TODO refactor!
+// return data type, etc...
+// parameter names, etc...
 void DELTACALL convert_to_float(WAVEFORMATEX* format,
     void* in_buf, DWORD in_buf_len, FLOAT** out_buf, DWORD* out_buf_len) {
     const DWORD bits = format->wBitsPerSample;
@@ -420,17 +422,24 @@ VOID DELTACALL resample(size_t in_freq, FLOAT* in_buf, DWORD in_buf_len,
 }
 
 HRESULT DELTACALL read_from_circular_buffer(void* buffer, DWORD buffer_size,
-    DWORD start, DWORD length, void* output) { // TODO name, var names
-
-    // todo support play and write positions
+    DWORD start, DWORD end, DWORD length, void* output, LPDWORD pdwLength) { // TODO name, var names
     // TODO input validation
 
-    const DWORD read = min(buffer_size - start, length);
+    const DWORD max_read =
+        start < end ? end - start : buffer_size - start + end;
+
+    if (max_read < length) {
+        length = max_read;
+    }
+
+    const DWORD read = min(length, buffer_size - start);
     CopyMemory(output, (void*)((size_t)buffer + start), read);
 
     if (read < length) {
         CopyMemory((void*)((size_t)output + read), buffer, length - read);
     }
+
+    *pdwLength = length;
 
     return S_OK;
 }
@@ -455,33 +464,81 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
                 // TODO needed calculation for non-looping buffers
                 // min(target - padding, wav->dwNumFrames - audio->nCurrentFrame);
 
-                // TODO convert from source format to target format!
-
                 if (frames != 0) {
                     //if (frames == target) {
                     BYTE* lock;
                     if (SUCCEEDED(IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
 
-                        // TODO better math!
+                        // Compute out buffer size based on the format and number of frames.
+                        DWORD in_bytes = (DWORD)((FLOAT)main->Format->nSamplesPerSec
+                            / (FLOAT)self->WaveFormat->Format.nSamplesPerSec
+                            * frames * main->Format->nBlockAlign);
+
+                        // Round down to the closest complete frame
+                        if (in_bytes % main->Format->nBlockAlign) {
+                            in_bytes -= in_bytes % main->Format->nBlockAlign;
+                        }
+
+                        const DWORD in_frames = in_bytes / main->Format->nBlockAlign;
+                        DWORD out_bytes = (DWORD)((FLOAT)self->WaveFormat->Format.nSamplesPerSec
+                            / (FLOAT)main->Format->nSamplesPerSec
+                            * in_frames * self->WaveFormat->Format.nBlockAlign);
+
+                        // Round down to the closest complete frame
+                        if (out_bytes % self->WaveFormat->Format.nBlockAlign) {
+                            out_bytes -= out_bytes % self->WaveFormat->Format.nBlockAlign;
+                        }
 
                         // Convert needed frames to input frames as a ratio of frequencies.
-                        const UINT32 in_frames =
-                            (UINT32)((FLOAT)main->Format->nSamplesPerSec
-                                / (FLOAT)self->WaveFormat->Format.nSamplesPerSec * (FLOAT)frames);
+                        //const UINT32 in_frames =
+                        //    (UINT32)((FLOAT)main->Format->nSamplesPerSec
+                        //        / (FLOAT)self->WaveFormat->Format.nSamplesPerSec * (FLOAT)frames);
+
+                        // TODO this is incorrect ^^
+                        // There are frames dropped due to rounding, for example
+                        // 800 frames becomes 798 frames (when calculating buffer size, etc.
 
                         // TODO
                         // this assumes that input and output formats
                         // have the same number of chanels
 
-                        const DWORD buffer_read_length = in_frames * main->Format->nBlockAlign;
-                        void* buffer_read = malloc(buffer_read_length);
+                        //const DWORD buffer_read_length = in_frames * main->Format->nBlockAlign;
+                        //void* buffer_read = malloc(buffer_read_length);
+                        void* buffer_read = malloc(in_bytes);
 
+                        DWORD real_read = 0;
+                        //read_from_circular_buffer(main->Buffer, main->Caps.dwBufferBytes,
+                        //    main->CurrentPlayCursor, buffer_read_length, buffer_read);
+                        
                         read_from_circular_buffer(main->Buffer, main->Caps.dwBufferBytes,
-                            main->CurrentPlayCursor, buffer_read_length, buffer_read);
+                            main->CurrentPlayCursor, main->CurrentWriteCursor, in_bytes, buffer_read, &real_read);
+
+                        //{
+                        //    real_read = in_bytes;
+                        //    size_t copy = in_bytes;
+
+                        //    if (copy + main->CurrentPlayCursor < main->Caps.dwBufferBytes) {
+                        //        CopyMemory(buffer_read, (void*)((size_t)main->Buffer + main->CurrentPlayCursor), copy);
+                        //    }
+                        //    else {
+                        //        size_t copy1 = main->Caps.dwBufferBytes - main->CurrentPlayCursor;
+                        //        CopyMemory(buffer_read, (void*)((size_t)main->Buffer + main->CurrentPlayCursor), copy1);
+                        //        CopyMemory((void*)((size_t)buffer_read + copy1), main->Buffer, copy - copy1);
+                        //    }
+                        //}
+
+                        if (in_bytes != real_read) {
+                            int kk = 1;// TODO
+                        }
+
+                        //fprintf(f, "Reading at: %d Size %d Read %d Input bytes %d Input frames %d Output bytes %d\r\n",
+                        //    main->CurrentPlayCursor, in_bytes, real_read, in_bytes, in_frames, out_bytes);
 
                         float* float_buf = NULL;
                         DWORD float_buf_len = 0;
-                        convert_to_float(main->Format, buffer_read, buffer_read_length,
+                        //convert_to_float(main->Format, buffer_read, buffer_read_length,
+                        //    &float_buf, &float_buf_len);
+                        convert_to_float(main->Format, buffer_read, real_read,
                             &float_buf, &float_buf_len);
 
                         float* resample_buf = NULL;
@@ -489,6 +546,17 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
                         resample(main->Format->nSamplesPerSec, float_buf, float_buf_len,
                             self->WaveFormat->Format.nSamplesPerSec, &resample_buf, &resample_buf_len);
 
+                        if (out_bytes != resample_buf_len) {
+                            int kkk = 1; // TODO
+                        }
+
+
+
+                        const UINT32 out_frames = resample_buf_len / self->WaveFormat->Format.nBlockAlign;
+
+                        //fprintf(f, "Resampled frames %d\r\n", out_frames);
+
+                        //CopyMemory(lock, resample_buf, out_bytes); // resample_buf_len);
                         CopyMemory(lock, resample_buf, resample_buf_len);
 
                         // TODO memory management!!!
@@ -497,12 +565,18 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
                         free(buffer_read);
 
                         // Update play and write cursors.
+                        //main->CurrentPlayCursor =
+                        //    (main->CurrentPlayCursor + buffer_read_length) % main->Caps.dwBufferBytes;
+                        //main->CurrentWriteCursor =
+                        //    (main->CurrentWriteCursor + buffer_read_length) % main->Caps.dwBufferBytes;
                         main->CurrentPlayCursor =
-                            (main->CurrentPlayCursor + buffer_read_length) % main->Caps.dwBufferBytes;
+                            (main->CurrentPlayCursor + real_read) % main->Caps.dwBufferBytes;
                         main->CurrentWriteCursor =
-                            (main->CurrentWriteCursor + buffer_read_length) % main->Caps.dwBufferBytes;
+                            (main->CurrentWriteCursor + real_read) % main->Caps.dwBufferBytes;
 
-                        IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
+                        //IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
+
+                        IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, out_frames, 0);
 
                         // TODO for non-looping buffers
                         //if (wav->dwNumFrames <= audio->nCurrentFrame) {
@@ -511,6 +585,10 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
                     }
                 }
             }
+        }
+        else {
+            main->CurrentPlayCursor = 0;
+            main->CurrentWriteCursor = 0;
         }
     }
 
@@ -537,7 +615,7 @@ DWORD WINAPI device_thread(device_thread_context* ctx) {
         device_play(dev);
 
         // TODO
-        Sleep(1);
+        //Sleep(1);
     }
 
     if (dev->WaveFormat != NULL) {

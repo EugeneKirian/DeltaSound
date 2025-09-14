@@ -87,6 +87,25 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                     DebugBreak(); return hr;
                 }
 
+                {
+                    // TODO
+                    // NOTE. Original DirectSound ignores distance between read and write,
+                    // and manages to return complete size of the buffer,
+                    // includeing the "unaccessible" region...
+                    const size_t distance = current_play < current_write
+                        ? 32768 + current_play - current_write
+                        : 32768 + current_write - current_play;
+
+                    if (distance != audio1len + audio2len) {
+                        int todo = 1;/// TODO
+                    }
+                }
+
+                {
+                    // TODO test.
+                    // Lock with offset between read and write cursors...
+                }
+
                 const size_t written1 = (ptrdiff_t)audio1len < left ? audio1len : left;
 
                 {
@@ -243,10 +262,19 @@ static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBU
     }
 
     // Play A
-    ra = TestPlayBuffer(a, &capsa, wavea, wavelena, al11 * 2 / 3, priority, flags);
+    //ra = TestPlayBuffer(a, &capsa, wavea, wavelena, al11 * 2 / 3, priority, flags);
 
     // Play B
-    rb = TestPlayBuffer(b, &capsb, waveb, wavelenb, al12 * 2 / 3, priority, flags);
+    //rb = TestPlayBuffer(b, &capsb, waveb, wavelenb, al12 * 2 / 3, priority, flags);
+
+    // TODO
+    // play once test, no locking-unlocking
+    if (SUCCEEDED(IDirectSoundBuffer_Play(b, 0, 0, DSBPLAY_LOOPING))) {
+        Sleep(10 * 1000);
+        IDirectSoundBuffer_Stop(b);
+
+        // TODO One complete buffer fill play some noise!!
+    }
 
     if (ra != rb) {
         DebugBreak(); return FALSE;

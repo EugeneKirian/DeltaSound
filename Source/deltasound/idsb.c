@@ -389,9 +389,7 @@ HRESULT DELTACALL idsb_stop(idsb* self) {
         return E_POINTER;
     }
 
-    // TODO NOT IMPLEMENTED
-
-    return S_OK;
+    return dsb_stop(self->Instance);
 }
 
 HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {

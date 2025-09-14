@@ -61,6 +61,10 @@ typedef struct dsb {
     DWORD           CurrentWriteCursor; // In bytes
     LPBYTE          Buffer;
 
+    // TODO Have a dscb - circular buffer entity to manage positions
+    // and locks. So that it can be reused in capture
+    // and tested, etc...
+
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;
     FLOAT           Pan;
@@ -96,6 +100,6 @@ HRESULT DELTACALL dsb_set_format(dsb* pDSB, LPCWAVEFORMATEX pcfxFormat);
 HRESULT DELTACALL dsb_set_volume(dsb* pDSB, FLOAT fVolume);
 HRESULT DELTACALL dsb_set_pan(dsb* pDSB, FLOAT fPan);
 HRESULT DELTACALL dsb_set_frequency(dsb* pDSB, DWORD dwFrequency);
-// Stop
+HRESULT DELTACALL dsb_stop(dsb* pDSB);
 HRESULT DELTACALL dsb_unlock(dsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL dsb_restore(dsb* pDSB);

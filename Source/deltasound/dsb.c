@@ -87,7 +87,7 @@ VOID DELTACALL dsb_release(dsb* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) {
+HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) { // TODO Is this needed?
     self->Caps.dwFlags = dwFlags;
 
     // TODO properly update things when new flags are set
@@ -368,12 +368,19 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         }
     }
 
+    const DWORD lockable = self->CurrentPlayCursor < self->CurrentWriteCursor
+        ? self->Caps.dwBufferBytes + self->CurrentPlayCursor - self->CurrentWriteCursor
+        : self->Caps.dwBufferBytes - self->CurrentPlayCursor + self->CurrentWriteCursor;
+
     if (dwFlags & DSBLOCK_ENTIREBUFFER) {
-        dwBytes = self->Caps.dwBufferBytes;
+        dwBytes = lockable;
     }
 
+    // TODO what if offset in between read and write cursors
+    // + wrapped test
+
     if (dwBytes == 0
-        || self->Caps.dwBufferBytes < dwOffset || self->Caps.dwBufferBytes < dwBytes) {
+        || self->Caps.dwBufferBytes < dwOffset || lockable < dwBytes) {
         hr = E_INVALIDARG;
         goto fail;
     }
@@ -381,15 +388,13 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     const DWORD wrapped = self->Caps.dwBufferBytes < dwOffset + dwBytes
         ? dwOffset + dwBytes - self->Caps.dwBufferBytes : 0;
 
-    const DWORD length = dwBytes - wrapped;
-
     dsbl lock;
     ZeroMemory(&lock, sizeof(dsbl));
 
     lock.Offset = dwOffset;
     lock.Size = dwBytes;
     lock.Audio1 = (LPVOID)((size_t)self->Buffer + (size_t)dwOffset);
-    lock.AudioSize1 = length;
+    lock.AudioSize1 = dwBytes - wrapped;
 
     if (wrapped != 0) {
         lock.Audio2 = self->Buffer;
@@ -489,9 +494,10 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
 
     // TODO Verify
     // DSBPLAY_LOCHARDWARE 
-    // DSBPLAY_LOCSOFTWARE 
+    // DSBPLAY_LOCSOFTWARE
 
-    self->CurrentWriteCursor = 1000; // TODO come up with formula based on the format
+    self->CurrentWriteCursor =
+        self->CurrentPlayCursor + 800 * self->Format->nBlockAlign; // TODO make 800 frames a constant
 
     // TODO
     return S_OK;
@@ -619,6 +625,18 @@ HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency) {
     }
 
     self->Frequency = dwFrequency;
+
+    return S_OK;
+}
+
+HRESULT DELTACALL dsb_stop(dsb* self) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    // TODO Not implemented
+
+    self->Status &= ~(DSBSTATUS_PLAYING);
 
     return S_OK;
 }

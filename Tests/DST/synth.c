@@ -28,18 +28,22 @@ SOFTWARE.
 #include <math.h>
 #include <stdint.h>
 
-static int32_t Convert(double in, uint32_t bits) {
+// TODO refactor data types
+// TODO calling convention
+// TODO parameter names
+
+static int32_t Convert(FLOAT in, uint32_t bits) {
     if (bits == 8 || bits == 16) {
         // Normalize value to [-1, 1]
-        const double value = min(max(in, -1.0), 1.0);
+        const double value = min(max(in, -1.0f), 1.0f);
 
         if (bits == 8) {
             // Range [0 to 255]
-            return (int32_t)((value + 1.0) * 127.0);
+            return (int32_t)((value + 1.0) * 127.0f);
         }
         else if (bits == 16) {
             // Range of [-32,768 to 32,767]
-            return (int32_t)(value * 32767.0);
+            return (int32_t)(value * 32767.0f);
         }
     }
 
@@ -71,18 +75,18 @@ BOOL Synthesise(LPWAVEFORMATEX format,
     const uint32_t frames = samples / format->nChannels;
 
     for (uint32_t i = 0; i < frames; i++) {
-        const double value = sin(multiplier * ((double)(i) / format->nSamplesPerSec));
-        const uint32_t converted = Convert(value, format->wBitsPerSample);
-        const size_t block_offset = i * format->nChannels * (format->wBitsPerSample >> 3);
+        const double value = sin(multiplier * ((float)i / format->nSamplesPerSec));
+        const int32_t converted = Convert(value, format->wBitsPerSample);
+        const DWORD block_offset = i * format->nChannels * (format->wBitsPerSample >> 3);
 
         for (uint32_t j = 0; j < format->nChannels; j++) {
             const size_t sample_offset = block_offset + j * (format->wBitsPerSample >> 3);
 
             if (format->wBitsPerSample == 8) {
-                *(uint8_t*)((size_t)data + sample_offset) = (uint8_t)converted;
+                *(PBYTE)((SIZE_T)data + sample_offset) = (BYTE)converted;
             }
             else if (format->wBitsPerSample == 16) {
-                *(int16_t*)((size_t)data + sample_offset) = (int16_t)converted;
+                *(PSHORT)((SIZE_T)data + sample_offset) = (SHORT)converted;
             }
         }
     }
