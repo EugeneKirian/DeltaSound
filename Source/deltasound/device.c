@@ -214,7 +214,7 @@ HRESULT DELTACALL device_initialize(device* self) {
 
     if (FAILED(hr = IAudioClient_Initialize(self->AudioClient,
         AUDCLNT_SHAREMODE_SHARED,
-        AUDCLNT_STREAMFLAGS_NOPERSIST, // TODO ??? | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+        AUDCLNT_STREAMFLAGS_NOPERSIST | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
         REFTIMES_PER_SEC, 0, wfx, NULL))) {
         goto exit;
     }
@@ -231,9 +231,9 @@ HRESULT DELTACALL device_initialize(device* self) {
 
     CoTaskMemFree(wfx);
 
-    //if (FAILED(hr = IAudioClient_SetEventHandle(self->AudioClient, self->AudioEvent))) {
-    //    goto exit;
-    //}
+    if (FAILED(hr = IAudioClient_SetEventHandle(self->AudioClient, self->AudioEvent))) {
+        goto exit;
+    }
 
     if (FAILED(hr = IAudioClient_GetService(self->AudioClient,
         &IID_IAudioRenderClient, &self->AudioRenderer))) {
@@ -527,61 +527,61 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
                         //    }
                         //}
 
-                        if (in_bytes != real_read) {
-                            int kk = 1;// TODO
-                        }
+if (in_bytes != real_read) {
+    int kk = 1;// TODO
+}
 
-                        //fprintf(f, "Reading at: %d Size %d Read %d Input bytes %d Input frames %d Output bytes %d\r\n",
-                        //    main->CurrentPlayCursor, in_bytes, real_read, in_bytes, in_frames, out_bytes);
+//fprintf(f, "Reading at: %d Size %d Read %d Input bytes %d Input frames %d Output bytes %d\r\n",
+//    main->CurrentPlayCursor, in_bytes, real_read, in_bytes, in_frames, out_bytes);
 
-                        float* float_buf = NULL;
-                        DWORD float_buf_len = 0;
-                        //convert_to_float(main->Format, buffer_read, buffer_read_length,
-                        //    &float_buf, &float_buf_len);
-                        convert_to_float(main->Format, buffer_read, real_read,
-                            &float_buf, &float_buf_len);
+float* float_buf = NULL;
+DWORD float_buf_len = 0;
+//convert_to_float(main->Format, buffer_read, buffer_read_length,
+//    &float_buf, &float_buf_len);
+convert_to_float(main->Format, buffer_read, real_read,
+    &float_buf, &float_buf_len);
 
-                        float* resample_buf = NULL;
-                        DWORD resample_buf_len = 0;
-                        resample(main->Format->nSamplesPerSec, float_buf, float_buf_len,
-                            self->WaveFormat->Format.nSamplesPerSec, &resample_buf, &resample_buf_len);
+float* resample_buf = NULL;
+DWORD resample_buf_len = 0;
+resample(main->Format->nSamplesPerSec, float_buf, float_buf_len,
+    self->WaveFormat->Format.nSamplesPerSec, &resample_buf, &resample_buf_len);
 
-                        if (out_bytes != resample_buf_len) {
-                            int kkk = 1; // TODO
-                        }
+if (out_bytes != resample_buf_len) {
+    int kkk = 1; // TODO
+}
 
 
 
-                        const UINT32 out_frames = resample_buf_len / self->WaveFormat->Format.nBlockAlign;
+const UINT32 out_frames = resample_buf_len / self->WaveFormat->Format.nBlockAlign;
 
-                        //fprintf(f, "Resampled frames %d\r\n", out_frames);
+//fprintf(f, "Resampled frames %d\r\n", out_frames);
 
-                        //CopyMemory(lock, resample_buf, out_bytes); // resample_buf_len);
-                        CopyMemory(lock, resample_buf, resample_buf_len);
+//CopyMemory(lock, resample_buf, out_bytes); // resample_buf_len);
+CopyMemory(lock, resample_buf, resample_buf_len);
 
-                        // TODO memory management!!!
-                        free(resample_buf);
-                        free(float_buf);
-                        free(buffer_read);
+// TODO memory management!!!
+free(resample_buf);
+free(float_buf);
+free(buffer_read);
 
-                        // Update play and write cursors.
-                        //main->CurrentPlayCursor =
-                        //    (main->CurrentPlayCursor + buffer_read_length) % main->Caps.dwBufferBytes;
-                        //main->CurrentWriteCursor =
-                        //    (main->CurrentWriteCursor + buffer_read_length) % main->Caps.dwBufferBytes;
-                        main->CurrentPlayCursor =
-                            (main->CurrentPlayCursor + real_read) % main->Caps.dwBufferBytes;
-                        main->CurrentWriteCursor =
-                            (main->CurrentWriteCursor + real_read) % main->Caps.dwBufferBytes;
+// Update play and write cursors.
+//main->CurrentPlayCursor =
+//    (main->CurrentPlayCursor + buffer_read_length) % main->Caps.dwBufferBytes;
+//main->CurrentWriteCursor =
+//    (main->CurrentWriteCursor + buffer_read_length) % main->Caps.dwBufferBytes;
+main->CurrentPlayCursor =
+(main->CurrentPlayCursor + real_read) % main->Caps.dwBufferBytes;
+main->CurrentWriteCursor =
+(main->CurrentWriteCursor + real_read) % main->Caps.dwBufferBytes;
 
-                        //IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
+//IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
 
-                        IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, out_frames, 0);
+IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, out_frames, 0);
 
-                        // TODO for non-looping buffers
-                        //if (wav->dwNumFrames <= audio->nCurrentFrame) {
-                        //    audio->dwState = AUDIOSTATE_IDLE;
-                        //}
+// TODO for non-looping buffers
+//if (wav->dwNumFrames <= audio->nCurrentFrame) {
+//    audio->dwState = AUDIOSTATE_IDLE;
+//}
                     }
                 }
             }
@@ -619,12 +619,19 @@ DWORD WINAPI device_thread(device_thread_context* ctx) {
 
     SetEvent(ctx->Init);
 
+    // TODO:
+    // CPU efficiency:
+    // 1. Replace dev->Close to an event.
+    // 2. Use dev->AudioEvent for buffer filling
     while (!dev->Close) {
-        if (FAILED(device_play(dev))) {
-
-            // TODO
-            Sleep(1);
+        if (WaitForSingleObject(dev->AudioEvent, INFINITE) == STATUS_WAIT_0) {
+            device_play(dev);
         }
+        //if (FAILED(device_play(dev))) {
+        //
+        //    // TODO
+        //    Sleep(1);
+        //}
     }
 
     if (dev->WaveFormat != NULL) {
