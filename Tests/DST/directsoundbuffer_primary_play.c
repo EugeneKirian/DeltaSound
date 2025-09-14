@@ -176,7 +176,7 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
     return hr;
 }
 
-static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
+static BOOL TestDirectSoundBufferStreamWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
     LPVOID wavea, DWORD wavelena, LPVOID waveb, DWORD wavelenb, DWORD priority, DWORD flags) {
     if (a == NULL || b == NULL || wavea == NULL || wavelena == 0 || waveb == NULL || wavelenb == 0) {
         DebugBreak(); return FALSE;
@@ -262,19 +262,21 @@ static BOOL TestDirectSoundBufferPlayWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBU
     }
 
     // Play A
-    //ra = TestPlayBuffer(a, &capsa, wavea, wavelena, al11 * 2 / 3, priority, flags);
+    ra = TestPlayBuffer(a, &capsa, wavea, wavelena, al11 * 2 / 3, priority, flags);
 
     // Play B
-    //rb = TestPlayBuffer(b, &capsb, waveb, wavelenb, al12 * 2 / 3, priority, flags);
+    rb = TestPlayBuffer(b, &capsb, waveb, wavelenb, al12 * 2 / 3, priority, flags);
 
-    // TODO
+    // TODO : separate test
     // play once test, no locking-unlocking
-    if (SUCCEEDED(IDirectSoundBuffer_Play(b, 0, 0, DSBPLAY_LOOPING))) {
-        Sleep(10 * 1000);
-        IDirectSoundBuffer_Stop(b);
+    // name TestDirectSoundBufferLoopWave
+    // 
+    //if (SUCCEEDED(IDirectSoundBuffer_Play(b, 0, 0, DSBPLAY_LOOPING))) {
+    //    Sleep(10 * 1000);
+    //    IDirectSoundBuffer_Stop(b);
 
-        // TODO One complete buffer fill play some noise!!
-    }
+    //    // TODO One complete buffer fill play some noise!!
+    //}
 
     if (ra != rb) {
         DebugBreak(); return FALSE;
@@ -407,7 +409,7 @@ static BOOL TestDirectSoundBufferPrimaryPlayWave(
 
     for (int i = 0; i < PLAY_PRIORITY_COUNT; i++) {
         for (int k = 0; k < PLAY_FLAGS_COUNT; k++) {
-            if (!TestDirectSoundBufferPlayWave(dsba, dsbb,
+            if (!TestDirectSoundBufferStreamWave(dsba, dsbb,
                 wavea, wavelena, waveb, wavelenb, PlayPriority[i], PlayFlags[k])) {
                 result = FALSE;
                 goto exit;

@@ -466,7 +466,7 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
 
                 if (frames != 0) {
                     //if (frames == target) {
-                    BYTE* lock;
+                    BYTE* lock = NULL;
                     if (SUCCEEDED(IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
 
                         // Compute out buffer size based on the format and number of frames.
@@ -589,6 +589,14 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
         else {
             main->CurrentPlayCursor = 0;
             main->CurrentWriteCursor = 0;
+
+            // TODO optimize, call this only when buffer stopps.
+            //BYTE* lock = NULL;
+            //if (SUCCEEDED(IAudioRenderClient_GetBuffer(self->AudioRenderer, 0, &lock))) {
+            //    IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, 0, AUDCLNT_BUFFERFLAGS_SILENT);
+            //}
+
+            return DSERR_BUFFERLOST; // TODO Better error!
         }
     }
 
@@ -612,10 +620,11 @@ DWORD WINAPI device_thread(device_thread_context* ctx) {
     SetEvent(ctx->Init);
 
     while (!dev->Close) {
-        device_play(dev);
+        if (FAILED(device_play(dev))) {
 
-        // TODO
-        //Sleep(1);
+            // TODO
+            Sleep(1);
+        }
     }
 
     if (dev->WaveFormat != NULL) {
