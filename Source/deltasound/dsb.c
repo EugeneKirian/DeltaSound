@@ -439,7 +439,7 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         }
     }
 
-    self->PlayPriority = dwPriority;
+    self->Priority = dwPriority;
 
     self->Status = self->Status | DSBSTATUS_PLAYING;
     if (dwFlags & DSBPLAY_LOOPING) {

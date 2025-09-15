@@ -50,7 +50,7 @@ typedef struct dsb {
     // TODO Lock
 
     DSBCAPS         Caps;
-    DWORD           PlayPriority; // TODO name
+    DWORD           Priority;
     dsbcb*          Buffer;
 
     LPWAVEFORMATEX  Format;
