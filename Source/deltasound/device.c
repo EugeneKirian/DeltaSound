@@ -82,10 +82,13 @@ HRESULT DELTACALL device_create(
             return E_FAIL;
         }
 
-        instance->AudioEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-        if (instance->AudioEvent == NULL) {
-            device_release(instance);
-            return E_FAIL;
+        for (DWORD i = 0; i < DSDEVICE_MAX_EVENT_COUNT; i++) {
+            instance->Events[i] = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+            if (instance->Events[i] == NULL) {
+                device_release(instance);
+                return E_FAIL;
+            }
         }
 
         instance->ThreadEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
@@ -147,7 +150,7 @@ VOID DELTACALL device_release(device* self) {
     if (self == NULL) { return; }
 
     if (self->Thread != NULL) {
-        self->Close = TRUE;
+        SetEvent(self->Events[DSDEVICE_CLOSE_EVENT_INDEX]);
 
         // NOTE. Cannot wait for thread handle,
         // because it does not fire when thread is being
@@ -229,7 +232,8 @@ HRESULT DELTACALL device_initialize(device* self) {
 
     CoTaskMemFree(wfx);
 
-    if (FAILED(hr = IAudioClient_SetEventHandle(self->AudioClient, self->AudioEvent))) {
+    if (FAILED(hr = IAudioClient_SetEventHandle(self->AudioClient,
+        self->Events[DSDEVICE_AUDIO_EVENT_INDEX]))) {
         goto exit;
     }
 
@@ -418,29 +422,6 @@ VOID DELTACALL resample(size_t in_freq, FLOAT* in_buf, DWORD in_buf_len,
     *out_buf = buf;
     *out_buf_len = buf_len;
 }
-
-//HRESULT DELTACALL read_from_circular_buffer(void* buffer, DWORD buffer_size,
-//    DWORD start, DWORD end, DWORD length, void* output, LPDWORD pdwLength) { // TODO name, var names
-//    // TODO input validation
-//
-//    const DWORD max_read =
-//        start < end ? end - start : buffer_size - start + end;
-//
-//    if (max_read < length) {
-//        length = max_read;
-//    }
-//
-//    const DWORD read = min(length, buffer_size - start);
-//    CopyMemory(output, (void*)((size_t)buffer + start), read);
-//
-//    if (read < length) {
-//        CopyMemory((void*)((size_t)output + read), buffer, length - read);
-//    }
-//
-//    *pdwLength = length;
-//
-//    return S_OK;
-//}
 
 HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
     if (self->Instance == NULL) { return E_FAIL; }
@@ -633,15 +614,17 @@ DWORD WINAPI device_thread(device_thread_context* ctx) {
     // CPU efficiency:
     // 1. Replace dev->Close to an event.
     // 2. Use dev->AudioEvent for buffer filling
-    while (!dev->Close) {
-        if (WaitForSingleObject(dev->AudioEvent, INFINITE) == STATUS_WAIT_0) {
+    while (TRUE) {
+        const DWORD result =
+            WaitForMultipleObjects(DSDEVICE_MAX_EVENT_COUNT, dev->Events, FALSE, INFINITE);
+
+        if (result == DSDEVICE_CLOSE_EVENT_INDEX
+            || result == DSDEVICE_MAX_EVENT_COUNT) {
+            break;
+        }
+        else if (result == DSDEVICE_AUDIO_EVENT_INDEX) {
             device_play(dev);
         }
-        //if (FAILED(device_play(dev))) {
-        //
-        //    // TODO
-        //    Sleep(1);
-        //}
     }
 
     if (dev->WaveFormat != NULL) {

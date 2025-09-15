@@ -32,6 +32,11 @@ SOFTWARE.
 
 typedef struct ds ds;
 
+#define DSDEVICE_AUDIO_EVENT_INDEX      0
+#define DSDEVICE_CLOSE_EVENT_INDEX      1
+
+#define DSDEVICE_MAX_EVENT_COUNT        2
+
 typedef struct device {
     allocator*              Allocator;
     LONG                    RefCount;   // TODO is RefCount needed here??? Device isn't shared...
@@ -48,11 +53,10 @@ typedef struct device {
 
     PWAVEFORMATEXTENSIBLE   WaveFormat;
 
-    HANDLE                  AudioEvent;
+    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
 
     HANDLE                  Thread;
     HANDLE                  ThreadEvent;
-    BOOL                    Close;
 } device;
 
 HRESULT DELTACALL device_create(
