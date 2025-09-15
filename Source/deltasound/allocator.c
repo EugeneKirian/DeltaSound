@@ -63,34 +63,34 @@ VOID DELTACALL allocator_release(allocator* self) {
     HeapFree(self->Heap, 0, self);
 }
 
-HRESULT DELTACALL allocator_allocate(allocator* self, size_t nBytes, LPVOID* ppMem) {
+HRESULT DELTACALL allocator_allocate(allocator* self, DWORD dwBytes, LPVOID* ppMem) {
     if (self == NULL || ppMem == NULL) {
         return E_INVALIDARG;
     }
 
     // TODO Collect allocation stats
 
-    LPVOID memory = HeapAlloc(self->Heap, 0, nBytes);
+    LPVOID memory = HeapAlloc(self->Heap, 0, dwBytes);
 
     if (memory == NULL) {
         return E_OUTOFMEMORY;
     }
 
-    ZeroMemory(memory, nBytes);
+    ZeroMemory(memory, dwBytes);
 
     *ppMem = memory;
 
     return S_OK;
 }
 
-HRESULT DELTACALL allocator_reallocate(allocator* self, LPVOID pMem, size_t nBytes, LPVOID* ppMem) {
+HRESULT DELTACALL allocator_reallocate(allocator* self, LPVOID pMem, DWORD dwBytes, LPVOID* ppMem) {
     if (self == NULL || pMem == NULL || ppMem == NULL) {
         return E_INVALIDARG;
     }
 
     // TODO Collect allocation stats
 
-    LPVOID memory = HeapReAlloc(self->Heap, 0, pMem, nBytes);
+    LPVOID memory = HeapReAlloc(self->Heap, 0, pMem, dwBytes);
 
     if (memory == NULL) {
         return E_OUTOFMEMORY;

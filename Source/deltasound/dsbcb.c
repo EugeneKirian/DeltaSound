@@ -219,6 +219,8 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
         return E_INVALIDARG;
     }
 
+    EnterCriticalSection(&self->Lock);
+
     const DWORD wrapped = self->Size < dwOffset + dwBytes
         ? dwOffset + dwBytes - self->Size : 0;
 
@@ -243,17 +245,21 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
         if (SUCCEEDED(dsbcblc_get_item(self->Locks, i, &l))) {
             // Match
             if (l->Audio1 == lock.Audio1 && l->Audio2 == lock.Audio2) {
+                LeaveCriticalSection(&self->Lock);
                 return E_INVALIDARG;
             }
 
             // Overlap
             if (SUCCEEDED(dsbcb_locks_overlap(l->Offset, l->Offset + l->Size, lock.Offset, lock.Offset + lock.Size))) {
+                LeaveCriticalSection(&self->Lock);
                 return E_INVALIDARG;
             }
         }
     }
 
     dsbcblc_add_item(self->Locks, &lock);
+
+    LeaveCriticalSection(&self->Lock);
 
     *ppvAudioPtr1 = lock.Audio1;
     *pdwAudioBytes1 = lock.AudioSize1;
@@ -278,15 +284,20 @@ HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPt
         return E_INVALIDARG;
     }
 
+    EnterCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < dsbcblc_get_count(self->Locks); i++) {
         dsbcbl* l = NULL;
         if (SUCCEEDED(dsbcblc_get_item(self->Locks, i, &l))) {
             if (l->Audio1 == pvAudioPtr1 && l->Audio2 == pvAudioPtr2) {
                 dsbcblc_remove_item(self->Locks, i);
+                LeaveCriticalSection(&self->Lock);
                 return S_OK;
             }
         }
     }
+
+    LeaveCriticalSection(&self->Lock);
 
     return E_INVALIDARG;
 }
@@ -308,6 +319,8 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
         dwBytes = maximum;
     }
 
+    EnterCriticalSection(&self->Lock);
+
     if (pData != NULL) {
         const DWORD read = min(dwBytes, self->Size - self->ReadPosition);
         CopyMemory(pData, (LPVOID)((size_t)self->Buffer + self->ReadPosition), read);
@@ -316,6 +329,8 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
             CopyMemory((LPVOID)((size_t)pData + read), self->Buffer, dwBytes - read);
         }
     }
+
+    LeaveCriticalSection(&self->Lock);
 
     if (pdwBytesRead != NULL) {
         *pdwBytesRead = dwBytes;
