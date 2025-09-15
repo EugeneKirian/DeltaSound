@@ -88,6 +88,8 @@ HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
 }
 
 VOID DELTACALL ids_release(ids* self) {
+    if (self == NULL) { return; }
+
     allocator_free(self->Allocator, self);
 }
 

@@ -144,9 +144,7 @@ ULONG DELTACALL device_remove_ref(device* self) {
 }
 
 VOID DELTACALL device_release(device* self) {
-    if (self == NULL) {
-        return;
-    }
+    if (self == NULL) { return; }
 
     if (self->Thread != NULL) {
         self->Close = TRUE;
@@ -421,28 +419,28 @@ VOID DELTACALL resample(size_t in_freq, FLOAT* in_buf, DWORD in_buf_len,
     *out_buf_len = buf_len;
 }
 
-HRESULT DELTACALL read_from_circular_buffer(void* buffer, DWORD buffer_size,
-    DWORD start, DWORD end, DWORD length, void* output, LPDWORD pdwLength) { // TODO name, var names
-    // TODO input validation
-
-    const DWORD max_read =
-        start < end ? end - start : buffer_size - start + end;
-
-    if (max_read < length) {
-        length = max_read;
-    }
-
-    const DWORD read = min(length, buffer_size - start);
-    CopyMemory(output, (void*)((size_t)buffer + start), read);
-
-    if (read < length) {
-        CopyMemory((void*)((size_t)output + read), buffer, length - read);
-    }
-
-    *pdwLength = length;
-
-    return S_OK;
-}
+//HRESULT DELTACALL read_from_circular_buffer(void* buffer, DWORD buffer_size,
+//    DWORD start, DWORD end, DWORD length, void* output, LPDWORD pdwLength) { // TODO name, var names
+//    // TODO input validation
+//
+//    const DWORD max_read =
+//        start < end ? end - start : buffer_size - start + end;
+//
+//    if (max_read < length) {
+//        length = max_read;
+//    }
+//
+//    const DWORD read = min(length, buffer_size - start);
+//    CopyMemory(output, (void*)((size_t)buffer + start), read);
+//
+//    if (read < length) {
+//        CopyMemory((void*)((size_t)output + read), buffer, length - read);
+//    }
+//
+//    *pdwLength = length;
+//
+//    return S_OK;
+//}
 
 HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
     if (self->Instance == NULL) { return E_FAIL; }
@@ -509,9 +507,11 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
                         DWORD real_read = 0;
                         //read_from_circular_buffer(main->Buffer, main->Caps.dwBufferBytes,
                         //    main->CurrentPlayCursor, buffer_read_length, buffer_read);
-                        
-                        read_from_circular_buffer(main->Buffer, main->Caps.dwBufferBytes,
-                            main->CurrentPlayCursor, main->CurrentWriteCursor, in_bytes, buffer_read, &real_read);
+
+                        //read_from_circular_buffer(main->Buffer, main->Caps.dwBufferBytes,
+                        //    main->CurrentPlayCursor, main->CurrentWriteCursor, in_bytes, buffer_read, &real_read);
+
+                        dsbcb_read(main->Buffer, in_bytes, buffer_read, &real_read);
 
                         //{
                         //    real_read = in_bytes;
@@ -527,68 +527,78 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
                         //    }
                         //}
 
-if (in_bytes != real_read) {
-    int kk = 1;// TODO
-}
+                        if (in_bytes != real_read) {
+                            int kk = 1;// TODO
+                        }
 
-//fprintf(f, "Reading at: %d Size %d Read %d Input bytes %d Input frames %d Output bytes %d\r\n",
-//    main->CurrentPlayCursor, in_bytes, real_read, in_bytes, in_frames, out_bytes);
+                        //fprintf(f, "Reading at: %d Size %d Read %d Input bytes %d Input frames %d Output bytes %d\r\n",
+                        //    main->CurrentPlayCursor, in_bytes, real_read, in_bytes, in_frames, out_bytes);
 
-float* float_buf = NULL;
-DWORD float_buf_len = 0;
-//convert_to_float(main->Format, buffer_read, buffer_read_length,
-//    &float_buf, &float_buf_len);
-convert_to_float(main->Format, buffer_read, real_read,
-    &float_buf, &float_buf_len);
+                        float* float_buf = NULL;
+                        DWORD float_buf_len = 0;
+                        //convert_to_float(main->Format, buffer_read, buffer_read_length,
+                        //    &float_buf, &float_buf_len);
+                        convert_to_float(main->Format, buffer_read, real_read,
+                            &float_buf, &float_buf_len);
 
-float* resample_buf = NULL;
-DWORD resample_buf_len = 0;
-resample(main->Format->nSamplesPerSec, float_buf, float_buf_len,
-    self->WaveFormat->Format.nSamplesPerSec, &resample_buf, &resample_buf_len);
+                        float* resample_buf = NULL;
+                        DWORD resample_buf_len = 0;
+                        resample(main->Format->nSamplesPerSec, float_buf, float_buf_len,
+                            self->WaveFormat->Format.nSamplesPerSec, &resample_buf, &resample_buf_len);
 
-if (out_bytes != resample_buf_len) {
-    int kkk = 1; // TODO
-}
+                        if (out_bytes != resample_buf_len) {
+                            int kkk = 1; // TODO
+                        }
 
 
 
-const UINT32 out_frames = resample_buf_len / self->WaveFormat->Format.nBlockAlign;
+                        const UINT32 out_frames = resample_buf_len / self->WaveFormat->Format.nBlockAlign;
 
-//fprintf(f, "Resampled frames %d\r\n", out_frames);
+                        //fprintf(f, "Resampled frames %d\r\n", out_frames);
 
-//CopyMemory(lock, resample_buf, out_bytes); // resample_buf_len);
-CopyMemory(lock, resample_buf, resample_buf_len);
+                        //CopyMemory(lock, resample_buf, out_bytes); // resample_buf_len);
+                        CopyMemory(lock, resample_buf, resample_buf_len);
 
-// TODO memory management!!!
-free(resample_buf);
-free(float_buf);
-free(buffer_read);
+                        // TODO memory management!!!
+                        free(resample_buf);
+                        free(float_buf);
+                        free(buffer_read);
 
-// Update play and write cursors.
-//main->CurrentPlayCursor =
-//    (main->CurrentPlayCursor + buffer_read_length) % main->Caps.dwBufferBytes;
-//main->CurrentWriteCursor =
-//    (main->CurrentWriteCursor + buffer_read_length) % main->Caps.dwBufferBytes;
-main->CurrentPlayCursor =
-(main->CurrentPlayCursor + real_read) % main->Caps.dwBufferBytes;
-main->CurrentWriteCursor =
-(main->CurrentWriteCursor + real_read) % main->Caps.dwBufferBytes;
+                        // Update play and write cursors.
+                        //main->CurrentPlayCursor =
+                        //    (main->CurrentPlayCursor + buffer_read_length) % main->Caps.dwBufferBytes;
+                        //main->CurrentWriteCursor =
+                        //    (main->CurrentWriteCursor + buffer_read_length) % main->Caps.dwBufferBytes;
+                        
+                        //main->CurrentPlayCursor =
+                        //    (main->CurrentPlayCursor + real_read) % main->Caps.dwBufferBytes;
+                        //main->CurrentWriteCursor =
+                        //    (main->CurrentWriteCursor + real_read) % main->Caps.dwBufferBytes;
 
-//IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
+                        DWORD read = 0, write = 0;
+                        dsbcb_get_read_position(main->Buffer, &read);
+                        dsbcb_get_write_position(main->Buffer, &write);
 
-IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, out_frames, 0);
+                        dsbcb_set_read_position(main->Buffer, read + real_read, DSBCB_SETPOSITION_WRAP);
+                        dsbcb_set_write_position(main->Buffer, write + real_read, DSBCB_SETPOSITION_WRAP);
 
-// TODO for non-looping buffers
-//if (wav->dwNumFrames <= audio->nCurrentFrame) {
-//    audio->dwState = AUDIOSTATE_IDLE;
-//}
+                        //IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
+
+                        IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, out_frames, 0);
+
+                        // TODO for non-looping buffers
+                        //if (wav->dwNumFrames <= audio->nCurrentFrame) {
+                        //    audio->dwState = AUDIOSTATE_IDLE;
+                        //}
                     }
                 }
             }
         }
         else {
-            main->CurrentPlayCursor = 0;
-            main->CurrentWriteCursor = 0;
+            dsbcb_set_read_position(main->Buffer, 0, DSBCB_SETPOSITION_NONE);
+            dsbcb_set_write_position(main->Buffer, 0, DSBCB_SETPOSITION_NONE);
+            //main->CurrentPlayCursor = 0;
+            //main->CurrentWriteCursor = 0;
 
             // TODO optimize, call this only when buffer stopps.
             //BYTE* lock = NULL;

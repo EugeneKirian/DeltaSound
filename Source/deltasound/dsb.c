@@ -28,8 +28,9 @@ SOFTWARE.
 #include "ksp.h"
 #include "wave_format.h"
 
+#define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
+
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
-HRESULT DELTACALL dsb_locks_overlap(LONG lStart1, LONG lEnd1, LONG lStart2, LONG lEnd2);
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -42,7 +43,7 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
-        if (SUCCEEDED(hr = dsblc_create(pAlloc, &instance->Locks))) {
+        if (SUCCEEDED(hr = dsbcb_create(pAlloc, 0, &instance->Buffer))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
                 instance->Caps.dwSize = sizeof(DSBCAPS);
                 *ppOut = instance;
@@ -57,6 +58,8 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 }
 
 VOID DELTACALL dsb_release(dsb* self) {
+    if (self == NULL) { return; }
+
     for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
         idsb* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
@@ -66,10 +69,6 @@ VOID DELTACALL dsb_release(dsb* self) {
 
     intfc_release(self->Interfaces);
 
-    if (self->Locks != NULL) {
-        dsblc_release(self->Locks);
-    }
-
     if (self->Instance != NULL) {
         ds_remove_dsb(self->Instance, self);
     }
@@ -78,12 +77,9 @@ VOID DELTACALL dsb_release(dsb* self) {
         ksp_release(self->PropertySet);
     }
 
+    dsbcb_release(self->Buffer);
+
     allocator_free(self->Allocator, self->Format);
-
-    if (self->Buffer != NULL) {
-        allocator_free(self->Allocator, self->Buffer);
-    }
-
     allocator_free(self->Allocator, self);
 }
 
@@ -186,15 +182,21 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
         return DSERR_BUFFERLOST;
     }
 
+    HRESULT hr = S_OK;
+
     if (pdwCurrentPlayCursor != NULL) {
-        *pdwCurrentPlayCursor = self->CurrentPlayCursor;
+        if (FAILED(hr = dsbcb_get_read_position(self->Buffer, pdwCurrentPlayCursor))) {
+            return hr;
+        }
     }
 
     if (pdwCurrentWriteCursor != NULL) {
-        *pdwCurrentWriteCursor = self->CurrentWriteCursor;
+        if (FAILED(hr = dsbcb_get_write_position(self->Buffer, pdwCurrentWriteCursor))) {
+            return hr;
+        }
     }
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT DELTACALL dsb_get_format(dsb* self,
@@ -334,11 +336,12 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
         self->Format->cbSize = 0;
     }
     else {
+        // TODO, what to do with cbSize extra bytes ?
         self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
         CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
     }
 
-    return allocator_allocate(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
+    return dsbcb_resize(self->Buffer, self->Caps.dwBufferBytes);
 }
 
 HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
@@ -363,14 +366,14 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
 
     if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
         if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
-            hr = E_INVALIDARG;
             goto fail;
         }
     }
 
-    const DWORD lockable = self->CurrentPlayCursor < self->CurrentWriteCursor
-        ? self->Caps.dwBufferBytes + self->CurrentPlayCursor - self->CurrentWriteCursor
-        : self->Caps.dwBufferBytes - self->CurrentPlayCursor + self->CurrentWriteCursor;
+    DWORD lockable = 0;
+    if (FAILED(hr = dsbcb_get_lockable_size(self->Buffer, &lockable))) {
+        goto fail;
+    }
 
     if (dwFlags & DSBLOCK_ENTIREBUFFER) {
         dwBytes = lockable;
@@ -385,56 +388,10 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         goto fail;
     }
 
-    const DWORD wrapped = self->Caps.dwBufferBytes < dwOffset + dwBytes
-        ? dwOffset + dwBytes - self->Caps.dwBufferBytes : 0;
-
-    dsbl lock;
-    ZeroMemory(&lock, sizeof(dsbl));
-
-    lock.Offset = dwOffset;
-    lock.Size = dwBytes;
-    lock.Audio1 = (LPVOID)((size_t)self->Buffer + (size_t)dwOffset);
-    lock.AudioSize1 = dwBytes - wrapped;
-
-    if (wrapped != 0) {
-        lock.Audio2 = self->Buffer;
-
-        if (pdwAudioBytes2 != NULL) {
-            lock.AudioSize2 = wrapped;
-        }
+    if (SUCCEEDED(hr = dsbcb_lock(self->Buffer, dwOffset, dwBytes,
+        ppvAudioPtr1, pdwAudioBytes1, ppvAudioPtr2, pdwAudioBytes2))) {
+        return hr;
     }
-
-    for (UINT i = 0; i < dsblc_get_count(self->Locks); i++) {
-        dsbl* l = NULL;
-        if (SUCCEEDED(dsblc_get_item(self->Locks, i, &l))) {
-            // Match
-            if (l->Audio1 == lock.Audio1 && l->Audio2 == lock.Audio2) {
-                hr = E_INVALIDARG;
-                goto fail;
-            }
-
-            // Overlap
-            if (SUCCEEDED(dsb_locks_overlap(l->Offset, l->Offset + l->Size, lock.Offset, lock.Offset + lock.Size))) {
-                hr = E_INVALIDARG;
-                goto fail;
-            }
-        }
-    }
-
-    dsblc_add_item(self->Locks, &lock);
-
-    *ppvAudioPtr1 = lock.Audio1;
-    *pdwAudioBytes1 = lock.AudioSize1;
-
-    if (ppvAudioPtr2 != NULL) {
-        *ppvAudioPtr2 = lock.Audio2;
-    }
-
-    if (pdwAudioBytes2 != NULL) {
-        *pdwAudioBytes2 = lock.AudioSize2;
-    }
-
-    return S_OK;
 
 fail:
     if (ppvAudioPtr1 != NULL) {
@@ -496,11 +453,16 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
     // DSBPLAY_LOCHARDWARE 
     // DSBPLAY_LOCSOFTWARE
 
-    self->CurrentWriteCursor =
-        self->CurrentPlayCursor + 800 * self->Format->nBlockAlign; // TODO make 800 frames a constant
+    HRESULT hr = S_OK;
+    DWORD position = 0;
 
-    // TODO
-    return S_OK;
+    if (SUCCEEDED(hr = dsbcb_get_write_position(self->Buffer, &position))) {
+        hr = dsbcb_set_write_position(self->Buffer,
+            position + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign,
+            DSBCB_SETPOSITION_WRAP);
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
@@ -519,8 +481,15 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return E_INVALIDARG;
     }
 
-    self->CurrentPlayCursor = dwNewPosition;
-    self->CurrentWriteCursor = dwNewPosition;
+    HRESULT hr = S_OK;
+
+    if (FAILED(hr = dsbcb_set_read_position(self->Buffer, dwNewPosition, DSBCB_SETPOSITION_NONE))) {
+        return hr;
+    }
+
+    if (FAILED(hr = dsbcb_set_write_position(self->Buffer, dwNewPosition , DSBCB_SETPOSITION_NONE))) {
+        return hr;
+    }
 
     return S_OK;
 }
@@ -660,21 +629,15 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
         return S_OK;
     }
 
+    if (pvAudioPtr1 == NULL) {
+        return E_INVALIDARG;
+    }
+
     if (pvAudioPtr2 == NULL && dwAudioBytes2 != 0) {
         return E_INVALIDARG;
     }
 
-    for (UINT i = 0; i < dsblc_get_count(self->Locks); i++) {
-        dsbl* l = NULL;
-        if (SUCCEEDED(dsblc_get_item(self->Locks, i, &l))) {
-            if (l->Audio1 == pvAudioPtr1 && l->Audio2 == pvAudioPtr2) {
-                dsblc_remove_item(self->Locks, i);
-                return S_OK;
-            }
-        }
-    }
-
-    return E_INVALIDARG;
+    return dsbcb_unlock(self->Buffer, pvAudioPtr1, pvAudioPtr2);
 }
 
 HRESULT DELTACALL dsb_restore(dsb* self) {
@@ -706,13 +669,4 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
     }
 
     return hr;
-}
-
-HRESULT DELTACALL dsb_locks_overlap(LONG lStart1, LONG lEnd1, LONG lStart2, LONG lEnd2) {
-    const LONG l1min = (lStart1 < lEnd1) ? lStart1 : lEnd1;
-    const LONG l1max = (lStart1 > lEnd1) ? lStart1 : lEnd1;
-    const LONG l2min = (lStart2 < lEnd2) ? lStart2 : lEnd2;
-    const LONG l2max = (lStart2 > lEnd2) ? lStart2 : lEnd2;
-
-    return (l1max <= l2min || l2max <= l1min) ? E_FAIL : S_OK;
 }

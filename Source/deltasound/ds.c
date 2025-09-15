@@ -45,13 +45,10 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
                 dsb* main = NULL;
+                LPCGUID id = IsEqualIID(&IID_IDirectSound, riid)
+                    ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
-                if (SUCCEEDED(hr = dsb_create(pAlloc,
-                    IsEqualIID(&IID_IDirectSound, riid) ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8, &main))) {
-                    // TODO better initialization for main buffer properties
-
-                    main->Caps.dwBufferBytes = DSB_DEFAULT_PRIMARY_BUFFER_SIZE;
-
+                if (SUCCEEDED(hr = dsb_create(pAlloc, id, &main))) {
                     instance->Main = main;
                     *ppOut = instance;
                     return S_OK;
@@ -66,6 +63,8 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 }
 
 VOID DELTACALL ds_release(ds* self) {
+    if (self == NULL) { return; }
+
     for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
         ids* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {

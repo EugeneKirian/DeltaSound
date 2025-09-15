@@ -51,6 +51,8 @@ HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
 }
 
 VOID DELTACALL ksp_release(ksp* self) {
+    if (self == NULL) { return; }
+
     for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
         iksp* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {

@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "dsblc.h"
+#include "dsbcb.h"
 #include "idsb.h"
 #include "intfc.h"
 
@@ -47,23 +47,11 @@ typedef struct dsb {
     intfc*          Interfaces;
     ksp*            PropertySet;
 
+    // TODO Lock
+
     DSBCAPS         Caps;
-
-    dsblc*          Locks;
-
-    DWORD           PlayPriority;
-
-    // The write cursor indicates the position
-    // at which it is safe to write new data to the buffer.
-    // The write cursor always leads the play cursor,
-    // typically by about 15 milliseconds' worth of audio data.
-    DWORD           CurrentPlayCursor;  // In bytes
-    DWORD           CurrentWriteCursor; // In bytes
-    LPBYTE          Buffer;
-
-    // TODO Have a dscb - circular buffer entity to manage positions
-    // and locks. So that it can be reused in capture
-    // and tested, etc...
+    DWORD           PlayPriority; // TODO name
+    dsbcb*          Buffer;
 
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;

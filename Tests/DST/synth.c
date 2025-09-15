@@ -26,73 +26,70 @@ SOFTWARE.
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <stdint.h>
 
-// TODO refactor data types
-// TODO calling convention
-// TODO parameter names
-
-static int32_t Convert(FLOAT in, uint32_t bits) {
-    if (bits == 8 || bits == 16) {
+static INT Convert(FLOAT fIn, DWORD dwBits) {
+    if (dwBits == 8 || dwBits == 16) {
         // Normalize value to [-1, 1]
-        const double value = min(max(in, -1.0f), 1.0f);
+        const FLOAT value = min(max(fIn, -1.0f), 1.0f);
 
-        if (bits == 8) {
+        if (dwBits == 8) {
             // Range [0 to 255]
-            return (int32_t)((value + 1.0) * 127.0f);
+            return (INT)((value + 1.0) * 127.0f);
         }
-        else if (bits == 16) {
+        else if (dwBits == 16) {
             // Range of [-32,768 to 32,767]
-            return (int32_t)(value * 32767.0f);
+            return (INT)(value * 32767.0f);
         }
     }
 
     return 0;   // NOT SUPPORTED
 }
 
-BOOL Synthesise(LPWAVEFORMATEX format,
-    float frequency, float duration, void** wave, unsigned* size) {
-    if (format == NULL
-        || frequency < 0.0f || duration < 0.0f
-        || wave == NULL || size == NULL) {
+BOOL Synthesise(LPWAVEFORMATEX pwfxFormat,
+    FLOAT fFrequency, FLOAT fDuration, LPVOID* pBuffer, LPDWORD pdwSize) {
+    if (pwfxFormat == NULL
+        || fFrequency < 0.0f || fDuration < 0.0f
+        || pBuffer == NULL || pdwSize == NULL) {
         return FALSE;
     }
 
-    if (format->wBitsPerSample != 8 && format->wBitsPerSample != 16) {
+    if (pwfxFormat->wBitsPerSample != 8
+        && pwfxFormat->wBitsPerSample != 16) {
         return FALSE;   // NOT SUPPORTED
     }
 
-    const uint32_t samples = (uint32_t)(duration * format->nChannels * format->nSamplesPerSec);
-    const uint32_t length = samples * (format->wBitsPerSample >> 3);
+    const DWORD samples =
+        (DWORD)(fDuration * pwfxFormat->nChannels * pwfxFormat->nSamplesPerSec);
+    const DWORD length = samples * (pwfxFormat->wBitsPerSample >> 3);
 
-    void* data = malloc(length);
+    LPVOID buffer = malloc(length);
 
-    if (data == NULL) {
+    if (buffer == NULL) {
         return FALSE;
     }
 
-    const double multiplier = 2.0 * M_PI * frequency;
-    const uint32_t frames = samples / format->nChannels;
+    const FLOAT multiplier = 2.0 * M_PI * fFrequency;
+    const DWORD frames = samples / pwfxFormat->nChannels;
 
-    for (uint32_t i = 0; i < frames; i++) {
-        const double value = sin(multiplier * ((float)i / format->nSamplesPerSec));
-        const int32_t converted = Convert(value, format->wBitsPerSample);
-        const DWORD block_offset = i * format->nChannels * (format->wBitsPerSample >> 3);
+    for (DWORD i = 0; i < frames; i++) {
+        const FLOAT value = (FLOAT)sin(multiplier * ((FLOAT)i / (FLOAT)pwfxFormat->nSamplesPerSec));
+        const DWORD converted = Convert(value, pwfxFormat->wBitsPerSample);
+        const DWORD block_offset = i * pwfxFormat->nChannels * (pwfxFormat->wBitsPerSample >> 3);
 
-        for (uint32_t j = 0; j < format->nChannels; j++) {
-            const size_t sample_offset = block_offset + j * (format->wBitsPerSample >> 3);
+        for (DWORD j = 0; j < pwfxFormat->nChannels; j++) {
+            const DWORD sample_offset = block_offset + j * (pwfxFormat->wBitsPerSample >> 3);
 
-            if (format->wBitsPerSample == 8) {
-                *(PBYTE)((SIZE_T)data + sample_offset) = (BYTE)converted;
+            if (pwfxFormat->wBitsPerSample == 8) {
+                *(PBYTE)((SIZE_T)buffer + sample_offset) = (BYTE)converted;
             }
-            else if (format->wBitsPerSample == 16) {
-                *(PSHORT)((SIZE_T)data + sample_offset) = (SHORT)converted;
+            else if (pwfxFormat->wBitsPerSample == 16) {
+                *(PSHORT)((SIZE_T)buffer + sample_offset) = (SHORT)converted;
             }
         }
     }
 
-    *wave = data;
-    *size = length;
+    *pBuffer = buffer;
+    *pdwSize = length;
 
     return TRUE;
 }

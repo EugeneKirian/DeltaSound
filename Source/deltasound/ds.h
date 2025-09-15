@@ -38,6 +38,8 @@ typedef struct ds {
     deltasound* Instance;
     intfc*      Interfaces;
 
+    // TODO Lock!!
+
     HWND        HWND;
     DWORD       Level;
     device*     Device;

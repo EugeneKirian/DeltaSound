@@ -27,7 +27,8 @@
     <ClInclude Include="device_info.h" />
     <ClInclude Include="ds.h" />
     <ClInclude Include="dsb.h" />
-    <ClInclude Include="dsblc.h" />
+    <ClInclude Include="dsbcb.h" />
+    <ClInclude Include="dsbcblc.h" />
     <ClInclude Include="ids.h" />
     <ClInclude Include="idsb.h" />
     <ClInclude Include="iksp.h" />
@@ -44,7 +45,8 @@
     <ClCompile Include="device_info.c" />
     <ClCompile Include="ds.c" />
     <ClCompile Include="dsb.c" />
-    <ClCompile Include="dsblc.c" />
+    <ClCompile Include="dsbcb.c" />
+    <ClCompile Include="dsbcblc.c" />
     <ClCompile Include="ids.c" />
     <ClCompile Include="idsb.c" />
     <ClCompile Include="iksp.c" />

@@ -56,11 +56,11 @@ HRESULT DELTACALL allocator_create(allocator** ppAlloc) {
 }
 
 VOID DELTACALL allocator_release(allocator* self) {
+    if (self == NULL) { return; }
+
     // TODO LOG Memory leaks
 
-    if (self != NULL) {
-        HeapFree(self->Heap, 0, self);
-    }
+    HeapFree(self->Heap, 0, self);
 }
 
 HRESULT DELTACALL allocator_allocate(allocator* self, size_t nBytes, LPVOID* ppMem) {

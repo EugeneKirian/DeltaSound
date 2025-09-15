@@ -278,6 +278,10 @@ static BOOL TestDirectSoundBufferStreamWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     //    // TODO One complete buffer fill play some noise!!
     //}
 
+    // TODO tests with Volume
+    // TODO tests with Pan
+    // TODO tests with Frequency
+
     if (ra != rb) {
         DebugBreak(); return FALSE;
     }

@@ -48,6 +48,8 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
 }
 
 VOID DELTACALL deltasound_release(deltasound* self) {
+    if (self == NULL) { return; }
+
     DeleteCriticalSection(&self->Lock);
 
     for (UINT i = arr_get_count(self->Items); i != 0; i--) {

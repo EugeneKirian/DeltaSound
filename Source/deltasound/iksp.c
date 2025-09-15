@@ -73,6 +73,8 @@ HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
 }
 
 VOID DELTACALL iksp_release(iksp* self) {
+    if (self == NULL) { return; }
+
     allocator_free(self->Allocator, self);
 }
 

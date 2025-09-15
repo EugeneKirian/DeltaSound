@@ -116,6 +116,8 @@ HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut) {
 }
 
 VOID DELTACALL idsb_release(idsb* self) {
+    if (self == NULL) { return; }
+
     allocator_free(self->Allocator, self);
 }
 

@@ -26,22 +26,22 @@ SOFTWARE.
 
 #include "allocator.h"
 
-typedef struct dsbl {
+typedef struct dsbcbl {
     DWORD   Offset;
     DWORD   Size;
     LPVOID  Audio1;
     DWORD   AudioSize1;
     LPVOID  Audio2;
     DWORD   AudioSize2;
-} dsbl;
+} dsbcbl;
 
-typedef struct dsblc dsblc;
+typedef struct dsbcblc dsbcblc;
 
-HRESULT DELTACALL dsblc_create(allocator* pAlloc, dsblc** ppOut);
-VOID DELTACALL dsblc_release(dsblc* pLock);
+HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut);
+VOID DELTACALL dsbcblc_release(dsbcblc* pLock);
 
-HRESULT DELTACALL dsblc_add_item(dsblc* pLock, dsbl* pItem);
-HRESULT DELTACALL dsblc_get_item(dsblc* pLock, UINT nIndex, dsbl** ppItem);
-HRESULT DELTACALL dsblc_remove_item(dsblc* pLock, UINT nIndex);
+HRESULT DELTACALL dsbcblc_add_item(dsbcblc* pLock, dsbcbl* pItem);
+HRESULT DELTACALL dsbcblc_get_item(dsbcblc* pLock, DWORD dwIndex, dsbcbl** ppItem);
+HRESULT DELTACALL dsbcblc_remove_item(dsbcblc* pLock, DWORD dwIndex);
 
-UINT DELTACALL dsblc_get_count(dsblc* pLock);
+DWORD DELTACALL dsbcblc_get_count(dsbcblc* pLock);

@@ -31,10 +31,10 @@ typedef struct intfc intfc;
 HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut);
 VOID DELTACALL intfc_release(intfc* pIntfc);
 
-HRESULT DELTACALL intfc_get_item(intfc* pIntfc, UINT nIndex, LPVOID* ppItem);
+HRESULT DELTACALL intfc_get_item(intfc* pIntfc, DWORD dwIndex, LPVOID* ppItem);
 HRESULT DELTACALL intfc_query_item(intfc* pIntfc, REFIID riid, LPVOID* ppItem);
 
 HRESULT DELTACALL intfc_add_item(intfc* pIntfc, REFIID riid, LPVOID pItem);
 HRESULT DELTACALL intfc_remove_item(intfc* pIntfc, REFIID riid);
 
-UINT DELTACALL intfc_get_count(intfc* pIntfc);
+DWORD DELTACALL intfc_get_count(intfc* pIntfc);
