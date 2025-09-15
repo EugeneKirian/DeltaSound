@@ -337,6 +337,7 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     }
     else {
         // TODO, what to do with cbSize extra bytes ?
+        // Need tests
         self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
         CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
     }
@@ -349,6 +350,10 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
     }
 
     HRESULT hr = S_OK;
@@ -418,6 +423,10 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         return DSERR_UNINITIALIZED;
     }
 
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
             return DSERR_PRIOLEVELNEEDED;
@@ -437,6 +446,9 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         if (!(dwFlags & DSBPLAY_LOOPING)) {
             return E_INVALIDARG;
         }
+
+        // TODO iterate through all secondary buffers,
+        // stop them, and mark as lost.
     }
 
     self->Priority = dwPriority;
@@ -603,9 +615,23 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
         return DSERR_UNINITIALIZED;
     }
 
-    // TODO Not implemented
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
 
-    self->Status &= ~(DSBSTATUS_PLAYING);
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+
+    self->Status &= ~(DSBSTATUS_LOOPING | DSBSTATUS_PLAYING);
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+            dsb_set_current_position(self, 0);
+        }
+    }
 
     return S_OK;
 }
@@ -614,6 +640,10 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
     LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
     }
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
