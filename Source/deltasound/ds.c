@@ -23,10 +23,10 @@ SOFTWARE.
 */
 
 #include "deltasound.h"
-#include "device.h"
 #include "device_info.h"
 #include "ds.h"
 #include "dsb.h"
+#include "dsdevice.h"
 #include "ids.h"
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
@@ -88,7 +88,7 @@ VOID DELTACALL ds_release(ds* self) {
     }
 
     if (self->Device != NULL) {
-        device_release(self->Device);
+        dsdevice_release(self->Device);
     }
 
     if (self->Instance != NULL) {
@@ -249,7 +249,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         return DSERR_NODRIVER;
     }
 
-    if (SUCCEEDED(hr = device_create(self->Allocator, self, info.Type, &info, &self->Device))) {
+    if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, info.Type, &info, &self->Device))) {
         DSBUFFERDESC desc;
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 

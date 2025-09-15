@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "device.h"
 #include "ds.h"
 #include "dsb.h"
+#include "dsdevice.h"
 #include "uuid.h"
 
 #define REFTIMES_PER_SEC    10000000
@@ -33,22 +33,21 @@ SOFTWARE.
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 #define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
 
-typedef struct device_thread_context {
-    device* Device;
+typedef struct dsdevice_thread_context {
+    dsdevice* Device;
     HANDLE  Init;
-} device_thread_context;
+} dsdevice_thread_context;
 
-DWORD WINAPI device_thread(device_thread_context* ctx);
+DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx);
 
-HRESULT DELTACALL device_allocate(allocator* pAlloc, device** ppOut);
-HRESULT DELTACALL device_initialize(device* pDev);
-HRESULT DELTACALL device_get_period(device* pDev, LPREFERENCE_TIME pDefaultPeriod, LPREFERENCE_TIME pMinPeriod); // TODO is this needed ?
-HRESULT DELTACALL device_get_mix_format(device* pDev, LPWAVEFORMATEX* ppWaveFormat);
+HRESULT DELTACALL dsdevice_allocate(allocator* pAlloc, dsdevice** ppOut);
+HRESULT DELTACALL dsdevice_initialize(dsdevice* pDev);
+HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* pDev, LPWAVEFORMATEX* ppWaveFormat);
 
-HRESULT DELTACALL device_play(device* pDev); // TODO
+HRESULT DELTACALL dsdevice_play(dsdevice* pDev); // TODO
 
-HRESULT DELTACALL device_create(
-    allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, device** ppOut) {
+HRESULT DELTACALL dsdevice_create(
+    allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut) {
     if (pAlloc == NULL) {
         return E_INVALIDARG;
     }
@@ -62,23 +61,22 @@ HRESULT DELTACALL device_create(
     }
 
     HRESULT hr = S_OK;
-    device* instance = NULL;
+    dsdevice* instance = NULL;
 
-    if (SUCCEEDED(hr = device_allocate(pAlloc, &instance))) {
-        instance->RefCount = 1;
+    if (SUCCEEDED(hr = dsdevice_allocate(pAlloc, &instance))) {
         instance->Instance = pDS;
 
         CopyMemory(&instance->Info, pInfo, sizeof(device_info));
 
-        device_thread_context* ctx;
-        if (FAILED(hr = allocator_allocate(pAlloc, sizeof(device_thread_context), &ctx))) {
-            device_release(instance);
+        dsdevice_thread_context* ctx;
+        if (FAILED(hr = allocator_allocate(pAlloc, sizeof(dsdevice_thread_context), &ctx))) {
+            dsdevice_release(instance);
             return hr;
         }
 
         ctx->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
         if (ctx->Init == NULL) {
-            device_release(instance);
+            dsdevice_release(instance);
             return E_FAIL;
         }
 
@@ -86,24 +84,24 @@ HRESULT DELTACALL device_create(
             instance->Events[i] = CreateEventA(NULL, FALSE, FALSE, NULL);
 
             if (instance->Events[i] == NULL) {
-                device_release(instance);
+                dsdevice_release(instance);
                 return E_FAIL;
             }
         }
 
         instance->ThreadEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
         if (instance->ThreadEvent == NULL) {
-            device_release(instance);
+            dsdevice_release(instance);
             return E_FAIL;
         }
 
         ctx->Device = instance;
 
         instance->Thread = CreateThread(NULL, 0,
-            (LPTHREAD_START_ROUTINE)device_thread, ctx, 0, NULL);
+            (LPTHREAD_START_ROUTINE)dsdevice_thread, ctx, 0, NULL);
 
         if (instance->Thread == NULL) {
-            device_release(instance);
+            dsdevice_release(instance);
             return E_FAIL;
         }
 
@@ -120,33 +118,7 @@ HRESULT DELTACALL device_create(
     return hr;
 }
 
-ULONG DELTACALL device_add_ref(device* self) {
-    if (self == NULL) {
-        return 0;
-    }
-
-    return InterlockedIncrement(&self->RefCount);
-}
-
-ULONG DELTACALL device_remove_ref(device* self) {
-    if (self == NULL) {
-        return 0;
-    }
-
-    if (self->RefCount == 0) {
-        return 0;
-    }
-
-    if (InterlockedDecrement(&self->RefCount) <= 0) {
-        self->RefCount = 0;
-
-        device_release(self);
-    }
-
-    return self->RefCount;
-}
-
-VOID DELTACALL device_release(device* self) {
+VOID DELTACALL dsdevice_release(dsdevice* self) {
     if (self == NULL) { return; }
 
     if (self->Thread != NULL) {
@@ -168,15 +140,15 @@ VOID DELTACALL device_release(device* self) {
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL device_allocate(allocator* pAlloc, device** ppOut) {
+HRESULT DELTACALL dsdevice_allocate(allocator* pAlloc, dsdevice** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    device* instance = NULL;
+    dsdevice* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(device), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsdevice), &instance))) {
         instance->Allocator = pAlloc;
         *ppOut = instance;
     }
@@ -184,7 +156,7 @@ HRESULT DELTACALL device_allocate(allocator* pAlloc, device** ppOut) {
     return hr;
 }
 
-HRESULT DELTACALL device_initialize(device* self) {
+HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -209,7 +181,7 @@ HRESULT DELTACALL device_initialize(device* self) {
         goto exit;
     }
 
-    if (FAILED(hr = device_get_mix_format(self, &wfx))) {
+    if (FAILED(hr = dsdevice_get_mix_format(self, &wfx))) {
         goto exit;
     }
 
@@ -275,15 +247,7 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL device_get_period(device* self, LPREFERENCE_TIME pDefaultPeriod, LPREFERENCE_TIME pMinPeriod) { // TODO is this needed?
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    return IAudioClient_GetDevicePeriod(self->AudioClient, pDefaultPeriod, pMinPeriod);
-}
-
-HRESULT DELTACALL device_get_mix_format(device* self, LPWAVEFORMATEX* ppWaveFormat) {
+HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppWaveFormat) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -423,7 +387,7 @@ VOID DELTACALL resample(size_t in_freq, FLOAT* in_buf, DWORD in_buf_len,
     *out_buf_len = buf_len;
 }
 
-HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
+HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
     if (self->Instance == NULL) { return E_FAIL; }
     if (self->Instance->Main == NULL) { return E_FAIL; }
 
@@ -596,15 +560,15 @@ HRESULT DELTACALL device_play(device* self) { // TODO name, etc...
     return hr;
 }
 
-DWORD WINAPI device_thread(device_thread_context* ctx) {
+DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx) {
     if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
         return EXIT_FAILURE;
     }
 
     HRESULT hr = S_OK;
-    device* dev = ctx->Device;
+    dsdevice* dev = ctx->Device;
 
-    if (FAILED(hr = device_initialize(dev))) {
+    if (FAILED(hr = dsdevice_initialize(dev))) {
         goto exit;
     }
 
@@ -623,7 +587,7 @@ DWORD WINAPI device_thread(device_thread_context* ctx) {
             break;
         }
         else if (result == DSDEVICE_AUDIO_EVENT_INDEX) {
-            device_play(dev);
+            dsdevice_play(dev);
         }
     }
 

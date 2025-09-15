@@ -27,9 +27,6 @@ SOFTWARE.
 #include "allocator.h"
 #include "device_info.h"
 
-// TODO rename this to ds_device
-// so that there can be dsc_device for capture...
-
 typedef struct ds ds;
 
 #define DSDEVICE_AUDIO_EVENT_INDEX      0
@@ -37,9 +34,8 @@ typedef struct ds ds;
 
 #define DSDEVICE_MAX_EVENT_COUNT        2
 
-typedef struct device {
+typedef struct dsdevice {
     allocator*              Allocator;
-    LONG                    RefCount;   // TODO is RefCount needed here??? Device isn't shared...
     ds*                     Instance;
 
     device_info             Info;
@@ -57,12 +53,8 @@ typedef struct device {
 
     HANDLE                  Thread;
     HANDLE                  ThreadEvent;
-} device;
+} dsdevice;
 
-HRESULT DELTACALL device_create(
-    allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, device** ppOut);
-
-ULONG DELTACALL device_add_ref(device* pDev);
-ULONG DELTACALL device_remove_ref(device* pDev);
-
-VOID DELTACALL device_release(device* pDev);
+HRESULT DELTACALL dsdevice_create(
+    allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut);
+VOID DELTACALL dsdevice_release(dsdevice* pDev);

@@ -22,8 +22,9 @@
     <ClInclude Include="allocator.h" />
     <ClInclude Include="arr.h" />
     <ClInclude Include="base.h" />
+    <ClInclude Include="converter.h" />
     <ClInclude Include="deltasound.h" />
-    <ClInclude Include="device.h" />
+    <ClInclude Include="dsdevice.h" />
     <ClInclude Include="device_info.h" />
     <ClInclude Include="ds.h" />
     <ClInclude Include="dsb.h" />
@@ -40,8 +41,9 @@
   <ItemGroup>
     <ClCompile Include="allocator.c" />
     <ClCompile Include="arr.c" />
+    <ClCompile Include="converter.c" />
     <ClCompile Include="deltasound.c" />
-    <ClCompile Include="device.c" />
+    <ClCompile Include="dsdevice.c" />
     <ClCompile Include="device_info.c" />
     <ClCompile Include="ds.c" />
     <ClCompile Include="dsb.c" />
