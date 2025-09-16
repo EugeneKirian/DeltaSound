@@ -31,8 +31,8 @@ struct arr {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
 
-    UINT                Count;
-    UINT                Capacity;
+    DWORD               Count;
+    DWORD               Capacity;
 
     LPVOID*             Items;
 };
@@ -67,11 +67,12 @@ HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut) {
 }
 
 VOID DELTACALL arr_release(arr* self) {
-    if (self != NULL) {
-        DeleteCriticalSection(&self->Lock);
-        allocator_free(self->Allocator, self->Items);
-        allocator_free(self->Allocator, self);
-    }
+    if (self == NULL) { return; }
+
+    DeleteCriticalSection(&self->Lock);
+
+    allocator_free(self->Allocator, self->Items);
+    allocator_free(self->Allocator, self);
 }
 
 HRESULT DELTACALL arr_add_item(arr* self, LPVOID pItem) {
@@ -102,42 +103,42 @@ HRESULT DELTACALL arr_add_item(arr* self, LPVOID pItem) {
     return S_OK;
 }
 
-HRESULT DELTACALL arr_get_item(arr* self, UINT nIndex, LPVOID* ppItem) {
+HRESULT DELTACALL arr_get_item(arr* self, DWORD dwIndex, LPVOID* ppItem) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (self->Count < nIndex + 1 || ppItem == NULL) {
+    if (self->Count < dwIndex + 1 || ppItem == NULL) {
         return E_INVALIDARG;
     }
 
     EnterCriticalSection(&self->Lock);
 
-    *ppItem = self->Items[nIndex];
+    *ppItem = self->Items[dwIndex];
 
     LeaveCriticalSection(&self->Lock);
 
     return S_OK;
 }
 
-HRESULT DELTACALL arr_remove_item(arr* self, UINT nIndex, LPVOID* ppItem) {
+HRESULT DELTACALL arr_remove_item(arr* self, DWORD dwIndex, LPVOID* ppItem) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (self->Count < nIndex + 1) {
+    if (self->Count < dwIndex + 1) {
         return E_INVALIDARG;
     }
 
     EnterCriticalSection(&self->Lock);
 
     if (ppItem != NULL) {
-        *ppItem = self->Items[nIndex];
+        *ppItem = self->Items[dwIndex];
     }
 
-    if (self->Count != nIndex + 1) {
-        MoveMemory(&self->Items[nIndex],
-            &self->Items[nIndex + 1], (self->Count - nIndex - 1) * sizeof(LPVOID));
+    if (self->Count != dwIndex + 1) {
+        MoveMemory(&self->Items[dwIndex],
+            &self->Items[dwIndex + 1], (self->Count - dwIndex - 1) * sizeof(LPVOID));
     }
 
     self->Count--;
@@ -147,7 +148,7 @@ HRESULT DELTACALL arr_remove_item(arr* self, UINT nIndex, LPVOID* ppItem) {
     return S_OK;
 }
 
-UINT DELTACALL arr_get_count(arr* self) {
+DWORD DELTACALL arr_get_count(arr* self) {
     return self == NULL ? 0 : self->Count;
 }
 
@@ -177,8 +178,8 @@ HRESULT DELTACALL arr_resize(arr* self) {
 
     HRESULT hr = S_OK;
 
-    const UINT capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;
-    const UINT size = capacity * sizeof(LPVOID);
+    const DWORD capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;
+    const DWORD size = capacity * sizeof(LPVOID);
 
     if (FAILED(hr = allocator_reallocate(self->Allocator, self->Items, size, (LPVOID*)&self->Items))) {
         return hr;

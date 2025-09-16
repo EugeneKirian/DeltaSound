@@ -141,6 +141,9 @@
   <ItemGroup>
     <ClCompile Include="directsoundbuffer_primary_basics.c" />
     <ClCompile Include="directsoundbuffer_primary_lock.c" />
+    <ClCompile Include="directsoundbuffer_primary_play.c" />
+    <ClCompile Include="directsoundbuffer_primary_play_pan.c" />
+    <ClCompile Include="directsoundbuffer_primary_play_volume.c" />
     <ClCompile Include="directsoundbuffer_secondary_basics.c" />
     <ClCompile Include="directsoundbuffer_secondary_get.c" />
     <ClCompile Include="directsoundbuffer_secondary_lock.c" />
@@ -157,11 +160,16 @@
     <ClCompile Include="directsound_create.c" />
     <ClCompile Include="getdeviceid.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="synth.c" />
     <ClCompile Include="wnd.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="base.h" />
     <ClInclude Include="directsoundbuffer_primary_basics.h" />
     <ClInclude Include="directsoundbuffer_primary_lock.h" />
+    <ClInclude Include="directsoundbuffer_primary_play.h" />
+    <ClInclude Include="directsoundbuffer_primary_play_pan.h" />
+    <ClInclude Include="directsoundbuffer_primary_play_volume.h" />
     <ClInclude Include="directsoundbuffer_secondary_basics.h" />
     <ClInclude Include="directsoundbuffer_secondary_get.h" />
     <ClInclude Include="directsoundbuffer_secondary_lock.h" />
@@ -177,6 +185,7 @@
     <ClInclude Include="directsoundcapture_enumerate.h" />
     <ClInclude Include="directsound_create.h" />
     <ClInclude Include="getdeviceid.h" />
+    <ClInclude Include="synth.h" />
     <ClInclude Include="wnd.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -24,6 +24,12 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "dsb.h"
 
-BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+typedef struct mixer mixer;
+
+HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut);
+VOID DELTACALL mixer_release(mixer* pMix);
+
+HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
+    DWORD dwFrames, dsb* pMain, arr* pSecondary, LPVOID* pOutBuffer, LPDWORD ppdwOutBufferBytes);

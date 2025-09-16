@@ -40,4 +40,4 @@ VOID DELTACALL deltasound_release(deltasound* pD);
 HRESULT DELTACALL deltasound_create_directsound(deltasound* pD,
     REFIID riid, LPCGUID pcGuidDevice, LPDIRECTSOUND* ppOut);
 HRESULT DELTACALL deltasound_remove_ds(deltasound* pD, ds* pDS);
-HRESULT DELTACALL deltasound_can_unload(deltasound* pDpD);
+HRESULT DELTACALL deltasound_can_unload(deltasound* pD);

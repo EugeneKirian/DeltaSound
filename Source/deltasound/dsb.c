@@ -28,8 +28,9 @@ SOFTWARE.
 #include "ksp.h"
 #include "wave_format.h"
 
+#define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
+
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
-HRESULT DELTACALL dsb_locks_overlap(LONG lStart1, LONG lEnd1, LONG lStart2, LONG lEnd2);
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -42,7 +43,7 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
-        if (SUCCEEDED(hr = dsblc_create(pAlloc, &instance->Locks))) {
+        if (SUCCEEDED(hr = dsbcb_create(pAlloc, 0, &instance->Buffer))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
                 instance->Caps.dwSize = sizeof(DSBCAPS);
                 *ppOut = instance;
@@ -57,7 +58,9 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 }
 
 VOID DELTACALL dsb_release(dsb* self) {
-    for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
+    if (self == NULL) { return; }
+
+    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         idsb* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
             idsb_release(instance);
@@ -65,10 +68,6 @@ VOID DELTACALL dsb_release(dsb* self) {
     }
 
     intfc_release(self->Interfaces);
-
-    if (self->Locks != NULL) {
-        dsblc_release(self->Locks);
-    }
 
     if (self->Instance != NULL) {
         ds_remove_dsb(self->Instance, self);
@@ -78,16 +77,13 @@ VOID DELTACALL dsb_release(dsb* self) {
         ksp_release(self->PropertySet);
     }
 
+    dsbcb_release(self->Buffer);
+
     allocator_free(self->Allocator, self->Format);
-
-    if (self->Buffer != NULL) {
-        allocator_free(self->Allocator, self->Buffer);
-    }
-
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) {
+HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) { // TODO Is this needed?
     self->Caps.dwFlags = dwFlags;
 
     // TODO properly update things when new flags are set
@@ -186,15 +182,21 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
         return DSERR_BUFFERLOST;
     }
 
+    HRESULT hr = S_OK;
+
     if (pdwCurrentPlayCursor != NULL) {
-        *pdwCurrentPlayCursor = self->CurrentPlayCursor;
+        if (FAILED(hr = dsbcb_get_read_position(self->Buffer, pdwCurrentPlayCursor))) {
+            return hr;
+        }
     }
 
     if (pdwCurrentWriteCursor != NULL) {
-        *pdwCurrentWriteCursor = self->CurrentWriteCursor;
+        if (FAILED(hr = dsbcb_get_write_position(self->Buffer, pdwCurrentWriteCursor))) {
+            return hr;
+        }
     }
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT DELTACALL dsb_get_format(dsb* self,
@@ -204,7 +206,7 @@ HRESULT DELTACALL dsb_get_format(dsb* self,
     }
 
     HRESULT hr = S_OK;
-    const size_t size = sizeof(WAVEFORMATEX) + self->Format->cbSize;
+    const DWORD size = sizeof(WAVEFORMATEX) + self->Format->cbSize;
 
     if (pwfxFormat != NULL) {
         if (size <= dwSizeAllocated) {
@@ -334,11 +336,13 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
         self->Format->cbSize = 0;
     }
     else {
+        // TODO, what to do with cbSize extra bytes ?
+        // Need tests
         self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
         CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
     }
 
-    return allocator_allocate(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
+    return dsbcb_resize(self->Buffer, self->Caps.dwBufferBytes);
 }
 
 HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
@@ -346,6 +350,10 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
     }
 
     HRESULT hr = S_OK;
@@ -363,73 +371,32 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
 
     if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
         if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
-            hr = E_INVALIDARG;
             goto fail;
         }
     }
 
-    if (dwFlags & DSBLOCK_ENTIREBUFFER) {
-        dwBytes = self->Caps.dwBufferBytes;
+    DWORD lockable = 0;
+    if (FAILED(hr = dsbcb_get_lockable_size(self->Buffer, &lockable))) {
+        goto fail;
     }
 
+    if (dwFlags & DSBLOCK_ENTIREBUFFER) {
+        dwBytes = lockable;
+    }
+
+    // TODO what if offset in between read and write cursors
+    // + wrapped test
+
     if (dwBytes == 0
-        || self->Caps.dwBufferBytes < dwOffset || self->Caps.dwBufferBytes < dwBytes) {
+        || self->Caps.dwBufferBytes < dwOffset || lockable < dwBytes) {
         hr = E_INVALIDARG;
         goto fail;
     }
 
-    const DWORD wrapped = self->Caps.dwBufferBytes < dwOffset + dwBytes
-        ? dwOffset + dwBytes - self->Caps.dwBufferBytes : 0;
-
-    const DWORD length = dwBytes - wrapped;
-
-    dsbl lock;
-    ZeroMemory(&lock, sizeof(dsbl));
-
-    lock.Offset = dwOffset;
-    lock.Size = dwBytes;
-    lock.Audio1 = (LPVOID)((size_t)self->Buffer + (size_t)dwOffset);
-    lock.AudioSize1 = length;
-
-    if (wrapped != 0) {
-        lock.Audio2 = self->Buffer;
-
-        if (pdwAudioBytes2 != NULL) {
-            lock.AudioSize2 = wrapped;
-        }
+    if (SUCCEEDED(hr = dsbcb_lock(self->Buffer, dwOffset, dwBytes,
+        ppvAudioPtr1, pdwAudioBytes1, ppvAudioPtr2, pdwAudioBytes2))) {
+        return hr;
     }
-
-    for (UINT i = 0; i < dsblc_get_count(self->Locks); i++) {
-        dsbl* l = NULL;
-        if (SUCCEEDED(dsblc_get_item(self->Locks, i, &l))) {
-            // Match
-            if (l->Audio1 == lock.Audio1 && l->Audio2 == lock.Audio2) {
-                hr = E_INVALIDARG;
-                goto fail;
-            }
-
-            // Overlap
-            if (SUCCEEDED(dsb_locks_overlap(l->Offset, l->Offset + l->Size, lock.Offset, lock.Offset + lock.Size))) {
-                hr = E_INVALIDARG;
-                goto fail;
-            }
-        }
-    }
-
-    dsblc_add_item(self->Locks, &lock);
-
-    *ppvAudioPtr1 = lock.Audio1;
-    *pdwAudioBytes1 = lock.AudioSize1;
-
-    if (ppvAudioPtr2 != NULL) {
-        *ppvAudioPtr2 = lock.Audio2;
-    }
-
-    if (pdwAudioBytes2 != NULL) {
-        *pdwAudioBytes2 = lock.AudioSize2;
-    }
-
-    return S_OK;
 
 fail:
     if (ppvAudioPtr1 != NULL) {
@@ -451,6 +418,97 @@ fail:
     return hr;
 }
 
+HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+    else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        return DSERR_BUFFERLOST;
+    }
+
+    if ((dwFlags & DSBPLAY_TERMINATEBY_TIME)
+        && (dwFlags & DSBPLAY_TERMINATEBY_PRIORITY)) {
+        return E_INVALIDARG;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (dwPriority != 0) {
+            return E_INVALIDARG;
+        }
+
+        if (!(dwFlags & DSBPLAY_LOOPING)) {
+            return E_INVALIDARG;
+        }
+
+        if (dwFlags & (DSBPLAY_LOCSOFTWARE | DSBPLAY_LOCHARDWARE)) {
+            return E_INVALIDARG;
+        }
+
+        if (dwFlags & (DSBPLAY_TERMINATEBY_TIME
+            | DSBPLAY_TERMINATEBY_PRIORITY | DSBPLAY_TERMINATEBY_DISTANCE)) {
+            return E_INVALIDARG;
+        }
+
+        // TODO iterate through all secondary buffers,
+        // stop them, and mark as lost.
+    }
+    else {
+        if (!(self->Caps.dwFlags & (DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE))
+            && (dwFlags & DSBPLAY_TERMINATEBY_DISTANCE)) {
+            return E_INVALIDARG;
+        }
+
+        if (!(self->Caps.dwFlags & DSBCAPS_LOCDEFER)) {
+            if (dwPriority != 0) {
+                return E_INVALIDARG;
+            }
+
+            if (dwFlags & (DSBPLAY_LOCSOFTWARE | DSBPLAY_LOCHARDWARE)) {
+                return E_INVALIDARG;
+            }
+
+            if (dwFlags & (DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_PRIORITY)) {
+                return E_INVALIDARG;
+            }
+        }
+    }
+
+    self->Priority = dwPriority;
+
+    self->Status = self->Status | DSBSTATUS_PLAYING;
+
+    if (dwFlags & DSBPLAY_LOOPING) {
+        self->Status = self->Status | DSBSTATUS_LOOPING;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
+        self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
+    }
+
+    // TODO store play flags for future use
+
+    HRESULT hr = S_OK;
+    DWORD position = 0;
+
+    if (SUCCEEDED(hr = dsbcb_get_write_position(self->Buffer, &position))) {
+        hr = dsbcb_set_write_position(self->Buffer,
+            position + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign,
+            DSBCB_SETPOSITION_WRAP);
+    }
+
+    return hr;
+}
+
 HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
@@ -467,8 +525,15 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return E_INVALIDARG;
     }
 
-    self->CurrentPlayCursor = dwNewPosition;
-    self->CurrentWriteCursor = dwNewPosition;
+    HRESULT hr = S_OK;
+
+    if (FAILED(hr = dsbcb_set_read_position(self->Buffer, dwNewPosition, DSBCB_SETPOSITION_NONE))) {
+        return hr;
+    }
+
+    if (FAILED(hr = dsbcb_set_write_position(self->Buffer, dwNewPosition , DSBCB_SETPOSITION_NONE))) {
+        return hr;
+    }
 
     return S_OK;
 }
@@ -509,10 +574,18 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         // TODO stop the buffer, update the format, and resume playback
     }
 
-    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
+    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX)); // TODO see note below
     self->Format->cbSize = 0;
 
     return S_OK;
+
+    // TODO
+    // WAVEFORMATEXTENSIBLE can safely be cast to WAVEFORMATEX,
+    // because it simply configures the extra bytes specified by WAVEFORMATEX.cbSize.
+    // DirectSound recognizes the WAVE_FORMAT_EXTENSIBLE format tag
+    // and correctly plays multiple-channel and compressed formats in hardware buffers, as long as these formats are supported by the driver.
+
+    // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee419020(v=vs.85)
 }
 
 HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {
@@ -569,10 +642,41 @@ HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency) {
     return S_OK;
 }
 
+HRESULT DELTACALL dsb_stop(dsb* self) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
+            return DSERR_PRIOLEVELNEEDED;
+        }
+    }
+
+    self->Status &= ~(DSBSTATUS_LOOPING | DSBSTATUS_PLAYING);
+
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+            dsbcb_set_read_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
+            dsbcb_set_write_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
+        }
+    }
+
+    return S_OK;
+}
+
 HRESULT DELTACALL dsb_unlock(dsb* self,
     LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
     }
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
@@ -588,17 +692,15 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
         return S_OK;
     }
 
-    for (UINT i = 0; i < dsblc_get_count(self->Locks); i++) {
-        dsbl* l = NULL;
-        if (SUCCEEDED(dsblc_get_item(self->Locks, i, &l))) {
-            if (l->Audio1 == pvAudioPtr1 && l->Audio2 == pvAudioPtr2) {
-                dsblc_remove_item(self->Locks, i);
-                return S_OK;
-            }
-        }
+    if (pvAudioPtr1 == NULL) {
+        return E_INVALIDARG;
     }
 
-    return E_INVALIDARG;
+    if (pvAudioPtr2 == NULL && dwAudioBytes2 != 0) {
+        return E_INVALIDARG;
+    }
+
+    return dsbcb_unlock(self->Buffer, pvAudioPtr1, pvAudioPtr2);
 }
 
 HRESULT DELTACALL dsb_restore(dsb* self) {
@@ -630,13 +732,4 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
     }
 
     return hr;
-}
-
-HRESULT DELTACALL dsb_locks_overlap(LONG lStart1, LONG lEnd1, LONG lStart2, LONG lEnd2) {
-    const LONG l1min = (lStart1 < lEnd1) ? lStart1 : lEnd1;
-    const LONG l1max = (lStart1 > lEnd1) ? lStart1 : lEnd1;
-    const LONG l2min = (lStart2 < lEnd2) ? lStart2 : lEnd2;
-    const LONG l2max = (lStart2 > lEnd2) ? lStart2 : lEnd2;
-
-    return (l1max <= l2min || l2max <= l1min) ? E_FAIL : S_OK;
 }

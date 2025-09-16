@@ -88,6 +88,8 @@ HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
 }
 
 VOID DELTACALL ids_release(ids* self) {
+    if (self == NULL) { return; }
+
     allocator_free(self->Allocator, self);
 }
 
@@ -302,6 +304,11 @@ HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pc
     // dwFlags
 
     if (pcDesc->dwFlags & DSBCAPS_INVALID_PRIMARYBUFFER) {
+        return E_INVALIDARG;
+    }
+
+    if ((pcDesc->dwFlags & DSBCAPS_LOCDEFER)
+        && (pcDesc->dwFlags & (DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCHARDWARE))) {
         return E_INVALIDARG;
     }
 

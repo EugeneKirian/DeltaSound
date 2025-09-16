@@ -48,9 +48,11 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
 }
 
 VOID DELTACALL deltasound_release(deltasound* self) {
+    if (self == NULL) { return; }
+
     DeleteCriticalSection(&self->Lock);
 
-    for (UINT i = arr_get_count(self->Items); i != 0; i--) {
+    for (DWORD i = arr_get_count(self->Items); i != 0; i--) {
         ds* instance = NULL;
         if (SUCCEEDED(arr_remove_item(self->Items, i - 1, &instance))) {
             ds_release(instance);
@@ -112,7 +114,7 @@ HRESULT DELTACALL deltasound_remove_ds(deltasound* self, ds* pDS) {
 
     HRESULT hr = S_OK;
 
-    for (UINT i = 0; i < arr_get_count(self->Items); i++) {
+    for (DWORD i = 0; i < arr_get_count(self->Items); i++) {
         ds* instance = NULL;
 
         if (SUCCEEDED(hr = arr_get_item(self->Items, i, &instance))) {

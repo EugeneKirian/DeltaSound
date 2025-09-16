@@ -24,6 +24,38 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
+#include "device_info.h"
+#include "mixer.h"
 
-BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+typedef struct ds ds;
+
+#define DSDEVICE_AUDIO_EVENT_INDEX      0
+#define DSDEVICE_CLOSE_EVENT_INDEX      1
+
+#define DSDEVICE_MAX_EVENT_COUNT        2
+
+typedef struct dsdevice {
+    allocator*              Allocator;
+    ds*                     Instance;
+    mixer*                  Mixer;
+
+    device_info             Info;
+
+    IMMDevice*              Device;
+    IAudioClient*           AudioClient;
+    IAudioRenderClient*     AudioRenderer;
+
+    UINT32                  AudioClientBufferSize;  // In frames
+
+    PWAVEFORMATEXTENSIBLE   Format;
+
+    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
+
+    HANDLE                  Thread;
+    HANDLE                  ThreadEvent;
+} dsdevice;
+
+HRESULT DELTACALL dsdevice_create(allocator* pAlloc,
+    ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut);
+VOID DELTACALL dsdevice_release(dsdevice* pDev);

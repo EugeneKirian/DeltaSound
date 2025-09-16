@@ -24,6 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include <windows.h>
+#include "base.h"
 
 BOOL TestDirectSoundBufferSecondaryGet(HMODULE a, HMODULE b);

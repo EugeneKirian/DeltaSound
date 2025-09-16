@@ -116,6 +116,8 @@ HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut) {
 }
 
 VOID DELTACALL idsb_release(idsb* self) {
+    if (self == NULL) { return; }
+
     allocator_free(self->Allocator, self);
 }
 
@@ -306,8 +308,15 @@ HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes,
 }
 
 HRESULT DELTACALL idsb_play(idsb* self, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (dwReserved1 != 0) {
+        return E_INVALIDARG;
+    }
+
+    return dsb_play(self->Instance, dwPriority, dwFlags);
 }
 
 HRESULT DELTACALL idsb_set_curent_position(idsb* self, DWORD dwNewPosition) {
@@ -378,8 +387,11 @@ HRESULT DELTACALL idsb_set_frequency(idsb* self, DWORD dwFrequency) {
 }
 
 HRESULT DELTACALL idsb_stop(idsb* self) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return dsb_stop(self->Instance);
 }
 
 HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {

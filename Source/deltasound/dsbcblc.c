@@ -13,8 +13,8 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WdsblcANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WdsblcANTIES OF MERCHANTABILITY,
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WdsbcblcANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WdsbcblcANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -22,59 +22,59 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "dsblc.h"
+#include "dsbcblc.h"
 
 #define DEFAULT_CAPACITY            8
 #define DEFAULT_CAPACITY_MULTIPLIER 2
 
-struct dsblc {
-    allocator* Allocator;
+struct dsbcblc {
+    allocator*          Allocator;
     CRITICAL_SECTION    Lock;
 
-    UINT                Count;
-    UINT                Capacity;
+    DWORD               Count;
+    DWORD               Capacity;
 
-    dsbl*               Items;
+    dsbcbl*             Items;
 };
 
-HRESULT DELTACALL dsblc_allocate(allocator* pAlloc, dsblc** ppOut);
-HRESULT DELTACALL dsblc_resize(dsblc* self);
+HRESULT DELTACALL dsbcblc_allocate(allocator* pAlloc, dsbcblc** ppOut);
+HRESULT DELTACALL dsbcblc_resize(dsbcblc* self);
 
-HRESULT DELTACALL dsblc_create(allocator* pAlloc, dsblc** ppOut) {
+HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    dsblc* instance = NULL;
+    dsbcblc* instance = NULL;
 
-    if (SUCCEEDED(hr = dsblc_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = dsbcblc_allocate(pAlloc, &instance))) {
         instance->Count = 0;
         instance->Capacity = DEFAULT_CAPACITY;
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc,
-            instance->Capacity * sizeof(dsbl), &instance->Items))) {
+            instance->Capacity * sizeof(dsbcbl), &instance->Items))) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
             return S_OK;
         }
 
-        dsblc_release(instance);
+        dsbcblc_release(instance);
     }
 
     return hr;
 }
 
-VOID DELTACALL dsblc_release(dsblc* self) {
-    if (self != NULL) {
-        DeleteCriticalSection(&self->Lock);
-        allocator_free(self->Allocator, self->Items);
-        allocator_free(self->Allocator, self);
-    }
+VOID DELTACALL dsbcblc_release(dsbcblc* self) {
+    if (self == NULL) { return; }
+
+    DeleteCriticalSection(&self->Lock);
+    allocator_free(self->Allocator, self->Items);
+    allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsblc_add_item(dsblc* self, dsbl* pItem) {
+HRESULT DELTACALL dsbcblc_add_item(dsbcblc* self, dsbcbl* pItem) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -87,13 +87,13 @@ HRESULT DELTACALL dsblc_add_item(dsblc* self, dsbl* pItem) {
 
     if (self->Capacity < self->Count + 1) {
         HRESULT hr = S_OK;
-        if (FAILED(hr = dsblc_resize(self))) {
+        if (FAILED(hr = dsbcblc_resize(self))) {
             LeaveCriticalSection(&self->Lock);
             return hr;
         }
     }
 
-    CopyMemory(&self->Items[self->Count], pItem, sizeof(dsbl));
+    CopyMemory(&self->Items[self->Count], pItem, sizeof(dsbcbl));
 
     self->Count++;
 
@@ -102,38 +102,38 @@ HRESULT DELTACALL dsblc_add_item(dsblc* self, dsbl* pItem) {
     return S_OK;
 }
 
-HRESULT DELTACALL dsblc_get_item(dsblc* self, UINT nIndex, dsbl** ppItem) {
+HRESULT DELTACALL dsbcblc_get_item(dsbcblc* self, DWORD dwIndex, dsbcbl** ppItem) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (self->Count < nIndex + 1 || ppItem == NULL) {
+    if (self->Count < dwIndex + 1 || ppItem == NULL) {
         return E_INVALIDARG;
     }
 
     EnterCriticalSection(&self->Lock);
 
-    *ppItem = &self->Items[nIndex];
+    *ppItem = &self->Items[dwIndex];
 
     LeaveCriticalSection(&self->Lock);
 
     return S_OK;
 }
 
-HRESULT DELTACALL dsblc_remove_item(dsblc* self, UINT nIndex) {
+HRESULT DELTACALL dsbcblc_remove_item(dsbcblc* self, DWORD dwIndex) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (self->Count < nIndex + 1) {
+    if (self->Count < dwIndex + 1) {
         return E_INVALIDARG;
     }
 
     EnterCriticalSection(&self->Lock);
 
-    if (self->Count != nIndex + 1) {
-        MoveMemory(&self->Items[nIndex],
-            &self->Items[nIndex + 1], (self->Count - nIndex - 1) * sizeof(dsbl));
+    if (self->Count != dwIndex + 1) {
+        MoveMemory(&self->Items[dwIndex],
+            &self->Items[dwIndex + 1], (self->Count - dwIndex - 1) * sizeof(dsbcbl));
     }
 
     self->Count--;
@@ -143,21 +143,21 @@ HRESULT DELTACALL dsblc_remove_item(dsblc* self, UINT nIndex) {
     return S_OK;
 }
 
-UINT DELTACALL dsblc_get_count(dsblc* self) {
+DWORD DELTACALL dsbcblc_get_count(dsbcblc* self) {
     return self == NULL ? 0 : self->Count;
 }
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL dsblc_allocate(allocator* pAlloc, dsblc** ppOut) {
+HRESULT DELTACALL dsbcblc_allocate(allocator* pAlloc, dsbcblc** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    dsblc* instance = NULL;
+    dsbcblc* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsblc), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsbcblc), &instance))) {
         instance->Allocator = pAlloc;
 
         *ppOut = instance;
@@ -166,15 +166,15 @@ HRESULT DELTACALL dsblc_allocate(allocator* pAlloc, dsblc** ppOut) {
     return hr;
 }
 
-HRESULT DELTACALL dsblc_resize(dsblc* self) {
+HRESULT DELTACALL dsbcblc_resize(dsbcblc* self) {
     if (self == NULL) {
         return E_POINTER;
     }
 
     HRESULT hr = S_OK;
 
-    const UINT capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;
-    const UINT size = capacity * sizeof(dsbl);
+    const DWORD capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;
+    const DWORD size = capacity * sizeof(dsbcbl);
 
     if (FAILED(hr = allocator_reallocate(self->Allocator, self->Items, size, &self->Items))) {
         return hr;

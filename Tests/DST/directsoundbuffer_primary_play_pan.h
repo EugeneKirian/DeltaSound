@@ -26,4 +26,4 @@ SOFTWARE.
 
 #include "base.h"
 
-BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryPlayPan(HMODULE a, HMODULE b);

@@ -23,10 +23,10 @@ SOFTWARE.
 */
 
 #include "deltasound.h"
-#include "device.h"
 #include "device_info.h"
 #include "ds.h"
 #include "dsb.h"
+#include "dsdevice.h"
 #include "ids.h"
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
@@ -45,13 +45,10 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
                 dsb* main = NULL;
+                LPCGUID id = IsEqualIID(&IID_IDirectSound, riid)
+                    ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
-                if (SUCCEEDED(hr = dsb_create(pAlloc,
-                    IsEqualIID(&IID_IDirectSound, riid) ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8, &main))) {
-                    // TODO better initialization for main buffer properties
-
-                    main->Caps.dwBufferBytes = DSB_DEFAULT_PRIMARY_BUFFER_SIZE;
-
+                if (SUCCEEDED(hr = dsb_create(pAlloc, id, &main))) {
                     instance->Main = main;
                     *ppOut = instance;
                     return S_OK;
@@ -66,7 +63,9 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 }
 
 VOID DELTACALL ds_release(ds* self) {
-    for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
+    if (self == NULL) { return; }
+
+    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         ids* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
             ids_release(instance);
@@ -75,7 +74,7 @@ VOID DELTACALL ds_release(ds* self) {
 
     intfc_release(self->Interfaces);
 
-    for (UINT i = arr_get_count(self->Buffers); i != 0; i--) {
+    for (DWORD i = arr_get_count(self->Buffers); i != 0; i--) {
         dsb* instane = NULL;
         if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instane))) {
             dsb_release(instane);
@@ -89,7 +88,7 @@ VOID DELTACALL ds_release(ds* self) {
     }
 
     if (self->Device != NULL) {
-        device_release(self->Device);
+        dsdevice_release(self->Device);
     }
 
     if (self->Instance != NULL) {
@@ -180,7 +179,7 @@ HRESULT DELTACALL ds_create_dsb(ds* self, REFIID riid, LPCDSBUFFERDESC pcDesc, d
 HRESULT DELTACALL ds_remove_dsb(ds* self, dsb* pDSB) {
     HRESULT hr = S_OK;
 
-    for (UINT i = 0; i < arr_get_count(self->Buffers); i++) {
+    for (DWORD i = 0; i < arr_get_count(self->Buffers); i++) {
         dsb* instance = NULL;
 
         if (SUCCEEDED(hr = arr_get_item(self->Buffers, i, &instance))) {
@@ -250,7 +249,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         return DSERR_NODRIVER;
     }
 
-    if (SUCCEEDED(hr = device_create(self->Allocator, info.Type, &info, &self->Device))) {
+    if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, info.Type, &info, &self->Device))) {
         DSBUFFERDESC desc;
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 

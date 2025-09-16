@@ -24,6 +24,12 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
 
-BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+typedef struct arena arena;
+
+HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut);
+VOID DELTACALL arena_release(arena* pArena);
+
+HRESULT DELTACALL arena_allocate(arena* pArena, DWORD dwBytes, LPVOID* ppMem);
+HRESULT DELTACALL arena_clear(arena* pArena);

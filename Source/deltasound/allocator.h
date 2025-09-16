@@ -31,6 +31,6 @@ typedef struct allocator allocator;
 HRESULT DELTACALL allocator_create(allocator** ppOut);
 VOID DELTACALL allocator_release(allocator* pAlloc);
 
-HRESULT DELTACALL allocator_allocate(allocator* pAlloc, size_t nBytes, LPVOID* ppMem);
-HRESULT DELTACALL allocator_reallocate(allocator* pAlloc, LPVOID pMem, size_t nBytes, LPVOID* ppMem);
+HRESULT DELTACALL allocator_allocate(allocator* pAlloc, DWORD dwBytes, LPVOID* ppMem);
+HRESULT DELTACALL allocator_reallocate(allocator* pAlloc, LPVOID pMem, DWORD dwBytes, LPVOID* ppMem);
 HRESULT DELTACALL allocator_free(allocator* pAlloc, LPVOID pMem);

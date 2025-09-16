@@ -26,4 +26,5 @@ SOFTWARE.
 
 #include "base.h"
 
-BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+BOOL Synthesise(LPWAVEFORMATEX pwfxFormat,
+    FLOAT fFrequency, FLOAT fDuration, LPVOID* pBuffer, LPDWORD pdwSize);

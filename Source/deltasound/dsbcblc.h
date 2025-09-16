@@ -13,8 +13,8 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WdsblcANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WdsblcANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -24,6 +24,24 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
 
-BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+typedef struct dsbcbl {
+    DWORD   Offset;
+    DWORD   Size;
+    LPVOID  Audio1;
+    DWORD   AudioSize1;
+    LPVOID  Audio2;
+    DWORD   AudioSize2;
+} dsbcbl;
+
+typedef struct dsbcblc dsbcblc;
+
+HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut);
+VOID DELTACALL dsbcblc_release(dsbcblc* pLock);
+
+HRESULT DELTACALL dsbcblc_add_item(dsbcblc* pLock, dsbcbl* pItem);
+HRESULT DELTACALL dsbcblc_get_item(dsbcblc* pLock, DWORD dwIndex, dsbcbl** ppItem);
+HRESULT DELTACALL dsbcblc_remove_item(dsbcblc* pLock, DWORD dwIndex);
+
+DWORD DELTACALL dsbcblc_get_count(dsbcblc* pLock);

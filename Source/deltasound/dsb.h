@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "dsblc.h"
+#include "dsbcb.h"
 #include "idsb.h"
 #include "intfc.h"
 
@@ -47,22 +47,16 @@ typedef struct dsb {
     intfc*          Interfaces;
     ksp*            PropertySet;
 
+    // TODO Lock
+
     DSBCAPS         Caps;
-
-    dsblc*          Locks;
-
-    // The write cursor indicates the position
-    // at which it is safe to write new data to the buffer.
-    // The write cursor always leads the play cursor,
-    // typically by about 15 milliseconds' worth of audio data.
-    DWORD           CurrentPlayCursor;  // In bytes
-    DWORD           CurrentWriteCursor; // In bytes
-    LPBYTE          Buffer;
+    DWORD           Priority;
+    dsbcb*          Buffer;
 
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;
     FLOAT           Pan;
-    DWORD           Frequency;          // Frequency override when not equal to DSBFREQUENCY_ORIGINAL
+    DWORD           Frequency;
     DWORD           Status;
 } dsb;
 
@@ -88,12 +82,12 @@ HRESULT DELTACALL dsb_initialize(dsb* pDSB, ds* pDS, LPCDSBUFFERDESC pcDesc);
 HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1,
     LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
-// PLAY
+HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags);
 HRESULT DELTACALL dsb_set_current_position(dsb* pDSB, DWORD dwNewPosition);
 HRESULT DELTACALL dsb_set_format(dsb* pDSB, LPCWAVEFORMATEX pcfxFormat);
 HRESULT DELTACALL dsb_set_volume(dsb* pDSB, FLOAT fVolume);
 HRESULT DELTACALL dsb_set_pan(dsb* pDSB, FLOAT fPan);
 HRESULT DELTACALL dsb_set_frequency(dsb* pDSB, DWORD dwFrequency);
-// Stop
+HRESULT DELTACALL dsb_stop(dsb* pDSB);
 HRESULT DELTACALL dsb_unlock(dsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL dsb_restore(dsb* pDSB);

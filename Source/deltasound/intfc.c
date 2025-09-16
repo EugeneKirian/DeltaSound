@@ -27,19 +27,19 @@ SOFTWARE.
 #define DEFAULT_CAPACITY            8
 #define DEFAULT_CAPACITY_MULTIPLIER 2
 
-typedef struct intfc_item {
+typedef struct intf {
     GUID    ID;
     LPVOID  Item;
-} intfc_item;
+} intf;
 
 struct intfc {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
 
-    UINT                Count;
-    UINT                Capacity;
+    DWORD               Count;
+    DWORD               Capacity;
 
-    intfc_item*         Items;
+    intf*         Items;
 };
 
 HRESULT DELTACALL intfc_allocate(allocator* pAlloc, intfc** ppOut);
@@ -58,7 +58,7 @@ HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut) {
         instance->Capacity = DEFAULT_CAPACITY;
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc,
-            instance->Capacity * sizeof(intfc_item), &instance->Items))) {
+            instance->Capacity * sizeof(intf), &instance->Items))) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
@@ -72,25 +72,26 @@ HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut) {
 }
 
 VOID DELTACALL intfc_release(intfc* self) {
-    if (self != NULL) {
-        DeleteCriticalSection(&self->Lock);
-        allocator_free(self->Allocator, self->Items);
-        allocator_free(self->Allocator, self);
-    }
+    if (self == NULL) { return; }
+
+    DeleteCriticalSection(&self->Lock);
+
+    allocator_free(self->Allocator, self->Items);
+    allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL intfc_get_item(intfc* self, UINT nIndex, LPVOID* ppItem) {
+HRESULT DELTACALL intfc_get_item(intfc* self, DWORD dwIndex, LPVOID* ppItem) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (self->Count < nIndex + 1 || ppItem == NULL) {
+    if (self->Count < dwIndex + 1 || ppItem == NULL) {
         return E_INVALIDARG;
     }
 
     EnterCriticalSection(&self->Lock);
 
-    *ppItem = self->Items[nIndex].Item;
+    *ppItem = self->Items[dwIndex].Item;
 
     LeaveCriticalSection(&self->Lock);
 
@@ -172,10 +173,10 @@ HRESULT DELTACALL intfc_remove_item(intfc* self, REFIID riid) {
 
     EnterCriticalSection(&self->Lock);
 
-    for (UINT i = 0; i < self->Count; i++) {
+    for (DWORD i = 0; i < self->Count; i++) {
         if (IsEqualGUID(riid, &self->Items[i].ID)) {
-            for (UINT k = i; k < self->Count - 1; k++) {
-                CopyMemory(&self->Items[k], &self->Items[k + 1], sizeof(intfc_item));
+            for (DWORD k = i; k < self->Count - 1; k++) {
+                CopyMemory(&self->Items[k], &self->Items[k + 1], sizeof(intf));
             }
 
             self->Count--;
@@ -189,7 +190,7 @@ HRESULT DELTACALL intfc_remove_item(intfc* self, REFIID riid) {
     return S_OK;
 }
 
-UINT DELTACALL intfc_get_count(intfc* self) {
+DWORD DELTACALL intfc_get_count(intfc* self) {
     return self == NULL ? 0 : self->Count;
 }
 
@@ -219,8 +220,8 @@ HRESULT DELTACALL intfc_resize(intfc* self) {
 
     HRESULT hr = S_OK;
 
-    const UINT capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;
-    const UINT size = capacity * sizeof(intfc_item);
+    const DWORD capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;
+    const DWORD size = capacity * sizeof(intf);
 
     if (FAILED(hr = allocator_reallocate(self->Allocator, self->Items, size, &self->Items))) {
         return hr;

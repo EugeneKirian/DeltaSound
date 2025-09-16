@@ -35,7 +35,7 @@ SOFTWARE.
                                             | DSBCAPS_PRIMARYBUFFER)
 
 #define DSBCAPS_INVALID_PRIMARYBUFFER   (DSBCAPS_STATIC | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPOSITIONNOTIFY            \
-                                            | DSBCAPS_CTRLFX | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER)
+                                            | DSBCAPS_CTRLFX | DSBCAPS_GLOBALFOCUS)
 
 #define DSBLOCK_NONE                    0
 

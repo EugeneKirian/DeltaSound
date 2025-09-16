@@ -28,7 +28,7 @@ SOFTWARE.
 #include "intfc.h"
 
 typedef struct deltasound deltasound;
-typedef struct device device;
+typedef struct dsdevice dsdevice;
 typedef struct dsb dsb;
 typedef struct ids ids;
 
@@ -38,9 +38,11 @@ typedef struct ds {
     deltasound* Instance;
     intfc*      Interfaces;
 
+    // TODO Lock!!
+
     HWND        HWND;
     DWORD       Level;
-    device*     Device;
+    dsdevice*   Device;
 
     dsb*        Main;       // Primary Buffer
     arr*        Buffers;    // Secondary Buffers

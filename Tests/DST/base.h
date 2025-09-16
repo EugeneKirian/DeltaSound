@@ -13,8 +13,8 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WdsblcANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WdsblcANTIES OF MERCHANTABILITY,
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -24,24 +24,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
+#include <windows.h>
+#include <dsound.h>
+#include <mmreg.h>
 
-typedef struct dsbl {
-    DWORD   Offset;
-    DWORD   Size;
-    LPVOID  Audio1;
-    DWORD   AudioSize1;
-    LPVOID  Audio2;
-    DWORD   AudioSize2;
-} dsbl;
-
-typedef struct dsblc dsblc;
-
-HRESULT DELTACALL dsblc_create(allocator* pAlloc, dsblc** ppOut);
-VOID DELTACALL dsblc_release(dsblc* pLock);
-
-HRESULT DELTACALL dsblc_add_item(dsblc* pLock, dsbl* pItem);
-HRESULT DELTACALL dsblc_get_item(dsblc* pLock, UINT nIndex, dsbl** ppItem);
-HRESULT DELTACALL dsblc_remove_item(dsblc* pLock, UINT nIndex);
-
-UINT DELTACALL dsblc_get_count(dsblc* pLock);
+typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);

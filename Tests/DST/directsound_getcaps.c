@@ -24,10 +24,6 @@ SOFTWARE.
 
 #include "directsound_getcaps.h"
 
-#include <dsound.h>
-
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
-
 static BOOL TestDirectSoundGetCapsInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) {
     if (a == NULL || b == NULL) {
         return FALSE;
