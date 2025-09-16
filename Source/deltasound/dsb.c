@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
+#include "dssl.h"
 #include "ids.h"
 #include "ksp.h"
 #include "wave_format.h"
@@ -121,6 +122,23 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         }
 
         return hr;
+    }
+    else if (IsEqualIID(&IID_IDirectSound3DListener, riid)) {
+        if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
+            if (self->SpatialListener == NULL) {
+                HRESULT hr = S_OK;
+                dssl* instance = NULL;
+
+                if (FAILED(hr = dssl_create(self->Allocator, riid, &instance))) {
+                    return hr;
+                }
+
+                instance->Instance = self;
+                self->SpatialListener = instance;
+            }
+
+            return dssl_query_interface(self->SpatialListener, riid, (idssl**)ppOut);
+        }
     }
     else if (IsEqualIID(&IID_IKsPropertySet, riid)) {
         if (self->PropertySet == NULL) {

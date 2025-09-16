@@ -34,14 +34,14 @@ HRESULT DELTACALL iksp_set(iksp*,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength);
 HRESULT DELTACALL iksp_query_support(iksp*, REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport);
 
-typedef struct iksp_vft {
+struct iksp_vft {
     LPIKSPQUERYINTERFACE    QueryInterface;
     LPIKSPADDREF            AddRef;
     LPIKSPRELEASE           Release;
     LPIKSPGET               Get;
     LPIKSPSET               Set;
     LPIKSPQUERYSUPPORT      QuerySupport;
-} iksp_vft;
+};
 
 const static iksp_vft iksp_self = {
     iksp_query_interface,
@@ -112,8 +112,9 @@ ULONG DELTACALL iksp_remove_ref(iksp* self) {
 
         if (self->Instance != NULL) {
             ksp_remove_ref(self->Instance, self);
-            iksp_release(self);
         }
+
+        iksp_release(self);
     }
 
     return self->RefCount;

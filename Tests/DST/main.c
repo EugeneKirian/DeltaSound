@@ -31,6 +31,7 @@ SOFTWARE.
 #include "directsound_setcooperativelevel.h"
 
 #include "directsoundbuffer_primary_basics.h"
+#include "directsoundbuffer_primary_query_interface.h"
 #include "directsoundbuffer_primary_get.h"
 #include "directsoundbuffer_primary_set.h"
 #include "directsoundbuffer_primary_lock.h"
@@ -86,7 +87,7 @@ int main(int argc, char** argv) {
     //TEST(GetDeviceID);
 
     //TEST(DirectSoundCreate);
-    //TEST(DirectSoundBasics);
+    TEST(DirectSoundBasics);
   
     //TEST(DirectSoundCreateSoundBufferPrimary);
     //TEST(DirectSoundCreateSoundBufferSecondary);
@@ -94,10 +95,11 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundGetCaps);
 
     //TEST(DirectSoundBufferPrimaryBasics);
+    TEST(DirectSoundBufferPrimaryQueryInterface);
     //TEST(DirectSoundBufferPrimaryGet);
     //TEST(DirectSoundBufferPrimarySet);
     //TEST(DirectSoundBufferPrimaryLock);
-    TEST(DirectSoundBufferPrimaryPlay);
+    //TEST(DirectSoundBufferPrimaryPlay);
     //TEST(DirectSoundBufferPrimaryPlayPan);
     //TEST(DirectSoundBufferPrimaryPlayVolume);
 

@@ -24,21 +24,21 @@ SOFTWARE.
 
 #pragma once
 
-#include "iksp.h"
+#include "idssl.h"
 #include "intfc.h"
 
 typedef struct dsb dsb;
 
-typedef struct ksp {
+typedef struct dssl {
     allocator*  Allocator;
     GUID        ID;
     dsb*        Instance;
     intfc*      Interfaces;
-} ksp;
+} dssl;
 
-HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut);
-VOID DELTACALL ksp_release(ksp* pKSP);
+HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut);
+VOID DELTACALL dssl_release(dssl* pdssl);
 
-HRESULT DELTACALL ksp_query_interface(ksp* pKSP, REFIID riid, iksp** ppOut);
-HRESULT DELTACALL ksp_add_ref(ksp* pKSP, iksp* pIKSP);
-HRESULT DELTACALL ksp_remove_ref(ksp* pKSP, iksp* pIKSP);
+HRESULT DELTACALL dssl_query_interface(dssl* pdssl, REFIID riid, idssl** ppOut);
+HRESULT DELTACALL dssl_add_ref(dssl* pdssl, idssl* pIdssl);
+HRESULT DELTACALL dssl_remove_ref(dssl* pdssl, idssl* pIdssl);

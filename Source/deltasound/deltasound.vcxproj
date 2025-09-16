@@ -30,8 +30,10 @@
     <ClInclude Include="dsb.h" />
     <ClInclude Include="dsbcb.h" />
     <ClInclude Include="dsbcblc.h" />
+    <ClInclude Include="dssl.h" />
     <ClInclude Include="ids.h" />
     <ClInclude Include="idsb.h" />
+    <ClInclude Include="idssl.h" />
     <ClInclude Include="iksp.h" />
     <ClInclude Include="intfc.h" />
     <ClInclude Include="ksp.h" />
@@ -50,8 +52,10 @@
     <ClCompile Include="dsb.c" />
     <ClCompile Include="dsbcb.c" />
     <ClCompile Include="dsbcblc.c" />
+    <ClCompile Include="dssl.c" />
     <ClCompile Include="ids.c" />
     <ClCompile Include="idsb.c" />
+    <ClCompile Include="idssl.c" />
     <ClCompile Include="iksp.c" />
     <ClCompile Include="intfc.c" />
     <ClCompile Include="ksp.c" />
