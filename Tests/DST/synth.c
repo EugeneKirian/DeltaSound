@@ -68,7 +68,7 @@ BOOL Synthesise(LPWAVEFORMATEX pwfxFormat,
         return FALSE;
     }
 
-    const FLOAT multiplier = 2.0 * M_PI * fFrequency;
+    const FLOAT multiplier = 2.0 * (FLOAT)M_PI * fFrequency;
     const DWORD frames = samples / pwfxFormat->nChannels;
 
     for (DWORD i = 0; i < frames; i++) {

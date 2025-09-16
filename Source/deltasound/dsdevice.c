@@ -348,9 +348,8 @@ DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx) {
             break;
         }
         else if (result == DSDEVICE_AUDIO_EVENT_INDEX) {
-            // TODO pefrormance,
-            // do play only when there are buffers that are playing
-            dsdevice_play(dev);
+            // TODO pefrormance: play only when there are buffers that are playing
+            hr = dsdevice_play(dev);
         }
     }
 
@@ -358,7 +357,6 @@ DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx) {
         allocator_free(dev->Allocator, dev->Format);
     }
 
-    // RELEASE(dev->AudioVolume); // TODO
     RELEASE(dev->AudioRenderer);
     RELEASE(dev->AudioClient);
     RELEASE(dev->Device);

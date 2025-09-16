@@ -307,6 +307,11 @@ HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pc
         return E_INVALIDARG;
     }
 
+    if ((pcDesc->dwFlags & DSBCAPS_LOCDEFER)
+        && (pcDesc->dwFlags & (DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCHARDWARE))) {
+        return E_INVALIDARG;
+    }
+
     if (pcDesc->dwFlags & DSBCAPS_CTRLFX) {
         return E_INVALIDARG;
     }

@@ -436,19 +436,51 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         return DSERR_BUFFERLOST;
     }
 
-    if (!(self->Caps.dwFlags & DSBCAPS_LOCDEFER)) {
-        if (dwPriority != 0) {
-            return E_INVALIDARG;
-        }
+    if ((dwFlags & DSBPLAY_TERMINATEBY_TIME)
+        && (dwFlags & DSBPLAY_TERMINATEBY_PRIORITY)) {
+        return E_INVALIDARG;
     }
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (dwPriority != 0) {
+            return E_INVALIDARG;
+        }
+
         if (!(dwFlags & DSBPLAY_LOOPING)) {
+            return E_INVALIDARG;
+        }
+
+        if (dwFlags & (DSBPLAY_LOCSOFTWARE | DSBPLAY_LOCHARDWARE)) {
+            return E_INVALIDARG;
+        }
+
+        if (dwFlags & (DSBPLAY_TERMINATEBY_TIME
+            | DSBPLAY_TERMINATEBY_PRIORITY | DSBPLAY_TERMINATEBY_DISTANCE)) {
             return E_INVALIDARG;
         }
 
         // TODO iterate through all secondary buffers,
         // stop them, and mark as lost.
+    }
+    else {
+        if (!(self->Caps.dwFlags & (DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE))
+            && (dwFlags & DSBPLAY_TERMINATEBY_DISTANCE)) {
+            return E_INVALIDARG;
+        }
+
+        if (!(self->Caps.dwFlags & DSBCAPS_LOCDEFER)) {
+            if (dwPriority != 0) {
+                return E_INVALIDARG;
+            }
+
+            if (dwFlags & (DSBPLAY_LOCSOFTWARE | DSBPLAY_LOCHARDWARE)) {
+                return E_INVALIDARG;
+            }
+
+            if (dwFlags & (DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_PRIORITY)) {
+                return E_INVALIDARG;
+            }
+        }
     }
 
     self->Priority = dwPriority;
@@ -464,6 +496,8 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
     // TODO Verify
     // DSBPLAY_LOCHARDWARE 
     // DSBPLAY_LOCSOFTWARE
+
+    // TODO store play flags for future use
 
     HRESULT hr = S_OK;
     DWORD position = 0;
@@ -629,7 +663,8 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            dsb_set_current_position(self, 0);
+            dsbcb_set_read_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
+            dsbcb_set_write_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
         }
     }
 
