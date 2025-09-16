@@ -223,7 +223,8 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     }
 
     if (cpa != cpb || cwa != cwb) {
-        return FALSE;
+        IDirectSoundBuffer_Stop(a);
+        IDirectSoundBuffer_Stop(b);
     }
 
     return TRUE;

@@ -486,16 +486,14 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
     self->Priority = dwPriority;
 
     self->Status = self->Status | DSBSTATUS_PLAYING;
+
     if (dwFlags & DSBPLAY_LOOPING) {
         self->Status = self->Status | DSBSTATUS_LOOPING;
     }
 
-    // TODO DSBSTATUS_LOCSOFTWARE 
-    // TODO DSBSTATUS_LOCHARDWARE
-
-    // TODO Verify
-    // DSBPLAY_LOCHARDWARE 
-    // DSBPLAY_LOCSOFTWARE
+    if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
+        self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
+    }
 
     // TODO store play flags for future use
 
