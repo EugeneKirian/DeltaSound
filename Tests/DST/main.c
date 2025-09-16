@@ -35,6 +35,8 @@ SOFTWARE.
 #include "directsoundbuffer_primary_set.h"
 #include "directsoundbuffer_primary_lock.h"
 #include "directsoundbuffer_primary_play.h"
+#include "directsoundbuffer_primary_play_pan.h"
+#include "directsoundbuffer_primary_play_volume.h"
 
 #include "directsoundbuffer_secondary_basics.h"
 #include "directsoundbuffer_secondary_get.h"
@@ -75,32 +77,34 @@ int main(int argc, char** argv) {
         goto exit;
     }
 
-    //TEST(DirectSoundEnumerateA);
-    //TEST(DirectSoundEnumerateW);
+    TEST(DirectSoundEnumerateA);
+    TEST(DirectSoundEnumerateW);
 
-    //TEST(DirectSoundCaptureEnumerateA);
-    //TEST(DirectSoundCaptureEnumerateW);
+    TEST(DirectSoundCaptureEnumerateA);
+    TEST(DirectSoundCaptureEnumerateW);
 
-    //TEST(GetDeviceID);
+    TEST(GetDeviceID);
 
-    //TEST(DirectSoundCreate);
-    //TEST(DirectSoundBasics);
+    TEST(DirectSoundCreate);
+    TEST(DirectSoundBasics);
   
-    //TEST(DirectSoundCreateSoundBufferPrimary);
-    //TEST(DirectSoundCreateSoundBufferSecondary);
-    //TEST(DirectSoundSetCooperativeLevel);
-    //TEST(DirectSoundGetCaps);
+    TEST(DirectSoundCreateSoundBufferPrimary);
+    TEST(DirectSoundCreateSoundBufferSecondary);
+    TEST(DirectSoundSetCooperativeLevel);
+    TEST(DirectSoundGetCaps);
 
-    //TEST(DirectSoundBufferPrimaryBasics);
-    //TEST(DirectSoundBufferPrimaryGet);
-    //TEST(DirectSoundBufferPrimarySet);
-    //TEST(DirectSoundBufferPrimaryLock);
+    TEST(DirectSoundBufferPrimaryBasics);
+    TEST(DirectSoundBufferPrimaryGet);
+    TEST(DirectSoundBufferPrimarySet);
+    TEST(DirectSoundBufferPrimaryLock);
     TEST(DirectSoundBufferPrimaryPlay);
+    TEST(DirectSoundBufferPrimaryPlayPan);
+    TEST(DirectSoundBufferPrimaryPlayVolume);
 
-    //TEST(DirectSoundBufferSecondaryBasics);
-    //TEST(DirectSoundBufferSecondaryGet);
-    //TEST(DirectSoundBufferSecondarySet);
-    //TEST(DirectSoundBufferSecondaryLock);
+    TEST(DirectSoundBufferSecondaryBasics);
+    TEST(DirectSoundBufferSecondaryGet);
+    TEST(DirectSoundBufferSecondarySet);
+    TEST(DirectSoundBufferSecondaryLock);
 
 exit:
 
