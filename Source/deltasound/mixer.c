@@ -38,8 +38,8 @@ HRESULT DELTACALL mixer_allocate(allocator* pAlloc, mixer** ppOut);
 HRESULT DELTACALL mixer_convert_to_float(mixer* pMix,
     LPWAVEFORMATEX pwfxFormat, DWORD dwFrequency,
     LPVOID pBuffer, DWORD dwBytes, FLOAT** ppOut, LPDWORD pOutBytes);
-HRESULT DELTACALL resample(mixer* pMix, DWORD in_freq, FLOAT* in_buf, DWORD in_buf_len,
-    DWORD out_freq, FLOAT** out_buf, DWORD* out_buf_len); // TODO
+HRESULT DELTACALL mixer_resample(mixer* pMix, DWORD dwChannels, DWORD dwInFrequency, FLOAT* pfInBuffer,
+    DWORD dwInBufferBytes, DWORD dwOutFrequency, FLOAT** ppfOutBuffer, LPDWORD pdwOutBufferBytes);
 
 HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
@@ -88,15 +88,15 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
     HRESULT hr = S_OK;
 
     if (main) {
-        const DWORD in_frequency =
-            pMain->Frequency == DSBFREQUENCY_ORIGINAL ? pMain->Format->nSamplesPerSec : pMain->Frequency;
+        const DWORD in_frequency = pMain->Frequency == DSBFREQUENCY_ORIGINAL
+            ? pMain->Format->nSamplesPerSec : pMain->Frequency;
 
         // Compute out buffer size based on the format and number of frames.
         DWORD in_bytes = (DWORD)((FLOAT)in_frequency
             / (FLOAT)pwfxFormat->Format.nSamplesPerSec
             * dwFrames * pMain->Format->nBlockAlign);
 
-        // TODO Round down to the closest complete frame
+        // TODO Round down to the closest complete frame.
         if (in_bytes % pMain->Format->nBlockAlign) {
             in_bytes -= in_bytes % pMain->Format->nBlockAlign;
         }
@@ -105,7 +105,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
         DWORD out_bytes = (DWORD)((FLOAT)pwfxFormat->Format.nSamplesPerSec
             / (FLOAT)in_frequency * in_frames * pwfxFormat->Format.nBlockAlign);
 
-        // TODO Round down to the closest complete frame
+        // TODO Round down to the closest complete frame.
         if (out_bytes % pwfxFormat->Format.nBlockAlign) {
             out_bytes -= out_bytes % pwfxFormat->Format.nBlockAlign;
         }
@@ -130,8 +130,11 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
 
         FLOAT* resample_buf = NULL;
         DWORD resample_buf_len = 0;
-        resample(self, in_frequency, float_buf, float_buf_len,
-            pwfxFormat->Format.nSamplesPerSec, &resample_buf, &resample_buf_len);
+        if (FAILED(hr = mixer_resample(self, pwfxFormat->Format.nChannels,
+            in_frequency, float_buf, float_buf_len, pwfxFormat->Format.nSamplesPerSec,
+            &resample_buf, &resample_buf_len))) {
+            goto exit;
+        }
 
         // TODO convert back to intended format
 
@@ -274,20 +277,33 @@ Algorithm Steps (General Outline):
     Convert the processed floating-point samples back to the desired PCM integer format and bit depth.
 */
 
-HRESULT DELTACALL resample(mixer* self, DWORD in_freq, FLOAT* in_buf, DWORD in_buf_len,
-    DWORD out_freq, FLOAT** out_buf, DWORD* out_buf_len) {
+// TODO resampling with other methods, not just linear interpolation.
+HRESULT DELTACALL mixer_resample(mixer* self, DWORD dwChannels, DWORD dwInFrequency, FLOAT* pfInBuffer,
+    DWORD dwInBufferBytes, DWORD dwOutFrequency, FLOAT** ppfOutBuffer, LPDWORD pdwOutBufferBytes) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (dwChannels == 0 || dwInFrequency == 0 || pfInBuffer == NULL
+        || dwOutFrequency == 0 || ppfOutBuffer == NULL || pdwOutBufferBytes == NULL) {
+        return E_INVALIDARG;
+    }
+
     // TODO this is mono!
     // NEED To support multiple channels
 
-    const DWORD in_samples = in_buf_len / sizeof(FLOAT);
-    const DWORD out_samples = (DWORD)((FLOAT)in_samples / (FLOAT)in_freq * (FLOAT)out_freq);
+    const DWORD in_samples = dwInBufferBytes / sizeof(FLOAT);
+    const DWORD out_samples = (DWORD)((FLOAT)in_samples / (FLOAT)dwInFrequency * (FLOAT)dwOutFrequency);
     const DWORD buf_len = out_samples * sizeof(FLOAT);
 
-    FLOAT* buf = NULL;
+    HRESULT hr = S_OK;
+    FLOAT* buffer = NULL;
 
-    arena_allocate(self->Arena, buf_len, &buf); // TODO success check
+    if (FAILED(hr = arena_allocate(self->Arena, buf_len, &buffer))) {
+        return hr;
+    }
 
-    const FLOAT ratio = (FLOAT)in_freq / (FLOAT)out_freq;
+    const FLOAT ratio = (FLOAT)dwInFrequency / (FLOAT)dwOutFrequency;
 
     for (DWORD i = 0; i < out_samples; ++i) {
         // Find the floating-point position in the input buffer for the current output sample
@@ -301,20 +317,20 @@ HRESULT DELTACALL resample(mixer* self, DWORD in_freq, FLOAT* in_buf, DWORD in_b
 
         // Handle edge case for the last sample
         if (index_p1 >= in_samples - 1) {
-            buf[i] = in_buf[in_samples - 1];
+            buffer[i] = pfInBuffer[in_samples - 1];
             continue;
         }
 
         // Get the two adjacent samples for interpolation
-        FLOAT p1 = in_buf[index_p1];
-        FLOAT p2 = in_buf[index_p1 + 1];
+        FLOAT p1 = pfInBuffer[index_p1];
+        FLOAT p2 = pfInBuffer[index_p1 + 1];
 
         // Perform linear interpolation
-        buf[i] = p1 + fraction * (p2 - p1);
+        buffer[i] = p1 + fraction * (p2 - p1);
     }
 
-    *out_buf = buf;
-    *out_buf_len = buf_len;
+    *ppfOutBuffer = buffer;
+    *pdwOutBufferBytes = buf_len;
 
     return S_OK; // TODO
 }

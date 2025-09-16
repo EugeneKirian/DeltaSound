@@ -260,6 +260,7 @@ HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppForm
 }
 
 HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
+    // TODO input validation
     if (self->Instance == NULL) { return E_FAIL; }
     if (self->Instance->Main == NULL) { return E_FAIL; }
 
@@ -270,7 +271,7 @@ HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
     const UINT32 target =
         (UINT32)(self->AudioClientBufferSize * TARGET_BUFFER_PADDING_IN_SECONDS);
 
-    if (main->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+    if (main->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) { // TODO this logic is inside mixer already
         if (main->Status & DSBSTATUS_PLAYING) {
             UINT32 padding = 0;
 

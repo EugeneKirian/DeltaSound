@@ -36,7 +36,7 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
         DebugBreak(); return E_ABORT;
     }
 
-    UINT iter = 0;
+    UINT iteration = 0;
 
     DWORD last_play = 0, last_write = 0;
     DWORD total_play = 0, total_write = 0;
@@ -61,9 +61,9 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                 continue;
             }
 
-            const unsigned pd = current_play < last_play
+            const DWORD pd = current_play < last_play
                 ? caps->dwBufferBytes - last_play + current_play : current_play - last_play;
-            const unsigned wd = current_write < last_write
+            const DWORD wd = current_write < last_write
                 ? caps->dwBufferBytes - last_write + current_write : current_write - last_write;
 
             last_write = current_write;
@@ -72,10 +72,10 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
             total_play += pd;
             total_write += wd;
 
-            iter++;
+            iteration++;
 
             printf("It %8d, St %8d, Play %8d, Write %8d, Tot.Play %8d Tot.Write %8d N.Pos %8d\r\n",
-                iter, status, current_play, current_write, total_play, total_write, checkpoint);
+                iteration, status, current_play, current_write, total_play, total_write, checkpoint);
 
             // If the current write position is larger than the monitored buffer usage
             // then fill the buffer with more data and update the checkpoint position.
@@ -83,7 +83,8 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
             const ptrdiff_t left = wavelen - total_write;
 
             if (checkpoint < total_write && left > 0) {
-                if (FAILED(hr = IDirectSoundBuffer_Lock(buff, current_write, 0, &audio1, &audio1len, &audio2, &audio2len, DSBLOCK_ENTIREBUFFER))) {
+                if (FAILED(hr = IDirectSoundBuffer_Lock(buff,
+                    current_write, 0, &audio1, &audio1len, &audio2, &audio2len, DSBLOCK_ENTIREBUFFER))) {
                     DebugBreak(); return hr;
                 }
 
@@ -106,7 +107,7 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                     // Lock with offset between read and write cursors...
                 }
 
-                const size_t written1 = (ptrdiff_t)audio1len < left ? audio1len : left;
+                const DWORD written1 = (ptrdiff_t)audio1len < left ? audio1len : left;
 
                 {
                     // Copy the data
@@ -117,7 +118,7 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                 }
 
                 const ptrdiff_t left2 = wavelen - total_write - written1;
-                const size_t written2 = audio2 == NULL
+                const DWORD written2 = audio2 == NULL
                     ? 0 : ((ptrdiff_t)audio2len < left2 ? audio2len : left2);
 
                 if (audio2 != NULL)
@@ -150,10 +151,10 @@ static HRESULT TestPlayBuffer(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
             total_play += current_play;
             total_write += current_write;
 
-            iter++;
+            iteration++;
 
             printf("It %8d, Play %8d, Write %8d, Tot.Play %8d Tot.Write %8d Len %d8\r\n",
-                iter, current_play, current_write, total_play, total_write, wavelen);
+                iteration, current_play, current_write, total_play, total_write, wavelen);
 
             if (wavelen < total_play) {
                 break;
@@ -410,6 +411,17 @@ static BOOL TestDirectSoundBufferPrimaryPlayWave(
         result = FALSE;
         goto exit;
     }
+
+    // TODO
+    //for (int i = 0; i < PLAY_PRIORITY_COUNT; i++) {
+    //    for (int k = 0; k < PLAY_FLAGS_COUNT; k++) {
+    //        if (!TestDirectSoundBufferSingleWave(dsba, dsbb,
+    //            wavea, wavelena, waveb, wavelenb, PlayPriority[i], PlayFlags[k])) {
+    //            result = FALSE;
+    //            goto exit;
+    //        }
+    //    }
+    //}
 
     for (int i = 0; i < PLAY_PRIORITY_COUNT; i++) {
         for (int k = 0; k < PLAY_FLAGS_COUNT; k++) {
