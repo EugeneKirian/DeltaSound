@@ -28,6 +28,35 @@ SOFTWARE.
 
 #define WINDOW_NAME "DirectSound Primary Buffer Play"
 
+#define PLAY_FREQUENCY_COUNT    4
+
+const static DWORD PlayFrequencies[PLAY_FREQUENCY_COUNT] = {
+    0,
+    22050,
+    48000,
+    96000
+};
+
+#define PLAY_VOLUME_COUNT    4
+
+const static DWORD PlayVolume[PLAY_VOLUME_COUNT] = {
+    DSBVOLUME_MIN,
+    DSBVOLUME_MIN / 4,
+    DSBVOLUME_MIN / 2,
+    DSBVOLUME_MAX
+};
+
+#define PLAY_PAN_COUNT    6
+
+const static DWORD PlayPan[PLAY_PAN_COUNT] = {
+    DSBPAN_LEFT,
+    DSBPAN_LEFT / 2,
+    DSBPAN_CENTER,
+    DSBPAN_RIGHT / 2,
+    DSBPAN_RIGHT,
+    DSBPAN_CENTER
+};
+
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
     DWORD seconds, LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
@@ -197,32 +226,10 @@ static HRESULT TestPlayBufferStream(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                     DebugBreak(); return hr;
                 }
 
-                {
-                    // TODO
-                    // NOTE. Original DirectSound ignores distance between read and write,
-                    // and manages to return complete size of the buffer,
-                    // including the "unaccessible" region...
-                    const DWORD distance = current_play < current_write
-                        ? 32768 + current_play - current_write
-                        : 32768 + current_write - current_play;
-
-                    if (distance != audio1len + audio2len) {
-                        int todo = 1;/// TODO
-                    }
-                }
-
-                {
-                    // TODO test.
-                    // Lock with offset between read and write cursors...
-                }
-
                 const DWORD written1 = (ptrdiff_t)audio1len < left ? audio1len : left;
 
                 {
-                    // Copy the data
                     CopyMemory(audio1, (LPVOID)((size_t)wave + total_write), written1);
-
-                    // TODO need to generate silence
                     ZeroMemory((LPVOID)((size_t)audio1 + written1), audio1len - written1);
                 }
 
@@ -230,12 +237,8 @@ static HRESULT TestPlayBufferStream(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
                 const DWORD written2 = audio2 == NULL
                     ? 0 : ((ptrdiff_t)audio2len < left2 ? audio2len : left2);
 
-                if (audio2 != NULL)
-                {
-                    // Copy the data
+                if (audio2 != NULL){
                     CopyMemory(audio2, (LPVOID)((size_t)wave + total_write + written1), written2);
-
-                    // TODO need to generate silence
                     ZeroMemory((LPVOID)((size_t)audio2 + written2), audio2len - written2);
                 }
 
@@ -650,6 +653,8 @@ BOOL TestDirectSoundBufferPrimaryPlay(HMODULE a, HMODULE b) {
             }
         }
     }
+
+    // TODO play wav!
 
 exit:
 
