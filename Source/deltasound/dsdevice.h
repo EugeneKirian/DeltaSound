@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "allocator.h"
 #include "device_info.h"
+#include "mixer.h"
 
 typedef struct ds ds;
 
@@ -37,6 +38,7 @@ typedef struct ds ds;
 typedef struct dsdevice {
     allocator*              Allocator;
     ds*                     Instance;
+    mixer*                  Mixer;
 
     device_info             Info;
 

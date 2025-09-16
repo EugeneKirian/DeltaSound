@@ -23,8 +23,11 @@ SOFTWARE.
 */
 
 #include "arena.h"
+#include "arr.h"
 
 #define DEFAULT_BLOCK_SIZE      (1 * 1024 * 1024)
+
+// TODO align memory addresses!!
 
 typedef struct block {
     allocator*  Allocator;
@@ -36,8 +39,7 @@ typedef struct block {
 typedef struct arena {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
-    block**             Blocks;
-    DWORD               BlockCount;
+    arr*                Blocks;
 } arena;
 
 HRESULT DELTACALL block_create(allocator* pAlloc, DWORD dwBytes, block** ppOut);
@@ -53,16 +55,11 @@ HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut) {
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(arena), &instance))) {
         instance->Allocator = pAlloc;
+        InitializeCriticalSection(&instance->Lock);
 
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(block**), (LPVOID*)&instance->Blocks))) {
-            block* region = NULL;
-
-            if (SUCCEEDED(hr = block_create(pAlloc, DEFAULT_BLOCK_SIZE, &region))) {
-                InitializeCriticalSection(&instance->Lock);
-                instance->Blocks[0] = region;
-                instance->BlockCount = 1;
-                return S_OK;
-            }
+        if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Blocks))) {
+            *ppOut = instance;
+            return S_OK;
         }
 
         arena_release(instance);
@@ -74,8 +71,12 @@ HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut) {
 VOID DELTACALL arena_release(arena* self) {
     if (self == NULL) { return; }
 
-    for (DWORD i = 0; i < self->BlockCount; i++) {
-        block_release(self->Blocks[i]);
+    for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
+        block* region = NULL;
+
+        if (SUCCEEDED(arr_get_item(self->Blocks, i, &region))) {
+            block_release(region);
+        }
     }
 
     DeleteCriticalSection(&self->Lock);
@@ -98,20 +99,20 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
     HRESULT hr = S_OK;
     block* region = NULL;
 
-    for (DWORD i = 0; i < self->BlockCount; i++) {
-        if (dwBytes < self->Blocks[i]->Capacity - self->Blocks[i]->Size) {
-            self->Blocks[i]->Size += dwBytes;
-            *ppMem = (LPVOID)((size_t)self->Blocks[i]->Block + self->Blocks[i]->Size);
-            goto exit;
+    for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
+        if (SUCCEEDED(hr = arr_get_item(self->Blocks, i, &region))) {
+            if (dwBytes < region->Capacity - region->Size) {
+                region->Size += dwBytes;
+                *ppMem = (LPVOID)((size_t)region->Block + region->Size);
+                goto exit;
+            }
         }
     }
 
     if (SUCCEEDED(hr = block_create(self->Allocator, max(dwBytes, DEFAULT_BLOCK_SIZE), &region))) {
         region->Size = dwBytes;
 
-        if (SUCCEEDED(hr = allocator_reallocate(self->Allocator, self->Blocks,
-            (self->BlockCount + 1) * sizeof(block*), (LPVOID*)&self->Blocks))) {
-            self->Blocks[self->BlockCount++] = region;
+        if (SUCCEEDED(hr = arr_add_item(self->Blocks, region))) {
             *ppMem = region->Block;
             goto exit;
         }
@@ -133,8 +134,12 @@ HRESULT DELTACALL arena_clear(arena* self) {
 
     EnterCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < self->BlockCount; i++) {
-        self->Blocks[i]->Size = 0;
+    for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
+        block* region = NULL;
+
+        if (SUCCEEDED(arr_get_item(self->Blocks, i, &region))) {
+            region->Size = 0;
+        }
     }
 
     LeaveCriticalSection(&self->Lock);

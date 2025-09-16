@@ -68,51 +68,58 @@ HRESULT DELTACALL dsdevice_create(
 
         CopyMemory(&instance->Info, pInfo, sizeof(device_info));
 
-        dsdevice_thread_context* ctx;
-        if (FAILED(hr = allocator_allocate(pAlloc, sizeof(dsdevice_thread_context), &ctx))) {
-            dsdevice_release(instance);
-            return hr;
-        }
+        if (SUCCEEDED(hr = mixer_create(pAlloc, &instance->Mixer))) {
+            dsdevice_thread_context* ctx;
 
-        ctx->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
-        if (ctx->Init == NULL) {
-            dsdevice_release(instance);
-            return E_FAIL;
-        }
+            if (FAILED(hr = allocator_allocate(pAlloc, sizeof(dsdevice_thread_context), &ctx))) {
+                dsdevice_release(instance);
+                return hr;
+            }
 
-        for (DWORD i = 0; i < DSDEVICE_MAX_EVENT_COUNT; i++) {
-            instance->Events[i] = CreateEventA(NULL, FALSE, FALSE, NULL);
-
-            if (instance->Events[i] == NULL) {
+            ctx->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
+            if (ctx->Init == NULL) {
                 dsdevice_release(instance);
                 return E_FAIL;
             }
+
+            for (DWORD i = 0; i < DSDEVICE_MAX_EVENT_COUNT; i++) {
+                instance->Events[i] = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+                if (instance->Events[i] == NULL) {
+                    dsdevice_release(instance);
+                    return E_FAIL;
+                }
+            }
+
+            instance->ThreadEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+            if (instance->ThreadEvent == NULL) {
+                dsdevice_release(instance);
+                return E_FAIL;
+            }
+
+            ctx->Device = instance;
+
+            instance->Thread = CreateThread(NULL, 0,
+                (LPTHREAD_START_ROUTINE)dsdevice_thread, ctx, 0, NULL);
+
+            if (instance->Thread == NULL) {
+                dsdevice_release(instance);
+                return E_FAIL;
+            }
+
+            SetThreadPriority(instance->Thread, THREAD_PRIORITY_TIME_CRITICAL);
+
+            WaitForSingleObject(ctx->Init, INFINITE);
+            CloseHandle(ctx->Init);
+
+            // TODO check if thread exited prematurely...
+
+            *ppOut = instance;
+
+            return S_OK;
         }
 
-        instance->ThreadEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-        if (instance->ThreadEvent == NULL) {
-            dsdevice_release(instance);
-            return E_FAIL;
-        }
-
-        ctx->Device = instance;
-
-        instance->Thread = CreateThread(NULL, 0,
-            (LPTHREAD_START_ROUTINE)dsdevice_thread, ctx, 0, NULL);
-
-        if (instance->Thread == NULL) {
-            dsdevice_release(instance);
-            return E_FAIL;
-        }
-
-        SetThreadPriority(instance->Thread, THREAD_PRIORITY_TIME_CRITICAL);
-
-        WaitForSingleObject(ctx->Init, INFINITE);
-        CloseHandle(ctx->Init);
-
-        // TODO check if thread exited prematurely...
-
-        *ppOut = instance;
+        mixer_release(instance->Mixer);
     }
 
     return hr;
@@ -133,7 +140,7 @@ VOID DELTACALL dsdevice_release(dsdevice* self) {
         CloseHandle(self->Thread);
     }
 
-    // TODO clean wave format
+    mixer_release(self->Mixer);
 
     allocator_free(self->Allocator, self);
 }
@@ -218,12 +225,6 @@ HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
         goto exit;
     }
 
-    // TODO
-    //if (FAILED(hr = IAudioClient_GetService(self->AudioClient,
-    //    &IID_IAudioStreamVolume, &self->AudioVolume))) {
-    //    goto exit;
-    //}
-
     if (FAILED(hr = IAudioClient_Start(self->AudioClient))) {
         goto exit;
     }
@@ -238,7 +239,6 @@ exit:
         allocator_free(self->Allocator, self->Format);
     }
 
-    // RELEASE(self->AudioVolume); // TODO
     RELEASE(self->AudioRenderer);
     RELEASE(self->AudioClient);
     RELEASE(self->Device);
@@ -257,134 +257,6 @@ HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppForm
     }
 
     return IAudioClient_GetMixFormat(self->AudioClient, ppFormat);
-}
-
-// TODO refactor!
-// return data type, etc...
-// parameter names, etc...
-void DELTACALL convert_to_float(WAVEFORMATEX* format,
-    void* in_buf, DWORD in_buf_len, FLOAT** out_buf, DWORD* out_buf_len) {
-    const DWORD bits = format->wBitsPerSample;
-    const DWORD samples = in_buf_len / (format->wBitsPerSample >> 3);
-
-    const DWORD buf_len = samples * sizeof(FLOAT);
-
-    float* buf = (float*)calloc(buf_len, 1);
-
-    if (buf == NULL) {
-        return;
-    }
-
-    // Convert to float [-1.0, 1.0]
-
-    if (bits == 8) {
-        const PBYTE buffer = (PBYTE)in_buf;
-
-        for (DWORD i = 0; i < samples; i++) {
-            buf[i] = ((FLOAT)buffer[i] - 128.0f) / 128.0f;
-        }
-    }
-    else if (bits == 16) {
-        const PSHORT buffer = (PSHORT)in_buf;
-
-        for (DWORD i = 0; i < samples; i++) {
-            buf[i] = (FLOAT)buffer[i] / 32768.0f;
-        }
-    }
-    else {
-        // TODO NOT IMPLEMENTED
-    }
-
-    *out_buf_len = buf_len;
-    *out_buf = buf;
-}
-
-#include <math.h>
-
-// TODO refactor!
-// Linear interpolation...
-
-/*
-
-Common PCM Resampling Algorithms:
-
-    Linear Interpolation:
-
-This is a simple method where new sample values are estimated by drawing a straight line between two existing samples. While computationally inexpensive, it can introduce audible artifacts, particularly for significant sample rate changes.
-Cubic Spline Interpolation:
-This method uses a cubic polynomial to interpolate between samples, resulting in a smoother curve and generally better audio quality than linear interpolation, but with increased computational cost.
-Sinc Interpolation (Kaiser Window-Sinc Filter):
-Considered a high-quality method, sinc interpolation uses a sinc function, often with a windowing function like the Kaiser window, to reconstruct the continuous-time signal from the discrete samples and then resample it at the desired rate. This offers excellent fidelity but is more computationally intensive.
-Lagrange Interpolation:
-This method uses Lagrange polynomials to create a polynomial that passes through all given data points, allowing for interpolation of new sample values.
-
-Key Concepts in Resampling:
-
-    Anti-aliasing Filter (Low-Pass Filter - LPF):
-
-When downsampling (reducing the sample rate), it is crucial to apply an anti-aliasing filter before the resampling process. This filter removes frequencies above the new Nyquist frequency (half the new sample rate) to prevent aliasing, which can cause distortion and unwanted artifacts.
-Dithering:
-When reducing the bit depth during resampling, dithering can be applied to add a small amount of random noise to the signal. This helps to decorrelate quantization errors and reduce audible quantization noise.
-Noise Shaping:
-Often used in conjunction with dithering, noise shaping moves quantization noise to less audible frequency ranges, further improving perceived audio quality at lower bit depths.
-
-Algorithm Steps (General Outline):
-
-    Normalization (Optional):
-    If necessary, convert PCM samples to a floating-point representation (e.g., -1.0 to 1.0) for easier processing, especially when mixing multiple sources.
-    Filtering (for downsampling):
-    Apply an appropriate anti-aliasing low-pass filter to prevent aliasing.
-    Interpolation/Decimation:
-    Calculate new sample values at the target sample rate using the chosen interpolation algorithm (e.g., linear, cubic, sinc). This involves either interpolating between existing samples (upsampling) or selecting a subset of samples (downsampling with decimation).
-    Quantization and Dithering/Noise Shaping (for bit depth reduction):
-    If the target bit depth is lower than the source, quantize the samples and apply dithering or noise shaping to minimize quantization noise.
-    Conversion to Target Format:
-    Convert the processed floating-point samples back to the desired PCM integer format and bit depth.
-*/
-
-VOID DELTACALL resample(DWORD in_freq, FLOAT* in_buf, DWORD in_buf_len,
-    DWORD out_freq, FLOAT** out_buf, DWORD* out_buf_len) {
-    // TODO this is mono!
-    // NEED To support multiple channels
-
-    const DWORD in_samples = in_buf_len / sizeof(FLOAT);
-    const DWORD out_samples = (DWORD)((FLOAT)in_samples / (FLOAT)in_freq * (FLOAT)out_freq);
-    const DWORD buf_len = out_samples * sizeof(FLOAT);
-
-    FLOAT* buf = (FLOAT*)calloc(buf_len, 1);
-
-    if (buf == NULL) {
-        return;
-    }
-
-    const FLOAT ratio = (FLOAT)in_freq / (FLOAT)out_freq;
-
-    for (DWORD i = 0; i < out_samples; ++i) {
-        // Find the floating-point position in the input buffer for the current output sample
-        FLOAT source_position = i * ratio;
-
-        // Get the integer index of the first sample (p1)
-        DWORD index_p1 = (DWORD)floor(source_position);
-
-        // Get the fractional part for interpolation
-        float fraction = source_position - index_p1;
-
-        // Handle edge case for the last sample
-        if (index_p1 >= in_samples - 1) {
-            buf[i] = in_buf[in_samples - 1];
-            continue;
-        }
-
-        // Get the two adjacent samples for interpolation
-        FLOAT p1 = in_buf[index_p1];
-        FLOAT p2 = in_buf[index_p1 + 1];
-
-        // Perform linear interpolation
-        buf[i] = p1 + fraction * (p2 - p1);
-    }
-
-    *out_buf = buf;
-    *out_buf_len = buf_len;
 }
 
 HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
@@ -408,83 +280,25 @@ HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
                 // min(target - padding, wav->dwNumFrames - audio->nCurrentFrame);
 
                 if (frames != 0) {
-                    //if (frames == target) {
                     BYTE* lock = NULL;
+
                     if (SUCCEEDED(IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
 
-                        // Compute out buffer size based on the format and number of frames.
-                        DWORD in_bytes = (DWORD)((FLOAT)main->Format->nSamplesPerSec
-                            / (FLOAT)self->Format->Format.nSamplesPerSec
-                            * frames * main->Format->nBlockAlign);
+                        LPVOID buffer = NULL;
+                        DWORD buffer_size = 0;
 
-                        // Round down to the closest complete frame
-                        if (in_bytes % main->Format->nBlockAlign) {
-                            in_bytes -= in_bytes % main->Format->nBlockAlign;
+                        if (SUCCEEDED(mixer_mix(self->Mixer,
+                            self->Format, frames, self->Instance->Main,
+                            self->Instance->Buffers, &buffer, &buffer_size))) {
+                            CopyMemory(lock, buffer, buffer_size);
+
+                            IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
+                                buffer_size / self->Format->Format.nBlockAlign, 0);
                         }
-
-                        const DWORD in_frames = in_bytes / main->Format->nBlockAlign;
-                        DWORD out_bytes = (DWORD)((FLOAT)self->Format->Format.nSamplesPerSec
-                            / (FLOAT)main->Format->nSamplesPerSec
-                            * in_frames * self->Format->Format.nBlockAlign);
-
-                        // Round down to the closest complete frame
-                        if (out_bytes % self->Format->Format.nBlockAlign) {
-                            out_bytes -= out_bytes % self->Format->Format.nBlockAlign;
+                        else {
+                            IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
+                                0, AUDCLNT_BUFFERFLAGS_SILENT);
                         }
-
-                        void* buffer_read = malloc(in_bytes);
-
-                        DWORD real_read = 0;
-                        dsbcb_read(main->Buffer, in_bytes, buffer_read, &real_read);
-
-                        if (in_bytes != real_read) {
-                            int kk = 1;// TODO
-                        }
-
-                        //fprintf(f, "Reading at: %d Size %d Read %d Input bytes %d Input frames %d Output bytes %d\r\n",
-                        //    main->CurrentPlayCursor, in_bytes, real_read, in_bytes, in_frames, out_bytes);
-
-                        float* float_buf = NULL;
-                        DWORD float_buf_len = 0;
-                        convert_to_float(main->Format, buffer_read, real_read,
-                            &float_buf, &float_buf_len);
-
-                        float* resample_buf = NULL;
-                        DWORD resample_buf_len = 0;
-                        resample(main->Format->nSamplesPerSec, float_buf, float_buf_len,
-                            self->Format->Format.nSamplesPerSec, &resample_buf, &resample_buf_len);
-
-                        if (out_bytes != resample_buf_len) {
-                            int kkk = 1; // TODO
-                        }
-
-                        const UINT32 out_frames = resample_buf_len / self->Format->Format.nBlockAlign;
-
-                        //fprintf(f, "Resampled frames %d\r\n", out_frames);
-
-                        //CopyMemory(lock, resample_buf, out_bytes); // resample_buf_len);
-                        CopyMemory(lock, resample_buf, resample_buf_len);
-
-                        // TODO memory management!!!
-                        free(resample_buf);
-                        free(float_buf);
-                        free(buffer_read);
-
-                        DWORD read = 0, write = 0;
-                        dsbcb_get_read_position(main->Buffer, &read);
-                        dsbcb_get_write_position(main->Buffer, &write);
-
-                        dsbcb_set_read_position(main->Buffer, read + real_read, DSBCB_SETPOSITION_WRAP);
-                        dsbcb_set_write_position(main->Buffer, write + real_read, DSBCB_SETPOSITION_WRAP);
-
-                        //IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
-
-                        IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, out_frames, 0);
-
-                        // TODO for non-looping buffers
-                        //if (wav->dwNumFrames <= audio->nCurrentFrame) {
-                        //    audio->dwState = AUDIOSTATE_IDLE;
-                        //}
                     }
                 }
             }
