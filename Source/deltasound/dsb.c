@@ -60,7 +60,7 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 VOID DELTACALL dsb_release(dsb* self) {
     if (self == NULL) { return; }
 
-    for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
+    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         idsb* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
             idsb_release(instance);
@@ -206,7 +206,7 @@ HRESULT DELTACALL dsb_get_format(dsb* self,
     }
 
     HRESULT hr = S_OK;
-    const size_t size = sizeof(WAVEFORMATEX) + self->Format->cbSize;
+    const DWORD size = sizeof(WAVEFORMATEX) + self->Format->cbSize;
 
     if (pwfxFormat != NULL) {
         if (size <= dwSizeAllocated) {

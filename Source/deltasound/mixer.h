@@ -24,36 +24,12 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
-#include "device_info.h"
+#include "dsb.h"
 
-typedef struct ds ds;
+typedef struct mixer mixer;
 
-#define DSDEVICE_AUDIO_EVENT_INDEX      0
-#define DSDEVICE_CLOSE_EVENT_INDEX      1
+HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut);
+VOID DELTACALL mixer_release(mixer* pMix);
 
-#define DSDEVICE_MAX_EVENT_COUNT        2
-
-typedef struct dsdevice {
-    allocator*              Allocator;
-    ds*                     Instance;
-
-    device_info             Info;
-
-    IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
-
-    UINT32                  AudioClientBufferSize;  // In frames
-
-    PWAVEFORMATEXTENSIBLE   Format;
-
-    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
-
-    HANDLE                  Thread;
-    HANDLE                  ThreadEvent;
-} dsdevice;
-
-HRESULT DELTACALL dsdevice_create(allocator* pAlloc,
-    ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut);
-VOID DELTACALL dsdevice_release(dsdevice* pDev);
+HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
+    DWORD dwFrames, dsb* pMain, arr* pSecondary, LPVOID* pOutBuffer, LPDWORD ppdwFrames);

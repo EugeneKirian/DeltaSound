@@ -65,7 +65,7 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 VOID DELTACALL ds_release(ds* self) {
     if (self == NULL) { return; }
 
-    for (UINT i = 0; i < intfc_get_count(self->Interfaces); i++) {
+    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         ids* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
             ids_release(instance);
@@ -74,7 +74,7 @@ VOID DELTACALL ds_release(ds* self) {
 
     intfc_release(self->Interfaces);
 
-    for (UINT i = arr_get_count(self->Buffers); i != 0; i--) {
+    for (DWORD i = arr_get_count(self->Buffers); i != 0; i--) {
         dsb* instane = NULL;
         if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instane))) {
             dsb_release(instane);
@@ -179,7 +179,7 @@ HRESULT DELTACALL ds_create_dsb(ds* self, REFIID riid, LPCDSBUFFERDESC pcDesc, d
 HRESULT DELTACALL ds_remove_dsb(ds* self, dsb* pDSB) {
     HRESULT hr = S_OK;
 
-    for (UINT i = 0; i < arr_get_count(self->Buffers); i++) {
+    for (DWORD i = 0; i < arr_get_count(self->Buffers); i++) {
         dsb* instance = NULL;
 
         if (SUCCEEDED(hr = arr_get_item(self->Buffers, i, &instance))) {

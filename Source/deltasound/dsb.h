@@ -56,7 +56,7 @@ typedef struct dsb {
     LPWAVEFORMATEX  Format;
     FLOAT           Volume;
     FLOAT           Pan;
-    DWORD           Frequency;          // Frequency override when not equal to DSBFREQUENCY_ORIGINAL
+    DWORD           Frequency;
     DWORD           Status;
 } dsb;
 

@@ -240,7 +240,7 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
         }
     }
 
-    for (UINT i = 0; i < dsbcblc_get_count(self->Locks); i++) {
+    for (DWORD i = 0; i < dsbcblc_get_count(self->Locks); i++) {
         dsbcbl* l = NULL;
         if (SUCCEEDED(dsbcblc_get_item(self->Locks, i, &l))) {
             // Match

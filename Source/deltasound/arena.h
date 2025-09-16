@@ -25,35 +25,11 @@ SOFTWARE.
 #pragma once
 
 #include "allocator.h"
-#include "device_info.h"
 
-typedef struct ds ds;
+typedef struct arena arena;
 
-#define DSDEVICE_AUDIO_EVENT_INDEX      0
-#define DSDEVICE_CLOSE_EVENT_INDEX      1
+HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut);
+VOID DELTACALL arena_release(arena* pArena);
 
-#define DSDEVICE_MAX_EVENT_COUNT        2
-
-typedef struct dsdevice {
-    allocator*              Allocator;
-    ds*                     Instance;
-
-    device_info             Info;
-
-    IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
-
-    UINT32                  AudioClientBufferSize;  // In frames
-
-    PWAVEFORMATEXTENSIBLE   Format;
-
-    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
-
-    HANDLE                  Thread;
-    HANDLE                  ThreadEvent;
-} dsdevice;
-
-HRESULT DELTACALL dsdevice_create(allocator* pAlloc,
-    ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut);
-VOID DELTACALL dsdevice_release(dsdevice* pDev);
+HRESULT DELTACALL arena_allocate(arena* pArena, DWORD dwBytes, LPVOID* ppMem);
+HRESULT DELTACALL arena_clear(arena* pArena);
