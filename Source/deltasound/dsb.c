@@ -442,9 +442,6 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         dwBytes = lockable;
     }
 
-    // TODO what if offset in between read and write cursors
-    // + wrapped test
-
     if (dwBytes == 0
         || self->Caps.dwBufferBytes < dwOffset || lockable < dwBytes) {
         hr = E_INVALIDARG;
