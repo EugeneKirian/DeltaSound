@@ -52,6 +52,10 @@ static const DWORD BufferFlags[BUFFER_FLAG_COUNT] =
 };
 
 static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
     {
         LPDIRECTSOUND dsa = NULL;
         LPDIRECTSOUND dsb = NULL;

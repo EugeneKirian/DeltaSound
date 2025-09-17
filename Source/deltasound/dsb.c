@@ -140,7 +140,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
                     self->SpatialListener = instance;
                 }
 
-                return dssl_query_interface(self->SpatialListener, riid, (idssl**)ppOut);
+                return dssl_query_interface(self->SpatialListener, riid, ppOut);
             }
         }
     }
@@ -159,7 +159,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
                     self->SpatialBuffer = instance;
                 }
 
-                return dssb_query_interface(self->SpatialBuffer, riid, (idssb**)ppOut);
+                return dssb_query_interface(self->SpatialBuffer, riid, ppOut);
             }
         }
     }
@@ -178,7 +178,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
                     self->Notifications = instance;
                 }
 
-                return dsn_query_interface(self->Notifications, riid, (idsn**)ppOut);
+                return dsn_query_interface(self->Notifications, riid, ppOut);
             }
         }
     }
@@ -195,7 +195,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
             self->PropertySet = instance;
         }
 
-        return ksp_query_interface(self->PropertySet, riid, (iksp**)ppOut);
+        return ksp_query_interface(self->PropertySet, riid, ppOut);
     }
 
     return E_NOINTERFACE;
@@ -396,8 +396,6 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
         self->Format->cbSize = 0;
     }
     else {
-        // TODO, what to do with cbSize extra bytes ?
-        // Need tests
         self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
         CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
     }

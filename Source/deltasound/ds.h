@@ -51,7 +51,7 @@ typedef struct ds {
 HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut);
 VOID DELTACALL ds_release(ds* pDS);
 
-HRESULT DELTACALL ds_query_interface(ds* pDS, REFIID riid, ids** ppOut);
+HRESULT DELTACALL ds_query_interface(ds* pDS, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL ds_add_ref(ds* pDS, ids* pIDS);
 HRESULT DELTACALL ds_remove_ref(ds* pDS, ids* pIDS);
 

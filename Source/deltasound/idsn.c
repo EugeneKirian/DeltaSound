@@ -76,7 +76,7 @@ HRESULT DELTACALL idsn_query_interface(idsn* self, REFIID riid, LPVOID* ppvObjec
         return E_INVALIDARG;
     }
 
-    return dsn_query_interface(self->Instance, riid, (idsn**)ppvObject);
+    return dsn_query_interface(self->Instance, riid, ppvObject);
 }
 
 ULONG DELTACALL idsn_add_ref(idsn* self) {
@@ -110,8 +110,11 @@ ULONG DELTACALL idsn_remove_ref(idsn* self) {
 }
 
 HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return dsn_set_notification_positions(self->Instance, dwPositionNotifies, pcPositionNotifies);
 }
 
 /* ---------------------------------------------------------------------- */

@@ -127,7 +127,7 @@ HRESULT DELTACALL idssb_query_interface(idssb* self, REFIID riid, LPVOID* ppvObj
         return E_INVALIDARG;
     }
 
-    return dssb_query_interface(self->Instance, riid, (idssb**)ppvObject);
+    return dssb_query_interface(self->Instance, riid, ppvObject);
 }
 
 ULONG DELTACALL idssb_add_ref(idssb* self) {

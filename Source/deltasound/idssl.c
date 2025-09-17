@@ -119,7 +119,7 @@ HRESULT DELTACALL idssl_query_interface(idssl* self, REFIID riid, LPVOID* ppvObj
         return E_INVALIDARG;
     }
 
-    return dssl_query_interface(self->Instance, riid, (idssl**)ppvObject);
+    return dssl_query_interface(self->Instance, riid, ppvObject);
 }
 
 ULONG DELTACALL idssl_add_ref(idssl* self) {

@@ -37,6 +37,7 @@ HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
 
     if (SUCCEEDED(hr = dsn_allocate(pAlloc, &instance))) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
+        InitializeCriticalSection(&instance->Lock);
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             *ppOut = instance;
@@ -62,10 +63,12 @@ VOID DELTACALL dsn_release(dsn* self) {
 
     intfc_release(self->Interfaces);
 
+    DeleteCriticalSection(&self->Lock);
+
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, idsn** ppOut) {
+HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
     // TODO synchronization
 
     idsn* instance = NULL;
@@ -92,8 +95,10 @@ HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, idsn** ppOut) {
 
         return hr;
     }
-
-    // TODO NOT IMPLEMENTED
+    else if (IsEqualIID(&IID_IDirectSoundBuffer, riid)
+        || IsEqualIID(&IID_IKsPropertySet, riid)) {
+        return dsb_query_interface(self->Instance, riid, ppOut);
+    }
 
     return E_NOINTERFACE;
 }
@@ -111,6 +116,51 @@ HRESULT DELTACALL dsn_remove_ref(dsn* self, idsn* pIDSN) {
     return S_OK;
 }
 
+HRESULT DELTACALL dsn_get_notification_positions(dsn* self, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies) {
+    if (pdwPositionNotifies == NULL) {
+        return E_INVALIDARG;
+    }
+
+    *pdwPositionNotifies = self->NotificationCount;
+
+    if (ppcPositionNotifies != NULL) {
+        *ppcPositionNotifies = self->Notifications;
+    }
+
+    return S_OK;
+}
+
+HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
+    HRESULT hr = S_OK;
+
+    DWORD status = 0;
+    if (FAILED(hr = dsb_get_status(self->Instance, &status))) {
+        return hr;
+    }
+
+    if (!(status & DSBSTATUS_PLAYING)) {
+        return DSERR_INVALIDCALL;
+    }
+
+    EnterCriticalSection(&self->Lock);
+
+    if (self->NotificationCount < dwPositionNotifies) {
+        if (FAILED(hr = allocator_reallocate(self->Allocator,
+            self->Notifications, dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY), &self->Notifications))) {
+            goto exit;
+        }
+    }
+
+    self->NotificationCount = dwPositionNotifies;
+    CopyMemory(self->Notifications, pcPositionNotifies, dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY));
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
+}
+
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut) {
@@ -119,8 +169,13 @@ HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut) {
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsn), &instance))) {
         instance->Allocator = pAlloc;
-        *ppOut = instance;
-        return S_OK;
+
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, &instance->Notifications))) {
+            *ppOut = instance;
+            return S_OK;
+        }
+
+        allocator_free(pAlloc, instance);
     }
 
     return hr;

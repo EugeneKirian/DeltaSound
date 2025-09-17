@@ -39,6 +39,6 @@ typedef struct dssl {
 HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut);
 VOID DELTACALL dssl_release(dssl* pDSSL);
 
-HRESULT DELTACALL dssl_query_interface(dssl* pDSSL, REFIID riid, idssl** ppOut);
+HRESULT DELTACALL dssl_query_interface(dssl* pDSSL, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dssl_add_ref(dssl* pDSSL, idssl* pIDSSL);
 HRESULT DELTACALL dssl_remove_ref(dssl* pDSSL, idssl* pIDSSL);

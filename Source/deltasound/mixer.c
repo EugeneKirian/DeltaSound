@@ -153,12 +153,20 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
 
         // TODO convert back to intended format
 
-        DWORD read = 0, write = 0;
-        dsbcb_get_read_position(pMain->Buffer, &read);
-        dsbcb_get_write_position(pMain->Buffer, &write);
+        // Update the read and write positions but only if the buffer is still playing.
+        // This is to avoid race condition with ::Stop method being called at ill-timed moment.
 
-        dsbcb_set_read_position(pMain->Buffer, read + in_buffer_length, DSBCB_SETPOSITION_WRAP);
-        dsbcb_set_write_position(pMain->Buffer, write + in_buffer_length, DSBCB_SETPOSITION_WRAP);
+        DWORD status = 0;
+        if (SUCCEEDED(hr = dsb_get_status(pMain, &status))) {
+            if (status & DSBSTATUS_PLAYING) {
+                DWORD read = 0, write = 0;
+                dsbcb_get_read_position(pMain->Buffer, &read);
+                dsbcb_get_write_position(pMain->Buffer, &write);
+
+                dsbcb_set_read_position(pMain->Buffer, read + in_buffer_length, DSBCB_SETPOSITION_WRAP);
+                dsbcb_set_write_position(pMain->Buffer, write + in_buffer_length, DSBCB_SETPOSITION_WRAP);
+            }
+        }
 
         *pOutBuffer = resample_buf;
         *ppdwOutBufferBytes = resample_buf_len;
@@ -166,6 +174,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
     else {
         // TODO nothing to play for now
         // TODO support secondary buffers
+        // TODO handle position notifications.
     }
 
     return hr;

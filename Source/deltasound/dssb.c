@@ -65,7 +65,7 @@ VOID DELTACALL dssb_release(dssb* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, idssb** ppOut) {
+HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, LPVOID* ppOut) {
     // TODO synchronization
 
     idssb* instance = NULL;

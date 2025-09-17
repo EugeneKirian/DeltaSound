@@ -102,7 +102,7 @@ HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject)
         return E_INVALIDARG;
     }
 
-    return ds_query_interface(self->Instance, riid, (ids**)ppvObject);
+    return ds_query_interface(self->Instance, riid, ppvObject);
 }
 
 ULONG DELTACALL ids_add_ref(ids* self) {

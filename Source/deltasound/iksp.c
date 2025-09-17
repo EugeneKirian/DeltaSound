@@ -87,7 +87,7 @@ HRESULT DELTACALL iksp_query_interface(iksp* self, REFIID riid, LPVOID* ppvObjec
         return E_INVALIDARG;
     }
 
-    return ksp_query_interface(self->Instance, riid, (iksp**)ppvObject);
+    return ksp_query_interface(self->Instance, riid, ppvObject);
 }
 
 ULONG DELTACALL iksp_add_ref(iksp* self) {
