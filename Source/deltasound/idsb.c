@@ -47,7 +47,7 @@ HRESULT DELTACALL idsb_stop(idsb* self);
 HRESULT DELTACALL idsb_unlock(idsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL idsb_restore(idsb* self);
 
-typedef struct idsb_vft {
+struct idsb_vft {
     LPIDSBQUERYINTERFACE        QueryInterface;
     LPIDSBADDREF                AddRef;
     LPIDSBRELEASE               Release;
@@ -69,7 +69,7 @@ typedef struct idsb_vft {
     LPIDSBSTOP                  Stop;
     LPIDSBUNLOCK                Unlock;
     LPIDSBRESTORE               Restore;
-} idsb_vft;
+};
 
 const static idsb_vft idsb_self = {
     idsb_query_interface,

@@ -22,10 +22,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_createsoundbuffer_primary.h"
+#include "directsound_createsoundbuffer_secondary.h"
 
 static const GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {
     0x0000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
+};
+
+#define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   15
+
+static const DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
+    0,
+    DSBCAPS_STATIC,
+    DSBCAPS_LOCHARDWARE,
+    DSBCAPS_LOCSOFTWARE,
+    DSBCAPS_CTRL3D,
+    DSBCAPS_CTRLFREQUENCY,
+    DSBCAPS_CTRLPAN,
+    DSBCAPS_CTRLVOLUME,
+    DSBCAPS_CTRLPOSITIONNOTIFY,
+    DSBCAPS_STICKYFOCUS,
+    DSBCAPS_GLOBALFOCUS,
+    DSBCAPS_GETCURRENTPOSITION2,
+    DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE,
+    DSBCAPS_TRUEPLAYPOSITION,
+    DSBCAPS_LOCHARDWARE | DSBCAPS_LOCDEFER
+};
+
+#define MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT   5
+
+static const DWORD CreateSecondaryBufferInvalidFlags[MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT] = {
+    DSBCAPS_LOCHARDWARE,
+    DSBCAPS_CTRLFX,
+    DSBCAPS_MUTE3DATMAXDISTANCE,
+    DSBCAPS_LOCDEFER,
+    DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCDEFER
 };
 
 static BOOL TestDirectSoundCreateBufferInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) {
@@ -334,16 +364,6 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     return TRUE;
 }
 
-#define MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT   5
-
-static const DWORD CreateSecondaryBufferInvalidFlags[MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT] = {
-    DSBCAPS_LOCHARDWARE,
-    DSBCAPS_CTRLFX,
-    DSBCAPS_MUTE3DATMAXDISTANCE,
-    DSBCAPS_LOCDEFER,
-    DSBCAPS_LOCSOFTWARE | DSBCAPS_LOCDEFER
-};
-
 static BOOL TestDirectSoundCreateBufferSecondaryInvalidFlags(LPDIRECTSOUND a, LPDIRECTSOUND b, DWORD dwFlags) {
     LPDIRECTSOUNDBUFFER dsba = NULL;
     LPDIRECTSOUNDBUFFER dsbb = NULL;
@@ -626,25 +646,61 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
     return TRUE;
 }
 
-#define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   15
+static BOOL TestDirectSoundCreateBufferSecondaryValidFormat(LPDIRECTSOUND a, LPDIRECTSOUND b) {
+    LPDIRECTSOUNDBUFFER dsba = NULL;
+    LPDIRECTSOUNDBUFFER dsbb = NULL;
 
-static const DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
-    0,
-    DSBCAPS_STATIC,
-    DSBCAPS_LOCHARDWARE,
-    DSBCAPS_LOCSOFTWARE,
-    DSBCAPS_CTRL3D,
-    DSBCAPS_CTRLFREQUENCY,
-    DSBCAPS_CTRLPAN,
-    DSBCAPS_CTRLVOLUME,
-    DSBCAPS_CTRLPOSITIONNOTIFY,
-    DSBCAPS_STICKYFOCUS,
-    DSBCAPS_GLOBALFOCUS,
-    DSBCAPS_GETCURRENTPOSITION2,
-    DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE,
-    DSBCAPS_TRUEPLAYPOSITION,
-    DSBCAPS_LOCHARDWARE | DSBCAPS_LOCDEFER
-};
+    {
+        WAVEFORMATEXTENSIBLE format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEXTENSIBLE));
+
+        format.Format.wFormatTag = WAVE_FORMAT_PCM;
+        format.Format.nChannels = 2;
+        format.Format.nSamplesPerSec = 22050;
+        format.Format.nAvgBytesPerSec = 44100;
+        format.Format.nBlockAlign = 2;
+        format.Format.wBitsPerSample = 8;
+        format.Format.cbSize = 22;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = (LPWAVEFORMATEX)&format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = (LPWAVEFORMATEX)&format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        if (ra == S_OK) {
+            DWORD sa = 0, sb = 0;
+            WAVEFORMATEXTENSIBLE fa;
+            ZeroMemory(&fa, sizeof(WAVEFORMATEXTENSIBLE));
+
+            WAVEFORMATEXTENSIBLE fb;
+            ZeroMemory(&fb, sizeof(WAVEFORMATEXTENSIBLE));
+
+            ra = IDirectSoundBuffer_GetFormat(dsba, (LPWAVEFORMATEX)&fa, sizeof(WAVEFORMATEXTENSIBLE), &sa);
+            rb = IDirectSoundBuffer_GetFormat(dsba, (LPWAVEFORMATEX)&fb, sizeof(WAVEFORMATEXTENSIBLE), &sb);
+
+            IDirectSoundBuffer_Release(dsba);
+            IDirectSoundBuffer_Release(dsbb);
+        }
+    }
+
+    return TRUE;
+}
 
 static BOOL TestDirectSoundCreateBufferSecondaryFlags(LPDIRECTSOUND a, LPDIRECTSOUND b, DWORD dwFlags) {
     BOOL result = TRUE;
@@ -847,6 +903,11 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
     }
 
     if (!TestDirectSoundCreateBufferSecondaryInvalidFormat(dsa, dsb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!TestDirectSoundCreateBufferSecondaryValidFormat(dsa, dsb)) {
         result = FALSE;
         goto exit;
     }

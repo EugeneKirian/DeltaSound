@@ -24,21 +24,21 @@ SOFTWARE.
 
 #pragma once
 
-#include "iksp.h"
+#include "idsn.h"
 #include "intfc.h"
 
 typedef struct dsb dsb;
 
-typedef struct ksp {
+typedef struct dsn {
     allocator*  Allocator;
     GUID        ID;
     dsb*        Instance;
     intfc*      Interfaces;
-} ksp;
+} dsn;
 
-HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut);
-VOID DELTACALL ksp_release(ksp* pKSP);
+HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut);
+VOID DELTACALL dsn_release(dsn* pDSN);
 
-HRESULT DELTACALL ksp_query_interface(ksp* pKSP, REFIID riid, iksp** ppOut);
-HRESULT DELTACALL ksp_add_ref(ksp* pKSP, iksp* pIKSP);
-HRESULT DELTACALL ksp_remove_ref(ksp* pKSP, iksp* pIKSP);
+HRESULT DELTACALL dsn_query_interface(dsn* pDSN, REFIID riid, idsn** ppOut);
+HRESULT DELTACALL dsn_add_ref(dsn* pDSN, idsn* pIDSN);
+HRESULT DELTACALL dsn_remove_ref(dsn* pDSN, idsn* pIDSN);

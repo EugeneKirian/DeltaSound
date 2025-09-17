@@ -26,6 +26,10 @@ SOFTWARE.
 
 typedef IReferenceClock* LPREFERENCECLOCK;
 
+static const GUID IID_IDirectSoundPrivate = {
+    0x2A8AF120, 0xE9DE, 0x4132, { 0xAA, 0xA5, 0x4B, 0xDD, 0xA5, 0xF3, 0x25, 0xB8 }
+};
+
 static BOOL TestDirectSoundAddRef(LPDIRECTSOUND a, LPDIRECTSOUND b) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -384,6 +388,18 @@ static BOOL TestDirectSoundQueryInterface(LPDIRECTSOUND a, LPDIRECTSOUND b) {
 
         HRESULT ra = IDirectSound_QueryInterface(a, &IID_IReferenceClock, &ca);
         HRESULT rb = IDirectSound_QueryInterface(b, &IID_IReferenceClock, &cb);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        LPREFERENCECLOCK ca = NULL;
+        LPREFERENCECLOCK cb = NULL;
+
+        HRESULT ra = IDirectSound_QueryInterface(a, &IID_IDirectSoundPrivate, &ca);
+        HRESULT rb = IDirectSound_QueryInterface(b, &IID_IDirectSoundPrivate, &cb);
 
         if (ra != rb) {
             return FALSE;

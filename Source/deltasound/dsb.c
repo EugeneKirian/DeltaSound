@@ -24,6 +24,9 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
+#include "dsn.h"
+#include "dssb.h"
+#include "dssl.h"
 #include "ids.h"
 #include "ksp.h"
 #include "wave_format.h"
@@ -121,6 +124,63 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         }
 
         return hr;
+    }
+    else if (IsEqualIID(&IID_IDirectSound3DListener, riid)) {
+        if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+            if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
+                if (self->SpatialListener == NULL) {
+                    HRESULT hr = S_OK;
+                    dssl* instance = NULL;
+
+                    if (FAILED(hr = dssl_create(self->Allocator, riid, &instance))) {
+                        return hr;
+                    }
+
+                    instance->Instance = self;
+                    self->SpatialListener = instance;
+                }
+
+                return dssl_query_interface(self->SpatialListener, riid, (idssl**)ppOut);
+            }
+        }
+    }
+    else if (IsEqualIID(&IID_IDirectSound3DBuffer, riid)) {
+        if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
+            if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
+                if (self->SpatialBuffer == NULL) {
+                    HRESULT hr = S_OK;
+                    dssb* instance = NULL;
+
+                    if (FAILED(hr = dssb_create(self->Allocator, riid, &instance))) {
+                        return hr;
+                    }
+
+                    instance->Instance = self;
+                    self->SpatialBuffer = instance;
+                }
+
+                return dssb_query_interface(self->SpatialBuffer, riid, (idssb**)ppOut);
+            }
+        }
+    }
+    else if (IsEqualIID(&IID_IDirectSoundNotify, riid)) {
+        if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
+            if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                if (self->Notifications == NULL) {
+                    HRESULT hr = S_OK;
+                    dsn* instance = NULL;
+
+                    if (FAILED(hr = dsn_create(self->Allocator, riid, &instance))) {
+                        return hr;
+                    }
+
+                    instance->Instance = self;
+                    self->Notifications = instance;
+                }
+
+                return dsn_query_interface(self->Notifications, riid, (idsn**)ppOut);
+            }
+        }
     }
     else if (IsEqualIID(&IID_IKsPropertySet, riid)) {
         if (self->PropertySet == NULL) {
@@ -574,18 +634,11 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         // TODO stop the buffer, update the format, and resume playback
     }
 
-    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX)); // TODO see note below
+    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
+
     self->Format->cbSize = 0;
 
     return S_OK;
-
-    // TODO
-    // WAVEFORMATEXTENSIBLE can safely be cast to WAVEFORMATEX,
-    // because it simply configures the extra bytes specified by WAVEFORMATEX.cbSize.
-    // DirectSound recognizes the WAVE_FORMAT_EXTENSIBLE format tag
-    // and correctly plays multiple-channel and compressed formats in hardware buffers, as long as these formats are supported by the driver.
-
-    // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee419020(v=vs.85)
 }
 
 HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {

@@ -39,6 +39,9 @@ SOFTWARE.
 
 typedef struct ds ds;
 typedef struct ksp ksp;
+typedef struct dsn dsn;
+typedef struct dssl dssl;
+typedef struct dssb dssb;
 
 typedef struct dsb {
     allocator*      Allocator;
@@ -46,6 +49,9 @@ typedef struct dsb {
     ds*             Instance;
     intfc*          Interfaces;
     ksp*            PropertySet;
+    dssl*           SpatialListener;
+    dssb*           SpatialBuffer;
+    dsn*            Notifications;
 
     // TODO Lock
 

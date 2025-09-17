@@ -37,7 +37,7 @@ HRESULT DELTACALL ids_get_speaker_config(ids* self, LPDWORD pdwSpeakerConfig);
 HRESULT DELTACALL ids_set_speaker_config(ids* self, DWORD dwSpeakerConfig);
 HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice);
 
-typedef struct ids_vft {
+struct ids_vft {
     LPIDSQUERYINTERFACE         QueryInterface;
     LPIDSADDREF                 AddRef;
     LPIDSRELEASE                Release;
@@ -49,7 +49,7 @@ typedef struct ids_vft {
     LPIDSGETSPEAKERCONFIG       GetSpeakerConfig;
     LPIDSSETSPEAKERCONFIG       SetSpeakerConfig;
     LPIDSINITIALIZE             Initialize;
-} ids_vft;
+};
 
 const static ids_vft ids_self = {
     ids_query_interface,
@@ -127,8 +127,9 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
 
         if (self->Instance != NULL) {
             ds_remove_ref(self->Instance, self);
-            ids_release(self);
         }
+
+        ids_release(self);
     }
 
     return self->RefCount;

@@ -24,21 +24,29 @@ SOFTWARE.
 
 #pragma once
 
-#include "iksp.h"
-#include "intfc.h"
+#include "allocator.h"
 
-typedef struct dsb dsb;
+typedef struct dsn dsn;
+typedef struct idsn_vft idsn_vft;
 
-typedef struct ksp {
-    allocator*  Allocator;
-    GUID        ID;
-    dsb*        Instance;
-    intfc*      Interfaces;
-} ksp;
+typedef struct idsn {
+    const idsn_vft*     Self;
+    allocator*          Allocator;
+    GUID                ID;
+    LONG                RefCount;
+    dsn*                Instance;
+} idsn;
 
-HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut);
-VOID DELTACALL ksp_release(ksp* pKSP);
+typedef HRESULT(DELTACALL* LPIDSNQUERYINTERFACE)(idsn*, REFIID, LPVOID*);
+typedef ULONG(DELTACALL* LPIDSNADDREF)(idsn*);
+typedef ULONG(DELTACALL* LPIDSNRELEASE)(idsn*);
 
-HRESULT DELTACALL ksp_query_interface(ksp* pKSP, REFIID riid, iksp** ppOut);
-HRESULT DELTACALL ksp_add_ref(ksp* pKSP, iksp* pIKSP);
-HRESULT DELTACALL ksp_remove_ref(ksp* pKSP, iksp* pIKSP);
+typedef HRESULT(DELTACALL* LPIDSNSETNOTIFICATIONPOSITIONS)(idsn*,
+    DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
+
+HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut);
+VOID DELTACALL idsn_release(idsn* pIDSN);
+
+HRESULT DELTACALL idsn_query_interface(idsn* pIDSN, REFIID riid, LPVOID* ppvObject);
+ULONG DELTACALL idsn_add_ref(idsn* pIDSN);
+ULONG DELTACALL idsn_remove_ref(idsn* pIDSN);
