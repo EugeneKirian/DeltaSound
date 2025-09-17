@@ -158,7 +158,7 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
         return S_OK;
     }
 
-    if (dwPositionNotifies != 0 && pcPositionNotifies == NULL) {
+    if (pcPositionNotifies == NULL) {
         return E_INVALIDARG;
     }
 

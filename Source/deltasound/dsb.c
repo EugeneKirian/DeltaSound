@@ -266,7 +266,7 @@ HRESULT DELTACALL dsb_get_format(dsb* self,
     }
 
     HRESULT hr = S_OK;
-    const DWORD size = sizeof(WAVEFORMATEX) + self->Format->cbSize;
+    const DWORD size = SIZEOFFORMATEX(self->Format);
 
     if (pwfxFormat != NULL) {
         if (size <= dwSizeAllocated) {

@@ -107,6 +107,8 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
             in_bytes -= in_bytes % pMain->Format->nBlockAlign;
         }
 
+        // TODO use BLOCKALIGN ?
+
         const DWORD in_frames = in_bytes / pMain->Format->nBlockAlign;
         DWORD out_bytes = (DWORD)((FLOAT)pwfxFormat->Format.nSamplesPerSec
             / (FLOAT)in_frequency * in_frames * pwfxFormat->Format.nBlockAlign);
@@ -115,6 +117,8 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
         if (out_bytes % pwfxFormat->Format.nBlockAlign != 0) {
             out_bytes -= out_bytes % pwfxFormat->Format.nBlockAlign;
         }
+
+        // TODO use BLOCKALIGN ?
 
         // Read the data from buffer's circular buffer into a linear block of memory.
 
