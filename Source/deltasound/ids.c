@@ -102,7 +102,7 @@ HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject)
         return E_INVALIDARG;
     }
 
-    return ds_query_interface(self->Instance, riid, (ids**)ppvObject);
+    return ds_query_interface(self->Instance, riid, ppvObject);
 }
 
 ULONG DELTACALL ids_add_ref(ids* self) {
@@ -186,7 +186,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
 
     if (pcDesc->dwSize == sizeof(dsb_desc_max)
         && !(pcDesc->dwFlags & DSBCAPS_CTRL3D)
-        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &GUID_NULL)) {
+        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &DS3DALG_DEFAULT)) {
         return E_INVALIDARG;
     }
 

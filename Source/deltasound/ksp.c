@@ -65,7 +65,7 @@ VOID DELTACALL ksp_release(ksp* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, iksp** ppOut) {
+HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
     // TODO synchronization
 
     iksp* instance = NULL;

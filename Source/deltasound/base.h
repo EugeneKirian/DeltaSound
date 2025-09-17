@@ -33,5 +33,6 @@ SOFTWARE.
 #include <functiondiscoverykeys_devpkey.h>
 
 #define DELTACALL   __stdcall
+#define CDECLCALL   __cdecl
 
 #define UNUSED(X)   ((VOID)X)

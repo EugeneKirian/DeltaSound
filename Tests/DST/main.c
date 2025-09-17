@@ -38,12 +38,16 @@ SOFTWARE.
 #include "directsoundbuffer_primary_play.h"
 #include "directsoundbuffer_primary_play_pan.h"
 #include "directsoundbuffer_primary_play_volume.h"
+#include "directsoundbuffer_primary_notify.h"
 
 #include "directsoundbuffer_secondary_basics.h"
 #include "directsoundbuffer_secondary_query_interface.h"
 #include "directsoundbuffer_secondary_get.h"
 #include "directsoundbuffer_secondary_set.h"
 #include "directsoundbuffer_secondary_lock.h"
+// TODO play
+#include "directsoundbuffer_secondary_notify.h"
+// TODO play with notifications
 
 #include "directsoundcapture_enumerate.h"
 
@@ -104,11 +108,15 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferPrimaryPlayPan);
     TEST(DirectSoundBufferPrimaryPlayVolume);
 
+    TEST(DirectSoundBufferPrimaryNotify);
+
     TEST(DirectSoundBufferSecondaryBasics);
     TEST(DirectSoundBufferSecondaryQueryInterface);
     TEST(DirectSoundBufferSecondaryGet);
     TEST(DirectSoundBufferSecondarySet);
     TEST(DirectSoundBufferSecondaryLock);
+
+    TEST(DirectSoundBufferSecondaryNotify);
 
 exit:
 

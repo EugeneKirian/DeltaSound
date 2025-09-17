@@ -24,29 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "idsn.h"
-#include "intfc.h"
+#include "base.h"
 
-typedef struct dsb dsb;
-
-typedef struct dsn {
-    allocator*              Allocator;
-    GUID                    ID;
-    dsb*                    Instance;
-    intfc*                  Interfaces;
-
-    CRITICAL_SECTION        Lock;
-
-    LPDSBPOSITIONNOTIFY     Notifications;
-    DWORD                   NotificationCount;
-} dsn;
-
-HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut);
-VOID DELTACALL dsn_release(dsn* pDSN);
-
-HRESULT DELTACALL dsn_query_interface(dsn* pDSN, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL dsn_add_ref(dsn* pDSN, idsn* pIDSN);
-HRESULT DELTACALL dsn_remove_ref(dsn* pDSN, idsn* pIDSN);
-
-HRESULT DELTACALL dsn_get_notification_positions(dsn* pDSN, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies);
-HRESULT DELTACALL dsn_set_notification_positions(dsn* pDSN, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
+BOOL TestDirectSoundBufferSecondaryNotify(HMODULE a, HMODULE b);

@@ -39,6 +39,6 @@ typedef struct dssb {
 HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut);
 VOID DELTACALL dssb_release(dssb* pDSSB);
 
-HRESULT DELTACALL dssb_query_interface(dssb* pDSSB, REFIID riid, idssb** ppOut);
+HRESULT DELTACALL dssb_query_interface(dssb* pDSSB, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dssb_add_ref(dssb* pDSSB, idssb* pIDSSB);
 HRESULT DELTACALL dssb_remove_ref(dssb* pDSSB, idssb* pIDSSB);

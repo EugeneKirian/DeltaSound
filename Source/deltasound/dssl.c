@@ -65,7 +65,7 @@ VOID DELTACALL dssl_release(dssl* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, idssl** ppOut) {
+HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, LPVOID* ppOut) {
     // TODO synchronization
 
     idssl* instance = NULL;

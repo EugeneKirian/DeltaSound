@@ -100,7 +100,7 @@ VOID DELTACALL ds_release(ds* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, ids** ppOut) {
+HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, LPVOID* ppOut) {
     // TODO synchronization
 
     ids* instance = NULL;
