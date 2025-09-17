@@ -588,6 +588,171 @@ exit:
     return result;
 }
 
+static BOOL TestDirectSoundBufferPrimaryLockDuringPlay(LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
+    LPDIRECTSOUND dsa = NULL;
+    LPDIRECTSOUND dsb = NULL;
+
+    HRESULT ra = a(NULL, &dsa, NULL);
+    HRESULT rb = b(NULL, &dsb, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    BOOL result = TRUE;
+
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_WRITEPRIMARY);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_WRITEPRIMARY);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUNDBUFFER dsba = NULL;
+    LPDIRECTSOUNDBUFFER dsbb = NULL;
+
+    DSBUFFERDESC desc;
+    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+
+    desc.dwSize = sizeof(DSBUFFERDESC);
+    desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+    LPVOID wavea = NULL, waveb = NULL;
+    DWORD wavea_length = 0, waveb_length = 0;
+
+    ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
+    rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    WAVEFORMATEX fa;
+    ZeroMemory(&fa, sizeof(WAVEFORMATEX));
+
+    WAVEFORMATEX fb;
+    ZeroMemory(&fb, sizeof(WAVEFORMATEX));
+
+    DWORD fas = 0, fbs = 0;
+
+    ra = IDirectSoundBuffer_GetFormat(dsba, &fa, sizeof(WAVEFORMATEX), &fas);
+    rb = IDirectSoundBuffer_GetFormat(dsbb, &fb, sizeof(WAVEFORMATEX), &fbs);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!Synthesise(&fa, 440.0f, 3.0f /* seconds */, &wavea, &wavea_length)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!Synthesise(&fa, 293.66f, 3.0f /* seconds */, &waveb, &waveb_length)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    LPVOID l1a = NULL, l2a = NULL, l1b = NULL, l2b = NULL;
+    DWORD l1la = 0, l2la = 0, l1lb = 0, l2lb = 0;
+
+    ra = IDirectSoundBuffer_Lock(dsba, 0, 0, &l1a, &l1la, &l2a, &l2la, DSBLOCK_ENTIREBUFFER);
+    rb = IDirectSoundBuffer_Lock(dsbb, 0, 0, &l1b, &l1lb, &l2b, &l2lb, DSBLOCK_ENTIREBUFFER);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    CopyMemory(l1a, wavea, l1la);
+    CopyMemory(l1b, wavea, l1lb);
+
+    ra = IDirectSoundBuffer_Unlock(dsba, l1a, l1la, l2a, l2la);
+    rb = IDirectSoundBuffer_Unlock(dsbb, l1b, l1lb, l2b, l2lb);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ra = IDirectSoundBuffer_Play(dsba, 0, 0, DSBPLAY_LOOPING);
+    rb = IDirectSoundBuffer_Play(dsbb, 0, 0, DSBPLAY_LOOPING);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    Sleep(100);
+
+    DWORD cra = 0, cwa = 0, crb = 0, cwb = 0;
+    ra = IDirectSoundBuffer_GetCurrentPosition(dsba, &cra, &cwa);
+    rb = IDirectSoundBuffer_GetCurrentPosition(dsbb, &crb, &cwb);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ra = IDirectSoundBuffer_Lock(dsba, cra, 0, &l1a, &l1la, &l2a, &l2la, DSBLOCK_ENTIREBUFFER);
+    rb = IDirectSoundBuffer_Lock(dsbb, crb, 0, &l1b, &l1lb, &l2b, &l2lb, DSBLOCK_ENTIREBUFFER);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    CopyMemory(l1a, waveb, l1la);
+    CopyMemory(l1b, waveb, l1lb);
+
+    ra = IDirectSoundBuffer_Unlock(dsba, l1a, l1la, l2a, l2la);
+    rb = IDirectSoundBuffer_Unlock(dsbb, l1b, l1lb, l2b, l2lb);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    Sleep(1 * 1000);
+
+    ra = IDirectSoundBuffer_Stop(dsba);
+    rb = IDirectSoundBuffer_Stop(dsbb);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+exit:
+
+    if (wavea != NULL) {
+        free(wavea);
+    }
+
+    if (waveb != NULL) {
+        free(waveb);
+    }
+
+    if (dsba != NULL) {
+        IDirectSoundBuffer_Release(dsba);
+    }
+
+    if (dsbb != NULL) {
+        IDirectSoundBuffer_Release(dsbb);
+    }
+
+    if (dsa != NULL) {
+        IDirectSound_Release(dsa);
+    }
+
+    if (dsb != NULL) {
+        IDirectSound_Release(dsb);
+    }
+
+    return result;
+}
+
 BOOL TestDirectSoundBufferPrimaryPlay(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -622,6 +787,11 @@ BOOL TestDirectSoundBufferPrimaryPlay(HMODULE a, HMODULE b) {
                 goto exit;
             }
         }
+    }
+
+    if (!TestDirectSoundBufferPrimaryLockDuringPlay(dsca, wa, dscb, wb)) {
+        result = FALSE;
+        goto exit;
     }
 
 exit:
