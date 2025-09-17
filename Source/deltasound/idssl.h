@@ -58,8 +58,8 @@ typedef HRESULT(DELTACALL* LPIDSSLSETVELOCITY)(idssl*, D3DVALUE x, D3DVALUE y, D
 typedef HRESULT(DELTACALL* LPIDSSLCOMMITDEFERREDSETTINGS)(idssl*);
 
 HRESULT DELTACALL idssl_create(allocator* pAlloc, REFIID riid, idssl** ppOut);
-VOID DELTACALL idssl_release(idssl* pidssl);
+VOID DELTACALL idssl_release(idssl* pIDSSL);
 
-HRESULT DELTACALL idssl_query_interface(idssl* pidssl, REFIID riid, LPVOID* ppvObject);
-ULONG DELTACALL idssl_add_ref(idssl* pidssl);
-ULONG DELTACALL idssl_remove_ref(idssl* pidssl);
+HRESULT DELTACALL idssl_query_interface(idssl* pIDSSL, REFIID riid, LPVOID* ppvObject);
+ULONG DELTACALL idssl_add_ref(idssl* pIDSSL);
+ULONG DELTACALL idssl_remove_ref(idssl* pIDSSL);

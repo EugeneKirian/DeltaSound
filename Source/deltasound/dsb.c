@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
+#include "dssb.h"
 #include "dssl.h"
 #include "ids.h"
 #include "ksp.h"
@@ -124,20 +125,41 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         return hr;
     }
     else if (IsEqualIID(&IID_IDirectSound3DListener, riid)) {
-        if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
-            if (self->SpatialListener == NULL) {
-                HRESULT hr = S_OK;
-                dssl* instance = NULL;
+        if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+            if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
+                if (self->SpatialListener == NULL) {
+                    HRESULT hr = S_OK;
+                    dssl* instance = NULL;
 
-                if (FAILED(hr = dssl_create(self->Allocator, riid, &instance))) {
-                    return hr;
+                    if (FAILED(hr = dssl_create(self->Allocator, riid, &instance))) {
+                        return hr;
+                    }
+
+                    instance->Instance = self;
+                    self->SpatialListener = instance;
                 }
 
-                instance->Instance = self;
-                self->SpatialListener = instance;
+                return dssl_query_interface(self->SpatialListener, riid, (idssl**)ppOut);
             }
+        }
+    }
+    else if (IsEqualIID(&IID_IDirectSound3DBuffer, riid)) {
+        if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
+            if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
+                if (self->SpatialBuffer == NULL) {
+                    HRESULT hr = S_OK;
+                    dssb* instance = NULL;
 
-            return dssl_query_interface(self->SpatialListener, riid, (idssl**)ppOut);
+                    if (FAILED(hr = dssb_create(self->Allocator, riid, &instance))) {
+                        return hr;
+                    }
+
+                    instance->Instance = self;
+                    self->SpatialBuffer = instance;
+                }
+
+                return dssb_query_interface(self->SpatialBuffer, riid, (idssb**)ppOut);
+            }
         }
     }
     else if (IsEqualIID(&IID_IKsPropertySet, riid)) {

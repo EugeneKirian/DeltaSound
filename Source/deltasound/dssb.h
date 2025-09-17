@@ -24,21 +24,21 @@ SOFTWARE.
 
 #pragma once
 
-#include "idssl.h"
+#include "idssb.h"
 #include "intfc.h"
 
 typedef struct dsb dsb;
 
-typedef struct dssl {
+typedef struct dssb {
     allocator*  Allocator;
     GUID        ID;
     dsb*        Instance;
     intfc*      Interfaces;
-} dssl;
+} dssb;
 
-HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut);
-VOID DELTACALL dssl_release(dssl* pDSSL);
+HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut);
+VOID DELTACALL dssb_release(dssb* pDSSB);
 
-HRESULT DELTACALL dssl_query_interface(dssl* pDSSL, REFIID riid, idssl** ppOut);
-HRESULT DELTACALL dssl_add_ref(dssl* pDSSL, idssl* pIDSSL);
-HRESULT DELTACALL dssl_remove_ref(dssl* pDSSL, idssl* pIDSSL);
+HRESULT DELTACALL dssb_query_interface(dssb* pDSSB, REFIID riid, idssb** ppOut);
+HRESULT DELTACALL dssb_add_ref(dssb* pDSSB, idssb* pIDSSB);
+HRESULT DELTACALL dssb_remove_ref(dssb* pDSSB, idssb* pIDSSB);

@@ -24,21 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "idssl.h"
-#include "intfc.h"
+#include "base.h"
 
-typedef struct dsb dsb;
-
-typedef struct dssl {
-    allocator*  Allocator;
-    GUID        ID;
-    dsb*        Instance;
-    intfc*      Interfaces;
-} dssl;
-
-HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut);
-VOID DELTACALL dssl_release(dssl* pDSSL);
-
-HRESULT DELTACALL dssl_query_interface(dssl* pDSSL, REFIID riid, idssl** ppOut);
-HRESULT DELTACALL dssl_add_ref(dssl* pDSSL, idssl* pIDSSL);
-HRESULT DELTACALL dssl_remove_ref(dssl* pDSSL, idssl* pIDSSL);
+BOOL TestDirectSoundBufferSecondaryQueryInterface(HMODULE a, HMODULE b);
