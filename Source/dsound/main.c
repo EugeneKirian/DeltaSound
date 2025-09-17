@@ -45,12 +45,13 @@ BOOL WINAPI DllMain(
     HINSTANCE hinstDLL,
     DWORD fdwReason,
     LPVOID lpvReserved) {
-    UNUSED(hinstDLL);
 
     // TODO NOT IMPLEMENTED
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH: {
+        DisableThreadLibraryCalls(hinstDLL);
+
         if (SUCCEEDED(allocator_create(&alc))) {
             if (SUCCEEDED(deltasound_create(alc, &delta))) {
                 return TRUE;
