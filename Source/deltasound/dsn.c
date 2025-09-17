@@ -25,7 +25,11 @@ SOFTWARE.
 #include "dsb.h"
 #include "dsn.h"
 
+#define IS_VALID_HANDLE(h)  (((h) != NULL) && ((h) != INVALID_HANDLE_VALUE))
+
 HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut);
+
+HRESULT DELTACALL dsn_validate_notification_positions(dsn* pDSN, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies);
 
 HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -121,42 +125,71 @@ HRESULT DELTACALL dsn_get_notification_positions(dsn* self, LPDWORD pdwPositionN
         return E_INVALIDARG;
     }
 
+    EnterCriticalSection(&self->Lock);
+
     *pdwPositionNotifies = self->NotificationCount;
 
     if (ppcPositionNotifies != NULL) {
         *ppcPositionNotifies = self->Notifications;
     }
 
+    LeaveCriticalSection(&self->Lock);
+
     return S_OK;
 }
 
 HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
-    HRESULT hr = S_OK;
+    if (!(self->Instance->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)) {
+        return DSERR_CONTROLUNAVAIL;
+    }
 
+    HRESULT hr = S_OK;
     DWORD status = 0;
     if (FAILED(hr = dsb_get_status(self->Instance, &status))) {
         return hr;
     }
 
-    if (!(status & DSBSTATUS_PLAYING)) {
+    if (status & DSBSTATUS_PLAYING) {
         return DSERR_INVALIDCALL;
     }
 
-    EnterCriticalSection(&self->Lock);
+    if (dwPositionNotifies == 0) {
+        self->NotificationCount = 0;
+        return S_OK;
+    }
 
-    if (self->NotificationCount < dwPositionNotifies) {
-        if (FAILED(hr = allocator_reallocate(self->Allocator,
-            self->Notifications, dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY), &self->Notifications))) {
-            goto exit;
+    if (dwPositionNotifies != 0 && pcPositionNotifies == NULL) {
+        return E_INVALIDARG;
+    }
+
+    const DWORD length = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
+    LPDSBPOSITIONNOTIFY items = NULL;
+
+    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &items))) {
+        CopyMemory(items, pcPositionNotifies, length);
+
+        if (SUCCEEDED(hr = dsn_validate_notification_positions(self, dwPositionNotifies, items))) {
+            EnterCriticalSection(&self->Lock);
+
+            if (self->NotificationCount < dwPositionNotifies) {
+                if (FAILED(hr = allocator_reallocate(self->Allocator, self->Notifications, length, &self->Notifications))) {
+                    LeaveCriticalSection(&self->Lock);
+                    goto exit;
+                }
+            }
+
+            self->NotificationCount = dwPositionNotifies;
+            CopyMemory(self->Notifications, items, length);
+
+            LeaveCriticalSection(&self->Lock);
         }
     }
 
-    self->NotificationCount = dwPositionNotifies;
-    CopyMemory(self->Notifications, pcPositionNotifies, dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY));
-
 exit:
 
-    LeaveCriticalSection(&self->Lock);
+    if (items != NULL) {
+        allocator_free(self->Allocator, items);
+    }
 
     return hr;
 }
@@ -179,4 +212,38 @@ HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut) {
     }
 
     return hr;
+}
+
+INT CDECLCALL dsn_position_notify_compare(LPCDSBPOSITIONNOTIFY a, LPCDSBPOSITIONNOTIFY b) {
+    if (a->dwOffset < b->dwOffset) { return -1; }
+
+    if (a->dwOffset > b->dwOffset) { return 1; }
+
+    return 0;
+}
+
+HRESULT DELTACALL dsn_validate_notification_positions(dsn* self, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies) {
+    qsort(pPositionNotifies, dwPositionNotifies,
+        sizeof(DSBPOSITIONNOTIFY), dsn_position_notify_compare);
+
+    for (DWORD i = 0; i < dwPositionNotifies - 1; i++) {
+        if (pPositionNotifies[i].dwOffset == pPositionNotifies[i + 1].dwOffset) {
+            return E_INVALIDARG;
+        }
+    }
+
+    const DWORD maximum = self->Instance->Caps.dwBufferBytes;
+
+    for (DWORD i = 0; i < dwPositionNotifies; i++) {
+        if (!IS_VALID_HANDLE(pPositionNotifies[i].hEventNotify)) {
+            return E_INVALIDARG;
+        }
+
+        if (maximum < pPositionNotifies[i].dwOffset
+            && pPositionNotifies[i].dwOffset != DSBPN_OFFSETSTOP) {
+            return E_INVALIDARG;
+        }
+    }
+
+    return S_OK;
 }

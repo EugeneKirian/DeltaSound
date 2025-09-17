@@ -186,7 +186,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
 
     if (pcDesc->dwSize == sizeof(dsb_desc_max)
         && !(pcDesc->dwFlags & DSBCAPS_CTRL3D)
-        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &GUID_NULL)) {
+        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &DS3DALG_DEFAULT)) {
         return E_INVALIDARG;
     }
 

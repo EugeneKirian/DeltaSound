@@ -491,6 +491,154 @@ static BOOL TestDirectSoundBufferSecondaryNotifyQueryInterfaces(LPDIRECTSOUNDBUF
     return result;
 }
 
+static BOOL TestDirectSoundBufferSecondaryNotifySet(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUNDNOTIFY na = NULL, nb = NULL;
+
+    HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundNotify, &na);
+    HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundNotify, &nb);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (na == NULL || nb == NULL) {
+        return FALSE;
+    }
+
+    BOOL result = TRUE;
+
+    // Invalid
+    {
+        ra = IDirectSoundNotify_SetNotificationPositions(na, 1, NULL);
+        rb = IDirectSoundNotify_SetNotificationPositions(nb, 1, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    // No notifications
+    {
+        ra = IDirectSoundNotify_SetNotificationPositions(na, 0, NULL);
+        rb = IDirectSoundNotify_SetNotificationPositions(nb, 0, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    // One notification
+    {
+        DSBPOSITIONNOTIFY notification;
+        ZeroMemory(&notification, sizeof(DSBPOSITIONNOTIFY));
+
+        // Invalid
+        {
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 1, &notification);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 1, &notification);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+
+        // Invalid
+        {
+            notification.dwOffset = 256;
+            notification.hEventNotify = (HANDLE)1;
+
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 1, &notification);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 1, &notification);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+
+        // Valid
+        {
+            notification.dwOffset = 0;
+            notification.hEventNotify = (HANDLE)1;
+
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 1, &notification);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 1, &notification);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+        
+        // Valid
+        {
+            notification.dwOffset = DSBPN_OFFSETSTOP;
+            notification.hEventNotify = (HANDLE)1;
+
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 1, &notification);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 1, &notification);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    // Some notifications
+    {
+        DSBPOSITIONNOTIFY notifications[4];
+
+        // Invalid
+        {
+            notifications[0].hEventNotify = (HANDLE)1;
+            notifications[1].hEventNotify = (HANDLE)2;
+            notifications[2].hEventNotify = (HANDLE)3;
+            notifications[3].hEventNotify = (HANDLE)0xCCCCCCCC;
+
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 4, notifications);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 4, notifications);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+
+        // Invalid
+        {
+            notifications[0].dwOffset = 1;
+            notifications[1].dwOffset = 2;
+            notifications[2].dwOffset = 3;
+            notifications[3].dwOffset = DSBPN_OFFSETSTOP - 1;
+
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 4, notifications);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 4, notifications);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+
+        // Valid
+        {
+            notifications[3].dwOffset = 4;
+
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 4, notifications);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 4, notifications);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
+    }
+
+    IDirectSoundNotify_Release(na);
+    IDirectSoundNotify_Release(nb);
+
+    return result;
+}
+
 BOOL TestDirectSoundBufferSecondaryNotify(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -554,7 +702,10 @@ BOOL TestDirectSoundBufferSecondaryNotify(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    // TODO set values
+    if (!TestDirectSoundBufferSecondaryNotifySet(dsba, dsbb)) {
+        result = FALSE;
+        goto exit;
+    }
 
 exit:
     IDirectSoundBuffer_Release(dsba);

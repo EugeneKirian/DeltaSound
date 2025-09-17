@@ -102,7 +102,7 @@ HRESULT DELTACALL idssb_create(allocator* pAlloc, REFIID riid, idssb** ppOut) {
     HRESULT hr = S_OK;
     idssb* instance = NULL;
 
-    if (SUCCEEDED(hr = idssl_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = idssb_allocate(pAlloc, &instance))) {
         instance->Self = &idssb_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
