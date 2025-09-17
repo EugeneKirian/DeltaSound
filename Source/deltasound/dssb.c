@@ -98,15 +98,15 @@ HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, idssb** ppOut) {
     return E_NOINTERFACE;
 }
 
-HRESULT DELTACALL dssb_add_ref(dssb* self, idssb* pIdssl) {
-    return intfc_add_item(self->Interfaces, &pIdssl->ID, pIdssl);
+HRESULT DELTACALL dssb_add_ref(dssb* self, idssb* pIDSSB) {
+    return intfc_add_item(self->Interfaces, &pIDSSB->ID, pIDSSB);
 }
 
-HRESULT DELTACALL dssb_remove_ref(dssb* self, idssb* pIdssl) {
-    intfc_remove_item(self->Interfaces, &pIdssl->ID);
+HRESULT DELTACALL dssb_remove_ref(dssb* self, idssb* pIDSSB) {
+    intfc_remove_item(self->Interfaces, &pIDSSB->ID);
 
     // TODO NOT IMPLEMENTED
-    // what to do when the listener is released? Keep the actual settings and conntinue using them?
+    // what to do when the buffer is released? Keep the actual settings and conntinue using them?
 
     return S_OK;
 }

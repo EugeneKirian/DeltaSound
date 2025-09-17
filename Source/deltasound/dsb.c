@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
+#include "dsn.h"
 #include "dssb.h"
 #include "dssl.h"
 #include "ids.h"
@@ -159,6 +160,25 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
                 }
 
                 return dssb_query_interface(self->SpatialBuffer, riid, (idssb**)ppOut);
+            }
+        }
+    }
+    else if (IsEqualIID(&IID_IDirectSoundNotify, riid)) {
+        if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
+            if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                if (self->Notifications == NULL) {
+                    HRESULT hr = S_OK;
+                    dsn* instance = NULL;
+
+                    if (FAILED(hr = dsn_create(self->Allocator, riid, &instance))) {
+                        return hr;
+                    }
+
+                    instance->Instance = self;
+                    self->Notifications = instance;
+                }
+
+                return dsn_query_interface(self->Notifications, riid, (idsn**)ppOut);
             }
         }
     }

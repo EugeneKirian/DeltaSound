@@ -39,6 +39,7 @@ SOFTWARE.
 
 typedef struct ds ds;
 typedef struct ksp ksp;
+typedef struct dsn dsn;
 typedef struct dssl dssl;
 typedef struct dssb dssb;
 
@@ -50,6 +51,7 @@ typedef struct dsb {
     ksp*            PropertySet;
     dssl*           SpatialListener;
     dssb*           SpatialBuffer;
+    dsn*            Notifications;
 
     // TODO Lock
 

@@ -23,19 +23,19 @@ SOFTWARE.
 */
 
 #include "dsb.h"
-#include "dssl.h"
+#include "dsn.h"
 
-HRESULT DELTACALL dssl_allocate(allocator* pAlloc, dssl** ppOut);
+HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut);
 
-HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
+HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    dssl* instance = NULL;
+    dsn* instance = NULL;
 
-    if (SUCCEEDED(hr = dssl_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = dsn_allocate(pAlloc, &instance))) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
@@ -44,19 +44,19 @@ HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
             return S_OK;
         }
 
-        dssl_release(instance);
+        dsn_release(instance);
     }
 
     return hr;
 }
 
-VOID DELTACALL dssl_release(dssl* self) {
+VOID DELTACALL dsn_release(dsn* self) {
     if (self == NULL) { return; }
 
     for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
-        idssl* instance = NULL;
+        idsn* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
-            idssl_release(instance);
+            idsn_release(instance);
         }
     }
 
@@ -65,29 +65,29 @@ VOID DELTACALL dssl_release(dssl* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, idssl** ppOut) {
+HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, idsn** ppOut) {
     // TODO synchronization
 
-    idssl* instance = NULL;
+    idsn* instance = NULL;
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
-        idssl_add_ref(instance);
+        idsn_add_ref(instance);
         *ppOut = instance;
         return S_OK;
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
-        || IsEqualIID(&IID_IDirectSound3DListener, riid)) {
+        || IsEqualIID(&IID_IDirectSoundNotify, riid)) {
         HRESULT hr = S_OK;
 
-        if (SUCCEEDED(hr = idssl_create(self->Allocator, riid, &instance))) {
-            if (SUCCEEDED(hr = dssl_add_ref(self, instance))) {
+        if (SUCCEEDED(hr = idsn_create(self->Allocator, riid, &instance))) {
+            if (SUCCEEDED(hr = dsn_add_ref(self, instance))) {
                 instance->Instance = self;
                 *ppOut = instance;
                 return S_OK;
             }
 
-            idssl_release(instance);
+            idsn_release(instance);
         }
 
         return hr;
@@ -98,26 +98,26 @@ HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, idssl** ppOut) {
     return E_NOINTERFACE;
 }
 
-HRESULT DELTACALL dssl_add_ref(dssl* self, idssl* pIDSSL) {
-    return intfc_add_item(self->Interfaces, &pIDSSL->ID, pIDSSL);
+HRESULT DELTACALL dsn_add_ref(dsn* self, idsn* pIDSN) {
+    return intfc_add_item(self->Interfaces, &pIDSN->ID, pIDSN);
 }
 
-HRESULT DELTACALL dssl_remove_ref(dssl* self, idssl* pIDSSL) {
-    intfc_remove_item(self->Interfaces, &pIDSSL->ID);
+HRESULT DELTACALL dsn_remove_ref(dsn* self, idsn* pIDSN) {
+    intfc_remove_item(self->Interfaces, &pIDSN->ID);
 
     // TODO NOT IMPLEMENTED
-    // what to do when the listener is released? Keep the actual settings and conntinue using them?
+    // what to do when the notifications are released? Remove the notifications?
 
     return S_OK;
 }
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL dssl_allocate(allocator* pAlloc, dssl** ppOut) {
+HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut) {
     HRESULT hr = S_OK;
-    dssl* instance = NULL;
+    dsn* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssl), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsn), &instance))) {
         instance->Allocator = pAlloc;
         *ppOut = instance;
         return S_OK;
