@@ -63,6 +63,7 @@ typedef struct dsb {
     FLOAT           Volume;
     FLOAT           Pan;
     DWORD           Frequency;
+    DWORD           Play;
     DWORD           Status;
 } dsb;
 

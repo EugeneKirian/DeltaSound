@@ -242,21 +242,7 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
         return DSERR_BUFFERLOST;
     }
 
-    HRESULT hr = S_OK;
-
-    if (pdwCurrentPlayCursor != NULL) {
-        if (FAILED(hr = dsbcb_get_read_position(self->Buffer, pdwCurrentPlayCursor))) {
-            return hr;
-        }
-    }
-
-    if (pdwCurrentWriteCursor != NULL) {
-        if (FAILED(hr = dsbcb_get_write_position(self->Buffer, pdwCurrentWriteCursor))) {
-            return hr;
-        }
-    }
-
-    return hr;
+    return dsbcb_get_current_position(self->Buffer, pdwCurrentPlayCursor, pdwCurrentWriteCursor);
 }
 
 HRESULT DELTACALL dsb_get_format(dsb* self,
@@ -538,27 +524,26 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         }
     }
 
-    self->Priority = dwPriority;
-
-    self->Status = self->Status | DSBSTATUS_PLAYING;
-
-    if (dwFlags & DSBPLAY_LOOPING) {
-        self->Status = self->Status | DSBSTATUS_LOOPING;
-    }
-
-    if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
-        self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
-    }
-
-    // TODO store play flags for future use
-
     HRESULT hr = S_OK;
-    DWORD position = 0;
+    DWORD read = 0, write = 0;
 
-    if (SUCCEEDED(hr = dsbcb_get_write_position(self->Buffer, &position))) {
-        hr = dsbcb_set_write_position(self->Buffer,
-            position + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign,
-            DSBCB_SETPOSITION_WRAP);
+    if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
+        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, read,
+            write + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign, DSBCB_SETPOSITION_WRAP))) {
+
+            self->Play = dwFlags;
+            self->Priority = dwPriority;
+
+            self->Status = self->Status | DSBSTATUS_PLAYING;
+
+            if (dwFlags & DSBPLAY_LOOPING) {
+                self->Status = self->Status | DSBSTATUS_LOOPING;
+            }
+
+            if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
+                self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
+            }
+        }
     }
 
     return hr;
@@ -580,17 +565,7 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return E_INVALIDARG;
     }
 
-    HRESULT hr = S_OK;
-
-    if (FAILED(hr = dsbcb_set_read_position(self->Buffer, dwNewPosition, DSBCB_SETPOSITION_NONE))) {
-        return hr;
-    }
-
-    if (FAILED(hr = dsbcb_set_write_position(self->Buffer, dwNewPosition , DSBCB_SETPOSITION_NONE))) {
-        return hr;
-    }
-
-    return S_OK;
+    return dsbcb_set_current_position(self->Buffer, dwNewPosition, dwNewPosition, DSBCB_SETPOSITION_NONE);
 }
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
@@ -709,8 +684,7 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            dsbcb_set_read_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
-            dsbcb_set_write_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
+            dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
         }
     }
 

@@ -74,65 +74,41 @@ VOID DELTACALL dsbcb_release(dsbcb* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsbcb_get_read_position(dsbcb* self, LPDWORD pdwReadBytes) {
+HRESULT DELTACALL dsbcb_get_current_position(dsbcb* self, LPDWORD pdwReadBytes, LPDWORD pdwWriteBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pdwReadBytes == NULL) {
+    if (pdwReadBytes == NULL && pdwWriteBytes == NULL) {
         return E_INVALIDARG;
     }
 
-    *pdwReadBytes = self->ReadPosition;
+    if (pdwReadBytes != NULL) {
+        *pdwReadBytes = self->ReadPosition;
+    }
+
+    if (pdwWriteBytes != NULL) {
+        *pdwWriteBytes = self->WritePosition;
+    }
 
     return S_OK;
 }
 
-HRESULT DELTACALL dsbcb_get_write_position(dsbcb* self, LPDWORD pdwWriteBytes) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (pdwWriteBytes == NULL) {
-        return E_INVALIDARG;
-    }
-
-    *pdwWriteBytes = self->WritePosition;
-
-    return S_OK;
-}
-
-HRESULT DELTACALL dsbcb_set_read_position(dsbcb* self, DWORD dwReadBytes, DWORD dwFlags) {
+HRESULT DELTACALL dsbcb_set_current_position(dsbcb* self, DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
 
     if (dwFlags & DSBCB_SETPOSITION_WRAP) {
         dwReadBytes = dwReadBytes % self->Size;
+        dwWriteBytes = dwWriteBytes % self->Size;
     }
 
-    if (self->Size < dwReadBytes) {
+    if (self->Size < dwReadBytes || self->Size < dwWriteBytes) {
         return E_INVALIDARG;
     }
 
     self->ReadPosition = dwReadBytes;
-
-    return S_OK;
-}
-
-HRESULT DELTACALL dsbcb_set_write_position(dsbcb* self, DWORD dwWriteBytes, DWORD dwFlags) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (dwFlags & DSBCB_SETPOSITION_WRAP) {
-        dwWriteBytes = dwWriteBytes % self->Size;
-    }
-
-    if (self->Size < dwWriteBytes) {
-        return E_INVALIDARG;
-    }
-
     self->WritePosition = dwWriteBytes;
 
     return S_OK;

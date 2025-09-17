@@ -34,11 +34,8 @@ typedef struct dsbcb dsbcb;
 HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut);
 VOID DELTACALL dsbcb_release(dsbcb* pBuffer);
 
-HRESULT DELTACALL dsbcb_get_read_position(dsbcb* pBuffer, LPDWORD pdwReadBytes);
-HRESULT DELTACALL dsbcb_get_write_position(dsbcb* pBuffer, LPDWORD pdwWriteBytes);
-
-HRESULT DELTACALL dsbcb_set_read_position(dsbcb* pBuffer, DWORD dwReadBytes, DWORD dwFlags);
-HRESULT DELTACALL dsbcb_set_write_position(dsbcb* pBuffer, DWORD dwWriteBytes, DWORD dwFlags);
+HRESULT DELTACALL dsbcb_get_current_position(dsbcb* pBuffer, LPDWORD pdwReadBytes, LPDWORD pdwWriteBytes);
+HRESULT DELTACALL dsbcb_set_current_position(dsbcb* pBuffer, DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags);
 
 HRESULT DELTACALL dsbcb_get_size(dsbcb* pBuffer, LPDWORD pdwBytes);
 HRESULT DELTACALL dsbcb_get_lockable_size(dsbcb* pBuffer, LPDWORD pdwBytes);

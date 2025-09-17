@@ -304,8 +304,7 @@ HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
             }
         }
         else {
-            dsbcb_set_read_position(main->Buffer, 0, DSBCB_SETPOSITION_NONE);
-            dsbcb_set_write_position(main->Buffer, 0, DSBCB_SETPOSITION_NONE);
+            dsbcb_set_current_position(main->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
             //main->CurrentPlayCursor = 0;
             //main->CurrentWriteCursor = 0;
 
