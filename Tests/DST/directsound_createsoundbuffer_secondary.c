@@ -626,6 +626,62 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
     return TRUE;
 }
 
+static BOOL TestDirectSoundCreateBufferSecondaryValidFormat(LPDIRECTSOUND a, LPDIRECTSOUND b) {
+    LPDIRECTSOUNDBUFFER dsba = NULL;
+    LPDIRECTSOUNDBUFFER dsbb = NULL;
+
+    {
+        WAVEFORMATEXTENSIBLE format;
+        ZeroMemory(&format, sizeof(WAVEFORMATEXTENSIBLE));
+
+        format.Format.wFormatTag = WAVE_FORMAT_PCM;
+        format.Format.nChannels = 2;
+        format.Format.nSamplesPerSec = 22050;
+        format.Format.nAvgBytesPerSec = 44100;
+        format.Format.nBlockAlign = 2;
+        format.Format.wBitsPerSample = 8;
+        format.Format.cbSize = 22;
+
+        DSBUFFERDESC desca;
+        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+
+        desca.dwSize = sizeof(DSBUFFERDESC);
+        desca.dwBufferBytes = 65536;
+        desca.lpwfxFormat = (LPWAVEFORMATEX)&format;
+
+        DSBUFFERDESC descb;
+        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
+
+        descb.dwSize = sizeof(DSBUFFERDESC);
+        descb.dwBufferBytes = 65536;
+        descb.lpwfxFormat = (LPWAVEFORMATEX)&format;
+
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        if (ra == S_OK) {
+            DWORD sa = 0, sb = 0;
+            WAVEFORMATEXTENSIBLE fa;
+            ZeroMemory(&fa, sizeof(WAVEFORMATEXTENSIBLE));
+
+            WAVEFORMATEXTENSIBLE fb;
+            ZeroMemory(&fb, sizeof(WAVEFORMATEXTENSIBLE));
+
+            ra = IDirectSoundBuffer_GetFormat(dsba, (LPWAVEFORMATEX)&fa, sizeof(WAVEFORMATEXTENSIBLE), &sa);
+            rb = IDirectSoundBuffer_GetFormat(dsba, (LPWAVEFORMATEX)&fb, sizeof(WAVEFORMATEXTENSIBLE), &sb);
+
+            IDirectSoundBuffer_Release(dsba);
+            IDirectSoundBuffer_Release(dsbb);
+        }
+    }
+
+    return TRUE;
+}
+
 #define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   15
 
 static const DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
@@ -847,6 +903,11 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
     }
 
     if (!TestDirectSoundCreateBufferSecondaryInvalidFormat(dsa, dsb)) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (!TestDirectSoundCreateBufferSecondaryValidFormat(dsa, dsb)) {
         result = FALSE;
         goto exit;
     }

@@ -27,8 +27,8 @@ SOFTWARE.
 #include "dsdevice.h"
 #include "uuid.h"
 
-#define REFTIMES_PER_SEC    10000000
-#define TARGET_BUFFER_PADDING_IN_SECONDS  (1.0f / 60.0f) /* TODO NAME */
+#define REFTIMES_PER_SEC                    10000000
+#define TARGET_BUFFER_PADDING_IN_SECONDS    (1.0f / 60.0f)
 
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 #define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
@@ -170,7 +170,6 @@ HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
 
     HRESULT hr = S_OK;
     IMMDeviceEnumerator* enumerator = NULL;
-    REFERENCE_TIME period = 0;// TODO is this needed?
     LPWAVEFORMATEX wfx = NULL;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_IMMDeviceEnumerator,
