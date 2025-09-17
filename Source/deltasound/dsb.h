@@ -28,6 +28,9 @@ SOFTWARE.
 #include "idsb.h"
 #include "intfc.h"
 
+#define DSBPLAY_NONE    0
+#define DSBSTATUS_NONE  0
+
 #define DSB_LEFT_PAN    (-1.0f)
 #define DSB_CENTER_PAN  (0.0f)
 #define DSB_RIGHT_PAN   (1.0f)

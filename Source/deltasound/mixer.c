@@ -178,6 +178,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
     else {
         // TODO nothing to play for now
         // TODO support secondary buffers
+        // TODO if secondary buffer is not looping - stop it when it reaches the end 
         // TODO handle position notifications.
         // TODO handle position notifications when buffer stopped in the middle of playback
     }
