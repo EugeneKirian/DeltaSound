@@ -28,13 +28,13 @@ SOFTWARE.
 
 #define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
 
-HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut);
-
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
     HRESULT hr = S_OK;
     deltasound* instance = NULL;
 
-    if (SUCCEEDED(hr = deltasound_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
+        instance->Allocator = pAlloc;
+
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Items))) {
             InitializeCriticalSection(&instance->Lock);
 
@@ -43,7 +43,7 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
             return S_OK;
         }
 
-        deltasound_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -141,23 +141,4 @@ HRESULT DELTACALL deltasound_can_unload(deltasound* self) {
     }
 
     return arr_get_count(self->Items) == 0 ? S_OK : S_FALSE;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    deltasound* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

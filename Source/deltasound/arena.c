@@ -56,16 +56,16 @@ HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut) {
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(arena), &instance))) {
         instance->Allocator = pAlloc;
-        InitializeCriticalSection(&instance->Lock);
 
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Blocks))) {
+            InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
 
             return S_OK;
         }
 
-        arena_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;

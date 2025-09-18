@@ -42,7 +42,6 @@ struct intfc {
     intf*         Items;
 };
 
-HRESULT DELTACALL intfc_allocate(allocator* pAlloc, intfc** ppOut);
 HRESULT DELTACALL intfc_resize(intfc* pIntfc);
 
 HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut) {
@@ -53,7 +52,9 @@ HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut) {
     HRESULT hr = S_OK;
     intfc* instance = NULL;
 
-    if (SUCCEEDED(hr = intfc_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(intfc), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Count = 0;
         instance->Capacity = DEFAULT_CAPACITY;
 
@@ -196,23 +197,6 @@ DWORD DELTACALL intfc_get_count(intfc* self) {
 }
 
 /* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL intfc_allocate(allocator* pAlloc, intfc** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    intfc* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(intfc), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
 
 HRESULT DELTACALL intfc_resize(intfc* self) {
     if (self == NULL) {

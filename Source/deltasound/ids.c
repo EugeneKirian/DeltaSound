@@ -65,19 +65,20 @@ const static ids_vft ids_self = {
     ids_initialize
 };
 
-HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut);
 HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc);
 HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc);
 
 HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
-    if (pAlloc == NULL || riid  == NULL || ppOut == NULL) {
+    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
     ids* instance = NULL;
 
-    if (SUCCEEDED(hr = ids_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Self = &ids_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
@@ -123,8 +124,10 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
         return 0;
     }
 
+    LONG result = self->RefCount;
+
     if (InterlockedDecrement(&self->RefCount) <= 0) {
-        self->RefCount = 0;
+        result = self->RefCount = 0;
 
         if (self->Instance != NULL) {
             ds_remove_ref(self->Instance, self);
@@ -133,7 +136,7 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
         ids_release(self);
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self,
@@ -304,23 +307,6 @@ HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice) {
 }
 
 /* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    ids* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
 
 HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc) {
     if (pcDesc == NULL) {

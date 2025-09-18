@@ -25,11 +25,7 @@ SOFTWARE.
 #include "dsb.h"
 #include "dsn.h"
 
-#define IS_VALID_HANDLE(h)  (((h) != NULL) && ((h) != INVALID_HANDLE_VALUE))
-
-HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut);
-
-HRESULT DELTACALL dsn_validate_notification_positions(dsn* pDSN, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies);
+HRESULT DELTACALL dsn_validate_notifications(dsn* pDSN, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies);
 
 HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -39,18 +35,20 @@ HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
     HRESULT hr = S_OK;
     dsn* instance = NULL;
 
-    if (SUCCEEDED(hr = dsn_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsn), &instance))) {
+        instance->Allocator = pAlloc;
+
         CopyMemory(&instance->ID, riid, sizeof(GUID));
-        InitializeCriticalSection(&instance->Lock);
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
 
             return S_OK;
         }
 
-        dsn_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -173,7 +171,7 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
     if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &items))) {
         CopyMemory(items, pcPositionNotifies, length);
 
-        if (SUCCEEDED(hr = dsn_validate_notification_positions(self, dwPositionNotifies, items))) {
+        if (SUCCEEDED(hr = dsn_validate_notifications(self, dwPositionNotifies, items))) {
             EnterCriticalSection(&self->Lock);
 
             self->NotificationCount = dwPositionNotifies;
@@ -187,8 +185,6 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
         }
     }
 
-exit:
-
     if (items != NULL) {
         allocator_free(self->Allocator, items);
     }
@@ -198,19 +194,6 @@ exit:
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut) {
-    HRESULT hr = S_OK;
-    dsn* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsn), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
-
 INT CDECLCALL dsn_position_notify_compare(LPCDSBPOSITIONNOTIFY a, LPCDSBPOSITIONNOTIFY b) {
     if (a->dwOffset < b->dwOffset) { return -1; }
 
@@ -219,7 +202,7 @@ INT CDECLCALL dsn_position_notify_compare(LPCDSBPOSITIONNOTIFY a, LPCDSBPOSITION
     return 0;
 }
 
-HRESULT DELTACALL dsn_validate_notification_positions(dsn* self, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies) {
+HRESULT DELTACALL dsn_validate_notifications(dsn* self, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies) {
     qsort(pPositionNotifies, dwPositionNotifies,
         sizeof(DSBPOSITIONNOTIFY), dsn_position_notify_compare);
 

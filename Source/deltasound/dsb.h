@@ -59,15 +59,19 @@ typedef struct dsb {
     // TODO Lock
 
     DSBCAPS         Caps;
-    DWORD           Priority;
     dsbcb*          Buffer;
 
     LPWAVEFORMATEX  Format;
-    FLOAT           Volume;
-    FLOAT           Pan;
+
     DWORD           Frequency;
+    FLOAT           Pan;
+    FLOAT           Volume;
+    DWORD           Priority;
+
     DWORD           Play;
     DWORD           Status;
+
+    GUID            SpatialAlgorithm;
 } dsb;
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut);

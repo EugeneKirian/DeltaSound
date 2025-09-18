@@ -29,8 +29,6 @@ SOFTWARE.
 #include "dsdevice.h"
 #include "ids.h"
 
-HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
-
 HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -39,7 +37,9 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     HRESULT hr = S_OK;
     ds* instance = NULL;
 
-    if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
+        instance->Allocator = pAlloc;
+
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
@@ -55,10 +55,14 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 
                     return S_OK;
                 }
+
+                arr_release(instance->Buffers);
             }
+
+            intfc_release(instance->Interfaces);
         }
 
-        ds_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -85,9 +89,7 @@ VOID DELTACALL ds_release(ds* self) {
 
     arr_release(self->Buffers);
 
-    if (self->Main != NULL) {
-        dsb_release(self->Main);
-    }
+    dsb_release(self->Main);
 
     if (self->Device != NULL) {
         dsdevice_release(self->Device);
@@ -347,25 +349,6 @@ HRESULT DELTACALL ds_get_status(ds* self, LPDWORD pdwStatus) {
                 }
             }
         }
-    }
-
-    return hr;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    ds* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
     }
 
     return hr;

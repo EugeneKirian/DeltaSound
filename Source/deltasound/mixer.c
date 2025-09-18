@@ -33,8 +33,6 @@ struct mixer {
     arena*      Arena;
 };
 
-HRESULT DELTACALL mixer_allocate(allocator* pAlloc, mixer** ppOut);
-
 HRESULT DELTACALL mixer_convert_to_float(mixer* pMix,
     LPWAVEFORMATEX pwfxFormat, DWORD dwFrequency,
     LPVOID pInBuffer, DWORD dwInBufferBytes, FLOAT** ppOutBuffer, LPDWORD pOutBufferBytes);
@@ -54,7 +52,9 @@ HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut) {
     HRESULT hr = S_OK;
     mixer* instance = NULL;
 
-    if (SUCCEEDED(hr = mixer_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(mixer), &instance))) {
+        instance->Allocator = pAlloc;
+
         if (SUCCEEDED(hr = arena_create(pAlloc, &instance->Arena))) {
 
             *ppOut = instance;
@@ -62,7 +62,7 @@ HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut) {
             return S_OK;
         }
 
-        mixer_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -217,23 +217,6 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
 }
 
 /* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL mixer_allocate(allocator* pAlloc, mixer** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    mixer* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(mixer), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
 
 HRESULT DELTACALL mixer_convert_to_float(mixer* self,
     LPWAVEFORMATEX pwfxFormat, DWORD dwFrequency,

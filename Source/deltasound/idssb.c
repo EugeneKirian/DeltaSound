@@ -92,7 +92,6 @@ const static idssb_vft idssb_self = {
     idssb_set_velocity
 };
 
-HRESULT DELTACALL idssb_allocate(allocator* pAlloc, idssb** ppOut);
 
 HRESULT DELTACALL idssb_create(allocator* pAlloc, REFIID riid, idssb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -102,7 +101,9 @@ HRESULT DELTACALL idssb_create(allocator* pAlloc, REFIID riid, idssb** ppOut) {
     HRESULT hr = S_OK;
     idssb* instance = NULL;
 
-    if (SUCCEEDED(hr = idssb_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idssb), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Self = &idssb_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
@@ -148,8 +149,10 @@ ULONG DELTACALL idssb_remove_ref(idssb* self) {
         return 0;
     }
 
+    LONG result = self->RefCount;
+
     if (InterlockedDecrement(&self->RefCount) <= 0) {
-        self->RefCount = 0;
+        result = self->RefCount = 0;
 
         if (self->Instance != NULL) {
             dssb_remove_ref(self->Instance, self);
@@ -158,7 +161,7 @@ ULONG DELTACALL idssb_remove_ref(idssb* self) {
         idssb_release(self);
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL idssb_get_all_parameters(idssb* self, LPDS3DBUFFER pDs3dBuffer) {
@@ -249,23 +252,4 @@ HRESULT DELTACALL idssb_set_position(idssb* self, D3DVALUE x, D3DVALUE y, D3DVAL
 HRESULT DELTACALL idssb_set_velocity(idssb* self, D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL idssb_allocate(allocator* pAlloc, idssb** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    idssb* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idssb), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

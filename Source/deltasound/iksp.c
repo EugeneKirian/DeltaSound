@@ -52,8 +52,6 @@ const static iksp_vft iksp_self = {
     iksp_query_support
 };
 
-HRESULT DELTACALL iksp_allocate(allocator* pAlloc, iksp** ppOut);
-
 HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -62,7 +60,9 @@ HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
     HRESULT hr = S_OK;
     iksp* instance = NULL;
 
-    if (SUCCEEDED(hr = iksp_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(iksp), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Self = &iksp_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
@@ -108,8 +108,10 @@ ULONG DELTACALL iksp_remove_ref(iksp* self) {
         return 0;
     }
 
+    LONG result = self->RefCount;
+
     if (InterlockedDecrement(&self->RefCount) <= 0) {
-        self->RefCount = 0;
+        result = self->RefCount = 0;
 
         if (self->Instance != NULL) {
             ksp_remove_ref(self->Instance, self);
@@ -118,7 +120,7 @@ ULONG DELTACALL iksp_remove_ref(iksp* self) {
         iksp_release(self);
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL iksp_get(iksp* self,
@@ -139,23 +141,4 @@ HRESULT DELTACALL iksp_set(iksp* self,
 HRESULT DELTACALL iksp_query_support(iksp* self, REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL iksp_allocate(allocator* pAlloc, iksp** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    iksp* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(iksp), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

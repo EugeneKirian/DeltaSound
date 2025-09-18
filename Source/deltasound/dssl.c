@@ -25,8 +25,6 @@ SOFTWARE.
 #include "dsb.h"
 #include "dssl.h"
 
-HRESULT DELTACALL dssl_allocate(allocator* pAlloc, dssl** ppOut);
-
 HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -35,7 +33,9 @@ HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
     HRESULT hr = S_OK;
     dssl* instance = NULL;
 
-    if (SUCCEEDED(hr = dssl_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssl), &instance))) {
+        instance->Allocator = pAlloc;
+
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
@@ -45,7 +45,7 @@ HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
             return S_OK;
         }
 
-        dssl_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -114,23 +114,4 @@ HRESULT DELTACALL dssl_remove_ref(dssl* self, idssl* pIDSSL) {
     // what to do when the listener is released? Keep the actual settings and conntinue using them?
 
     return S_OK;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL dssl_allocate(allocator* pAlloc, dssl** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    dssl* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssl), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

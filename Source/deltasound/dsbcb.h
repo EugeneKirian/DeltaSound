@@ -34,6 +34,8 @@ typedef struct dsbcb dsbcb;
 HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut);
 VOID DELTACALL dsbcb_release(dsbcb* pBuffer);
 
+HRESULT DELTACALL dsbcb_duplicate(dsbcb* pBuffer, dsbcb** ppOut);
+
 HRESULT DELTACALL dsbcb_get_current_position(dsbcb* pBuffer, LPDWORD pdwReadBytes, LPDWORD pdwWriteBytes);
 HRESULT DELTACALL dsbcb_set_current_position(dsbcb* pBuffer, DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags);
 
