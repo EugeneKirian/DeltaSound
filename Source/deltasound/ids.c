@@ -330,6 +330,14 @@ HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pc
         return E_INVALIDARG;
     }
 
+    // guid3DAlgorithm
+
+    if (pcDesc->dwSize == sizeof(dsb_desc_max)
+        && (pcDesc->dwFlags & DSBCAPS_CTRL3D)
+        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &DS3DALG_DEFAULT)) {
+        return E_INVALIDARG;
+    }
+
     return S_OK;
 }
 

@@ -144,14 +144,7 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
         return DSERR_CONTROLUNAVAIL;
     }
 
-    HRESULT hr = S_OK;
-    DWORD status = DSBSTATUS_NONE;
-
-    if (FAILED(hr = dsb_get_status(self->Instance, &status))) {
-        return hr;
-    }
-
-    if (status & DSBSTATUS_PLAYING) {
+    if (self->Instance->Status & DSBSTATUS_PLAYING) {
         return DSERR_INVALIDCALL;
     }
 
@@ -164,6 +157,7 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
         return E_INVALIDARG;
     }
 
+    HRESULT hr = S_OK;
     const DWORD length = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
     LPDSBPOSITIONNOTIFY items = NULL;
 

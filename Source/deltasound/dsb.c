@@ -275,12 +275,6 @@ HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLVOLUME)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -295,12 +289,6 @@ HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLPAN)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -313,12 +301,6 @@ HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan) {
 HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
-    }
-
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
     }
 
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
@@ -336,20 +318,13 @@ HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus) {
         return DSERR_UNINITIALIZED;
     }
 
-    DWORD status = self->Status;
-
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
-    }
-    else {
+    if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            status |= DSBSTATUS_BUFFERLOST;
+            self->Status = DSBSTATUS_BUFFERLOST;
         }
     }
 
-    *pdwStatus = status;
+    *pdwStatus = self->Status;
 
     return S_OK;
 }
@@ -590,7 +565,8 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         return DSERR_INVALIDCALL;
     }
 
-    if (self->Instance->Level == DSSCL_NORMAL) {
+    if (self->Instance->Level == DSSCL_NONE
+        || self->Instance->Level == DSSCL_NORMAL) {
         return DSERR_PRIOLEVELNEEDED;
     }
 
@@ -629,10 +605,6 @@ HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLVOLUME)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -647,10 +619,6 @@ HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLPAN)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -663,10 +631,6 @@ HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan) {
 HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
-    }
-
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
     }
 
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
