@@ -283,6 +283,18 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
     return S_OK;
 }
 
+HRESULT DELTACALL ds_compact(ds* self) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Level < DSSCL_PRIORITY) {
+        return DSERR_PRIOLEVELNEEDED;
+    }
+
+    return S_OK;
+}
+
 HRESULT DELTACALL ds_get_status(ds* self, LPDWORD pdwStatus) {
     if (self->Device == NULL) {
         return DSERR_UNINITIALIZED;
