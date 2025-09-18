@@ -26,6 +26,7 @@ SOFTWARE.
 #include "dsb.h"
 #include "dsdevice.h"
 #include "uuid.h"
+#include "wave_format.h"
 
 #define REFTIMES_PER_SEC                    10000000
 #define TARGET_BUFFER_PADDING_IN_SECONDS    (1.0f / 60.0f)
@@ -260,30 +261,29 @@ HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppForm
 }
 
 HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
-    // TODO input validation
-    if (self->Instance == NULL) { return E_FAIL; }
-    if (self->Instance->Main == NULL) { return E_FAIL; }
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (self->Instance == NULL) {
+        return E_FAIL;
+    }
 
     HRESULT hr = S_OK;
+    DWORD status = DS_STATUS_NONE;
 
-    dsb* main = self->Instance->Main;
-
-    const UINT32 target =
-        (UINT32)(self->AudioClientBufferSize * TARGET_BUFFER_PADDING_IN_SECONDS);
-
-    if (main->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) { // TODO this logic is inside mixer already
-        if (main->Status & DSBSTATUS_PLAYING) {
+    if (SUCCEEDED(hr = ds_get_status(self->Instance, &status))) {
+        if (status & DS_STATUS_PLAYING) {
             UINT32 padding = 0;
 
             if (SUCCEEDED(hr = IAudioClient_GetCurrentPadding(self->AudioClient, &padding))) {
-                const UINT32 frames = target - padding;
-                // TODO needed calculation for non-looping buffers
-                // min(target - padding, wav->dwNumFrames - audio->nCurrentFrame);
+                const UINT32 frames =
+                    (UINT32)(self->AudioClientBufferSize * TARGET_BUFFER_PADDING_IN_SECONDS) - padding;
 
                 if (frames != 0) {
                     BYTE* lock = NULL;
 
-                    if (SUCCEEDED(IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
+                    if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
 
                         LPVOID buffer = NULL;
                         DWORD buffer_size = 0;
@@ -304,22 +304,7 @@ HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
                 }
             }
         }
-        else {
-            dsbcb_set_current_position(main->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
-            //main->CurrentPlayCursor = 0;
-            //main->CurrentWriteCursor = 0;
-
-            // TODO optimize, call this only when buffer stopps.
-            //BYTE* lock = NULL;
-            //if (SUCCEEDED(IAudioRenderClient_GetBuffer(self->AudioRenderer, 0, &lock))) {
-            //    IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, 0, AUDCLNT_BUFFERFLAGS_SILENT);
-            //}
-
-            return DSERR_BUFFERLOST; // TODO Better error!
-        }
     }
-
-    // TODO secondary buffers, mixing, etc...
 
     return hr;
 }

@@ -22,37 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_secondary_play.h"
+#include "directsoundbuffer_secondary_play_stereo.h"
 #include "synth.h"
 #include "wnd.h"
 
-#define WINDOW_NAME "DirectSound Secondary Buffer Play"
-
-#define BUFFER_FLAG_COUNT       17
-
-const static DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
-    0,
-    DSBCAPS_STATIC,
-    DSBCAPS_LOCHARDWARE,
-    DSBCAPS_LOCSOFTWARE,
-    DSBCAPS_CTRL3D,
-    DSBCAPS_CTRLFREQUENCY,
-    DSBCAPS_CTRLPAN,
-    DSBCAPS_CTRLVOLUME,
-    DSBCAPS_CTRL3D | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME,
-    DSBCAPS_CTRL3D | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPOSITIONNOTIFY,
-    DSBCAPS_CTRLPOSITIONNOTIFY,
-    DSBCAPS_STICKYFOCUS,
-    DSBCAPS_GLOBALFOCUS,
-    DSBCAPS_STICKYFOCUS | DSBCAPS_GLOBALFOCUS,
-    DSBCAPS_GETCURRENTPOSITION2,
-    DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE,
-    DSBCAPS_TRUEPLAYPOSITION
-};
+#define WINDOW_NAME "DirectSound Secondary Buffer Play Stereo"
 
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
-    LPDIRECTSOUNDBUFFER b, HWND wb, LPDIRECTSOUNDBUFFER ma, LPDIRECTSOUNDBUFFER mb,
-    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
+    LPDIRECTSOUNDBUFFER b, HWND wb, DWORD seconds, LPVOID wave, DWORD wave_length) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
@@ -141,7 +118,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     ShowWindow(wa, SW_SHOW);
     UpdateWindow(wa);
 
-    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, priority, flags))) {
+    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, 0, 0))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(a);
     }
@@ -153,7 +130,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     ShowWindow(wb, SW_SHOW);
     UpdateWindow(wb);
 
-    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, priority, flags))) {
+    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, 0, 0))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(b);
     }
@@ -180,8 +157,8 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferSecondaryPlaySingle(
-    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
+static BOOL TestDirectSoundBufferSecondaryPlaySingleStereo(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
@@ -193,16 +170,14 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingle(
 
     LPDIRECTSOUNDBUFFER dsba = NULL;
     LPDIRECTSOUNDBUFFER dsbb = NULL;
-    LPDIRECTSOUNDBUFFER dsbma = NULL;
-    LPDIRECTSOUNDBUFFER dsbmb = NULL;
 
     WAVEFORMATEX format;
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
 
     format.wFormatTag = WAVE_FORMAT_PCM;
     format.nChannels = 2;
-    format.nSamplesPerSec = 22050;
-    format.nAvgBytesPerSec = 44100;
+    format.nSamplesPerSec = 48000;
+    format.nAvgBytesPerSec = 96000;
     format.nBlockAlign = 2;
     format.wBitsPerSample = 8;
 
@@ -210,16 +185,14 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingle(
     ZeroMemory(&desca, sizeof(DSBUFFERDESC));
 
     desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = flags;
-    desca.dwBufferBytes = 132300;
+    desca.dwBufferBytes = 144000;
     desca.lpwfxFormat = &format;
 
     DSBUFFERDESC descb;
     ZeroMemory(&descb, sizeof(DSBUFFERDESC));
 
     descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = flags;
-    descb.dwBufferBytes = 132300;
+    descb.dwBufferBytes = 144000;
     descb.lpwfxFormat = &format;
 
     DSBUFFERDESC descm;
@@ -257,16 +230,8 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingle(
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, level);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, level);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    ra = IDirectSound_CreateSoundBuffer(dsa, &descm, &dsbma, NULL);
-    rb = IDirectSound_CreateSoundBuffer(dsa, &descm, &dsbmb, NULL);
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_NORMAL);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_NORMAL);
 
     if (ra != rb) {
         result = FALSE;
@@ -275,10 +240,6 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingle(
 
     ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
-
-    if (ra == E_NOTIMPL && (flags & DSBCAPS_LOCHARDWARE)) {
-        goto exit;
-    }
 
     if (ra != rb) {
         result = FALSE;
@@ -322,17 +283,14 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingle(
 
     // Synthesise Wave
 
-    if (!Synthesise(&fa, 293.66f, 3.0f /* seconds */, &wave, &wave_length)) {
+    if (!Synthesise(&fa, 550.0f, 3.0f /* seconds */, &wave, &wave_length)) {
         result = FALSE;
         goto exit;
     }
 
-    for (int k = 0; k < BUFFER_PLAY_FLAGS_COUNT; k++) {
-        if (!TestDirectSoundBufferSingleWave(dsba, wa, dsbb, wb,
-            dsbma, dsbmb, 4, wave, wave_length, 0, BufferPlayFlags[k])) {
-            result = FALSE;
-            goto exit;
-        }
+    if (!TestDirectSoundBufferSingleWave(dsba, wa, dsbb, wb, 4, wave, wave_length)) {
+        result = FALSE;
+        goto exit;
     }
 
 exit:
@@ -349,14 +307,6 @@ exit:
         IDirectSoundBuffer_Release(dsbb);
     }
 
-    if (dsbma != NULL) {
-        IDirectSoundBuffer_Release(dsbma);
-    }
-
-    if (dsbmb != NULL) {
-        IDirectSoundBuffer_Release(dsbmb);
-    }
-
     if (dsa != NULL) {
         IDirectSound_Release(dsa);
     }
@@ -368,7 +318,7 @@ exit:
     return result;
 }
 
-BOOL TestDirectSoundBufferSecondaryPlay(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundBufferSecondaryPlayStereo(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -394,14 +344,9 @@ BOOL TestDirectSoundBufferSecondaryPlay(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
-        for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
-            if (!TestDirectSoundBufferSecondaryPlaySingle(dsca, wa, dscb, wb,
-                BufferFlags[k], CooperativeLevels[i])) {
-                result = FALSE;
-                goto exit;
-            }
-        }
+    if (!TestDirectSoundBufferSecondaryPlaySingleStereo(dsca, wa, dscb, wb)) {
+        result = FALSE;
+        goto exit;
     }
 
 exit:
