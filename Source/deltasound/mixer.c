@@ -56,7 +56,9 @@ HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut) {
 
     if (SUCCEEDED(hr = mixer_allocate(pAlloc, &instance))) {
         if (SUCCEEDED(hr = arena_create(pAlloc, &instance->Arena))) {
+
             *ppOut = instance;
+
             return S_OK;
         }
 
@@ -236,10 +238,6 @@ HRESULT DELTACALL mixer_allocate(allocator* pAlloc, mixer** ppOut) {
 HRESULT DELTACALL mixer_convert_to_float(mixer* self,
     LPWAVEFORMATEX pwfxFormat, DWORD dwFrequency,
     LPVOID pInBuffer, DWORD dwInBufferBytes, FLOAT** ppOutBuffer, LPDWORD pOutBufferBytes) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     if (pwfxFormat == NULL || dwFrequency == 0
         || pInBuffer == NULL || dwInBufferBytes == 0
         || ppOutBuffer == NULL || pOutBufferBytes == NULL) {
@@ -329,10 +327,6 @@ Algorithm Steps (General Outline):
 HRESULT DELTACALL mixer_resample(mixer* self,
     DWORD dwChannels, DWORD dwInFrequency, FLOAT* pfInBuffer,
     DWORD dwInBufferBytes, DWORD dwOutFrequency, FLOAT** ppfOutBuffer, LPDWORD pdwOutBufferBytes) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     if (dwChannels == 0 || dwInFrequency == 0
         || pfInBuffer == NULL || dwInBufferBytes == 0
         || dwOutFrequency == 0 || ppfOutBuffer == NULL || pdwOutBufferBytes == NULL) {

@@ -62,6 +62,7 @@ HRESULT DELTACALL intfc_create(allocator* pAlloc, intfc** ppOut) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
+
             return S_OK;
         }
 

@@ -261,10 +261,6 @@ HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppForm
 }
 
 HRESULT DELTACALL dsdevice_play(dsdevice* self) { // TODO name, etc...
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     if (self->Instance == NULL) {
         return E_FAIL;
     }

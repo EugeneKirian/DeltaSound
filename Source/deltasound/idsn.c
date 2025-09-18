@@ -55,6 +55,7 @@ HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
         instance->Self = &idsn_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
+
         *ppOut = instance;
     }
 

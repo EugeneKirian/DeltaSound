@@ -37,7 +37,9 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
     if (SUCCEEDED(hr = deltasound_allocate(pAlloc, &instance))) {
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Items))) {
             InitializeCriticalSection(&instance->Lock);
+
             *ppOut = instance;
+
             return S_OK;
         }
 
@@ -87,7 +89,9 @@ HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
 
             if (SUCCEEDED(hr = ds_query_interface(instance, riid, &intfc))) {
                 if (SUCCEEDED(hr = arr_add_item(self->Items, instance))) {
+
                     *ppOut = (LPDIRECTSOUND)intfc;
+
                     goto exit;
                 }
             }

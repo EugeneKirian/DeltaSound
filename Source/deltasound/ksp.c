@@ -39,6 +39,7 @@ HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+
             *ppOut = instance;
 
             return S_OK;
@@ -72,7 +73,9 @@ HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
         iksp_add_ref(instance);
+
         *ppOut = instance;
+
         return S_OK;
     }
 
@@ -83,7 +86,9 @@ HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = iksp_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ksp_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 

@@ -57,6 +57,7 @@ HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
+
             return S_OK;
         }
 
@@ -172,10 +173,6 @@ HRESULT DELTACALL arr_allocate(allocator* pAlloc, arr** ppOut) {
 }
 
 HRESULT DELTACALL arr_resize(arr* self) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     HRESULT hr = S_OK;
 
     const DWORD capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;

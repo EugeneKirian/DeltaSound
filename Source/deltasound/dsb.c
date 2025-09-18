@@ -45,13 +45,12 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 
     if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
+        if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            instance->Caps.dwSize = sizeof(DSBCAPS);
 
-        if (SUCCEEDED(hr = dsbcb_create(pAlloc, 0, &instance->Buffer))) {
-            if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
-                instance->Caps.dwSize = sizeof(DSBCAPS);
-                *ppOut = instance;
-                return S_OK;
-            }
+            *ppOut = instance;
+
+            return S_OK;
         }
 
         dsb_release(instance);
@@ -80,18 +79,42 @@ VOID DELTACALL dsb_release(dsb* self) {
         ksp_release(self->PropertySet);
     }
 
-    dsbcb_release(self->Buffer);
+    if (self->Buffer != NULL) {
+        dsbcb_release(self->Buffer);
+    }
 
     allocator_free(self->Allocator, self->Format);
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) { // TODO Is this needed?
-    self->Caps.dwFlags = dwFlags;
+HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
 
-    // TODO properly update things when new flags are set
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        return E_INVALIDARG;
+    }
 
-    return S_OK;
+    HRESULT hr = S_OK;
+    dsb* instance = NULL;
+
+    if (SUCCEEDED(hr = dsb_create(self->Allocator, &self->ID, &instance))) {
+        if (SUCCEEDED(hr = dsb_initialize(instance, self->Instance, TODO))) {
+            // TODO need to initialize with the same shared buffer....
+
+            if (SUCCEEDED(hr = arr_add_item(self->Instance->Buffers, instance))) {
+
+                *ppOut = instance;
+
+                return S_OK;
+            }
+        }
+
+        dsb_release(instance);
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
@@ -102,7 +125,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
 
         if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
             idsb_add_ref(instance);
+
             *ppOut = instance;
+
             return S_OK;
         }
     }
@@ -116,7 +141,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = idsb_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dsb_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 
@@ -363,7 +390,7 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
 
     // TODO Store Spatial (3D) algo
 
-    return dsbcb_resize(self->Buffer, self->Caps.dwBufferBytes);
+    return dsbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
 }
 
 HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
@@ -731,7 +758,9 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX), &instance->Format))) {
+
             *ppOut = instance;
+
             return S_OK;
         }
 

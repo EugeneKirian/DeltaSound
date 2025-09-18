@@ -57,6 +57,7 @@ HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
+
             return S_OK;
         }
 
@@ -70,6 +71,7 @@ VOID DELTACALL dsbcblc_release(dsbcblc* self) {
     if (self == NULL) { return; }
 
     DeleteCriticalSection(&self->Lock);
+
     allocator_free(self->Allocator, self->Items);
     allocator_free(self->Allocator, self);
 }

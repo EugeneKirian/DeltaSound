@@ -39,6 +39,7 @@ HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+
             *ppOut = instance;
 
             return S_OK;
@@ -72,7 +73,9 @@ HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, LPVOID* ppOut) {
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
         idssb_add_ref(instance);
+
         *ppOut = instance;
+
         return S_OK;
     }
 
@@ -83,7 +86,9 @@ HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = idssb_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dssb_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 

@@ -53,7 +53,9 @@ HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut) 
         InitializeCriticalSection(&instance->Lock);
 
         if (SUCCEEDED(hr = dsbcblc_create(pAlloc, &instance->Locks))) {
+
             *ppOut = instance;
+
             return S_OK;
         }
 
@@ -142,36 +144,6 @@ HRESULT DELTACALL dsbcb_get_lockable_size(dsbcb* self, LPDWORD pdwBytes) {
         : self->Size - self->ReadPosition + self->WritePosition;
 
     return S_OK;
-}
-
-HRESULT DELTACALL dsbcb_resize(dsbcb* self, DWORD dwBytes) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (self->Size == dwBytes) {
-        return S_OK;
-    }
-
-    if (dwBytes < self->Size) {
-        // TODO Support decrease in size.
-        // Need to check active locks and both read and write positions.
-        return E_NOTIMPL;
-    }
-
-    HRESULT hr = S_OK;
-    EnterCriticalSection(&self->Lock);
-
-    if (self->Size < dwBytes) {
-        if (SUCCEEDED(hr = allocator_reallocate(self->Allocator,
-            self->Buffer, dwBytes, &self->Buffer))) {
-            self->Size = dwBytes;
-        }
-    }
-
-    LeaveCriticalSection(&self->Lock);
-
-    return hr;
 }
 
 HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
@@ -329,7 +301,9 @@ HRESULT DELTACALL dsbcb_allocate(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc, dwBytes, &instance->Buffer))) {
+
             *ppOut = instance;
+
             return S_OK;
         }
 

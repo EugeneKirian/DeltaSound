@@ -44,6 +44,7 @@ HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
         InitializeCriticalSection(&instance->Lock);
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+
             *ppOut = instance;
 
             return S_OK;
@@ -84,7 +85,9 @@ HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
         idsn_add_ref(instance);
+
         *ppOut = instance;
+
         return S_OK;
     }
 
@@ -95,7 +98,9 @@ HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = idsn_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dsn_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 
@@ -201,7 +206,6 @@ HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut) {
         instance->Allocator = pAlloc;
 
         *ppOut = instance;
-
     }
 
     return hr;

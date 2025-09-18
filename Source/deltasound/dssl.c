@@ -39,6 +39,7 @@ HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+
             *ppOut = instance;
 
             return S_OK;
@@ -72,7 +73,9 @@ HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, LPVOID* ppOut) {
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
         idssl_add_ref(instance);
+
         *ppOut = instance;
+
         return S_OK;
     }
 
@@ -83,7 +86,9 @@ HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = idssl_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dssl_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 

@@ -73,7 +73,7 @@ typedef struct dsb {
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut);
 VOID DELTACALL dsb_release(dsb* pDSB);
 
-HRESULT DELTACALL dsb_set_flags(dsb* pDSB, DWORD dwFlags);
+HRESULT DELTACALL dsb_duplicate(dsb* pDSB, dsb** ppOut);
 
 HRESULT DELTACALL dsb_query_interface(dsb* pDSB, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dsb_add_ref(dsb* pDSB, idsb* pIDSB);

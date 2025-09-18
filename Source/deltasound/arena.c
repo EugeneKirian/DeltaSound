@@ -59,6 +59,7 @@ HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut) {
         InitializeCriticalSection(&instance->Lock);
 
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Blocks))) {
+
             *ppOut = instance;
 
             return S_OK;
