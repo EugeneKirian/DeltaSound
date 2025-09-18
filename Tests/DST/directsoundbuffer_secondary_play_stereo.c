@@ -195,12 +195,6 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingleStereo(
     descb.dwBufferBytes = 144000;
     descb.lpwfxFormat = &format;
 
-    DSBUFFERDESC descm;
-    ZeroMemory(&descm, sizeof(DSBUFFERDESC));
-
-    descm.dwSize = sizeof(DSBUFFERDESC);
-    descm.dwFlags = DSBCAPS_PRIMARYBUFFER;
-
     WAVEFORMATEX fa;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
 

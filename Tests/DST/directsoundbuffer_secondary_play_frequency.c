@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_secondary_play_mono.h"
+#include "directsoundbuffer_secondary_play_frequency.h"
 #include "synth.h"
 #include "wnd.h"
 
-#define WINDOW_NAME "DirectSound Secondary Buffer Play Mono"
+#define WINDOW_NAME "DirectSound Secondary Buffer Play Frequency"
 
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     LPDIRECTSOUNDBUFFER b, HWND wb, DWORD seconds, LPVOID wave, DWORD wave_length) {
@@ -51,6 +51,25 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     }
 
     if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+        return FALSE;
+    }
+
+    WAVEFORMATEX fa;
+    ZeroMemory(&fa, sizeof(WAVEFORMATEX));
+
+    WAVEFORMATEX fb;
+    ZeroMemory(&fb, sizeof(WAVEFORMATEX));
+
+    DWORD fas = 0, fbs = 0;
+
+    ra = IDirectSoundBuffer_GetFormat(a, &fa, sizeof(WAVEFORMATEX), &fas);
+    rb = IDirectSoundBuffer_GetFormat(b, &fb, sizeof(WAVEFORMATEX), &fbs);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (memcmp(&fa, &fb, sizeof(WAVEFORMATEX)) != 0) {
         return FALSE;
     }
 
@@ -119,7 +138,15 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     UpdateWindow(wa);
 
     if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, 0, 0))) {
-        Sleep(seconds * 1000);
+        for (DWORD i = 0; i < seconds; i++) {
+            const DWORD frequency =
+                fa.nSamplesPerSec + ((i % 2 == 0) ? 1 : -1) * (fa.nSamplesPerSec / (seconds + i));
+
+            IDirectSoundBuffer_SetFrequency(a, frequency);
+
+            Sleep(1000);
+        }
+
         IDirectSoundBuffer_Stop(a);
     }
 
@@ -130,8 +157,16 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     ShowWindow(wb, SW_SHOW);
     UpdateWindow(wb);
 
-    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, 0, 0))) {
-        Sleep(seconds * 1000);
+    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(b, 0, 0, 0))) {
+        for (DWORD i = 0; i < seconds; i++) {
+            const DWORD frequency =
+                fa.nSamplesPerSec + ((i % 2 == 0) ? 1 : -1) * (fa.nSamplesPerSec / (seconds + i));
+
+            IDirectSoundBuffer_SetFrequency(b, frequency);
+
+            Sleep(1000);
+        }
+
         IDirectSoundBuffer_Stop(b);
     }
 
@@ -157,7 +192,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferSecondaryPlaySingleMono(
+static BOOL TestDirectSoundBufferSecondaryPlaySingleFrequency(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
@@ -175,16 +210,17 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingleMono(
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
 
     format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 1;
+    format.nChannels = 2;
     format.nSamplesPerSec = 48000;
-    format.nAvgBytesPerSec = 48000;
-    format.nBlockAlign = 1;
+    format.nAvgBytesPerSec = 96000;
+    format.nBlockAlign = 2;
     format.wBitsPerSample = 8;
 
     DSBUFFERDESC desca;
     ZeroMemory(&desca, sizeof(DSBUFFERDESC));
 
     desca.dwSize = sizeof(DSBUFFERDESC);
+    desca.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY;
     desca.dwBufferBytes = 144000;
     desca.lpwfxFormat = &format;
 
@@ -192,6 +228,7 @@ static BOOL TestDirectSoundBufferSecondaryPlaySingleMono(
     ZeroMemory(&descb, sizeof(DSBUFFERDESC));
 
     descb.dwSize = sizeof(DSBUFFERDESC);
+    descb.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY;
     descb.dwBufferBytes = 144000;
     descb.lpwfxFormat = &format;
 
@@ -312,7 +349,7 @@ exit:
     return result;
 }
 
-BOOL TestDirectSoundBufferSecondaryPlayMono(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundBufferSecondaryPlayFrequency(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -338,7 +375,7 @@ BOOL TestDirectSoundBufferSecondaryPlayMono(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    if (!TestDirectSoundBufferSecondaryPlaySingleMono(dsca, wa, dscb, wb)) {
+    if (!TestDirectSoundBufferSecondaryPlaySingleFrequency(dsca, wa, dscb, wb)) {
         result = FALSE;
         goto exit;
     }
