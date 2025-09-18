@@ -74,6 +74,97 @@ VOID DELTACALL mixer_release(mixer* self) {
     allocator_free(self->Allocator, self);
 }
 
+// TODO refactor this plug
+// TODO this pretends that secondary buffer is same as primary
+// TODO add support of multiple buffers
+HRESULT DELTACALL mixer_play_buffer(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
+    DWORD dwFrames, dsb* buffer, LPVOID* pOutBuffer, LPDWORD ppdwOutBufferBytes) {
+    const DWORD in_frequency = buffer->Frequency == DSBFREQUENCY_ORIGINAL
+        ? buffer->Format->nSamplesPerSec : buffer->Frequency;
+
+    // Compute out buffer size based on the format and number of frames.
+    DWORD in_bytes = (DWORD)((FLOAT)in_frequency
+        / (FLOAT)pwfxFormat->Format.nSamplesPerSec
+        * dwFrames * buffer->Format->nBlockAlign);
+
+    // TODO Round down to the closest complete frame.
+    if (in_bytes % buffer->Format->nBlockAlign != 0) {
+        in_bytes -= in_bytes % buffer->Format->nBlockAlign;
+    }
+
+    // TODO use BLOCKALIGN ?
+
+    const DWORD in_frames = in_bytes / buffer->Format->nBlockAlign;
+    DWORD out_bytes = (DWORD)((FLOAT)pwfxFormat->Format.nSamplesPerSec
+        / (FLOAT)in_frequency * in_frames * pwfxFormat->Format.nBlockAlign);
+
+    // TODO Round down to the closest complete frame.
+    if (out_bytes % pwfxFormat->Format.nBlockAlign != 0) {
+        out_bytes -= out_bytes % pwfxFormat->Format.nBlockAlign;
+    }
+
+    // TODO use BLOCKALIGN ?
+
+    // Read the data from buffer's circular buffer into a linear block of memory.
+
+    LPVOID in_buffer = NULL;
+    DWORD in_buffer_length = 0;
+
+    HRESULT hr = S_OK;
+
+    if (FAILED(hr = arena_allocate(self->Arena, in_bytes, &in_buffer))) {
+        return hr;
+    }
+
+    if (FAILED(hr = dsbcb_read(buffer->Buffer, in_bytes, in_buffer, &in_buffer_length))) {
+        return hr;
+    }
+
+    // Convert input buffer's data to floats.
+    FLOAT* float_buf = NULL;
+    DWORD float_buf_len = 0;
+
+    if (FAILED(hr = mixer_convert_to_float(self, buffer->Format,
+        in_frequency, in_buffer, in_buffer_length, &float_buf, &float_buf_len))) {
+        return hr;
+    }
+
+    // TODO upmix/downmix - number of channels
+    // TODO apply volume and pan
+
+    // Resample the buffer to requested frequency.
+    FLOAT* resample_buf = NULL;
+    DWORD resample_buf_len = 0;
+
+    if (FAILED(hr = mixer_resample(self, pwfxFormat->Format.nChannels,
+        in_frequency, float_buf, float_buf_len, pwfxFormat->Format.nSamplesPerSec,
+        &resample_buf, &resample_buf_len))) {
+        return hr;
+    }
+
+    // TODO convert back to intended format
+
+    // Update the read and write positions but only if the buffer is still playing.
+    // This is to avoid race condition with ::Stop method being called at ill-timed moment.
+
+    DWORD status = DSBSTATUS_NONE;
+
+    if (SUCCEEDED(hr = dsb_get_status(buffer, &status))) {
+        if (status & DSBSTATUS_PLAYING) {
+            DWORD read = 0, write = 0;
+            if (SUCCEEDED(hr = dsbcb_get_current_position(buffer->Buffer, &read, &write))) {
+                hr = dsbcb_set_current_position(buffer->Buffer,
+                    read + in_buffer_length, write + in_buffer_length, DSBCB_SETPOSITION_WRAP);
+            }
+        }
+    }
+
+    *pOutBuffer = resample_buf;
+    *ppdwOutBufferBytes = resample_buf_len;
+
+    return hr;
+}
+
 HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
     DWORD dwFrames, dsb* pMain, arr* pSecondary, LPVOID* pOutBuffer, LPDWORD ppdwOutBufferBytes) {
     if (self == NULL) {
@@ -94,91 +185,30 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
         && (pMain->Status & DSBSTATUS_PLAYING);
 
     if (main) {
-        const DWORD in_frequency = pMain->Frequency == DSBFREQUENCY_ORIGINAL
-            ? pMain->Format->nSamplesPerSec : pMain->Frequency;
-
-        // Compute out buffer size based on the format and number of frames.
-        DWORD in_bytes = (DWORD)((FLOAT)in_frequency
-            / (FLOAT)pwfxFormat->Format.nSamplesPerSec
-            * dwFrames * pMain->Format->nBlockAlign);
-
-        // TODO Round down to the closest complete frame.
-        if (in_bytes % pMain->Format->nBlockAlign != 0) {
-            in_bytes -= in_bytes % pMain->Format->nBlockAlign;
-        }
-
-        // TODO use BLOCKALIGN ?
-
-        const DWORD in_frames = in_bytes / pMain->Format->nBlockAlign;
-        DWORD out_bytes = (DWORD)((FLOAT)pwfxFormat->Format.nSamplesPerSec
-            / (FLOAT)in_frequency * in_frames * pwfxFormat->Format.nBlockAlign);
-
-        // TODO Round down to the closest complete frame.
-        if (out_bytes % pwfxFormat->Format.nBlockAlign != 0) {
-            out_bytes -= out_bytes % pwfxFormat->Format.nBlockAlign;
-        }
-
-        // TODO use BLOCKALIGN ?
-
-        // Read the data from buffer's circular buffer into a linear block of memory.
-
-        LPVOID in_buffer = NULL;
-        DWORD in_buffer_length = 0;
-
-        if (FAILED(hr = arena_allocate(self->Arena, in_bytes, &in_buffer))) {
-            return hr;
-        }
-
-        if (FAILED(hr = dsbcb_read(pMain->Buffer, in_bytes, in_buffer, &in_buffer_length))) {
-            return hr;
-        }
-
-        // Convert input buffer's data to floats.
-        FLOAT* float_buf = NULL;
-        DWORD float_buf_len = 0;
-
-        if (FAILED(hr = mixer_convert_to_float(self, pMain->Format,
-            in_frequency, in_buffer, in_buffer_length, &float_buf, &float_buf_len))) {
-            return hr;
-        }
-
-        // TODO upmix/downmix - number of channels
-        // TODO apply volume and pan
-
-        // Resample the buffer to requested frequency.
-        FLOAT* resample_buf = NULL;
-        DWORD resample_buf_len = 0;
-
-        if (FAILED(hr = mixer_resample(self, pwfxFormat->Format.nChannels,
-            in_frequency, float_buf, float_buf_len, pwfxFormat->Format.nSamplesPerSec,
-            &resample_buf, &resample_buf_len))) {
-            return hr;
-        }
-
-        // TODO convert back to intended format
-
-        // Update the read and write positions but only if the buffer is still playing.
-        // This is to avoid race condition with ::Stop method being called at ill-timed moment.
-
-        DWORD status = 0;
-        if (SUCCEEDED(hr = dsb_get_status(pMain, &status))) {
-            if (status & DSBSTATUS_PLAYING) {
-                DWORD read = 0, write = 0;
-                dsbcb_get_read_position(pMain->Buffer, &read);
-                dsbcb_get_write_position(pMain->Buffer, &write);
-
-                dsbcb_set_read_position(pMain->Buffer, read + in_buffer_length, DSBCB_SETPOSITION_WRAP);
-                dsbcb_set_write_position(pMain->Buffer, write + in_buffer_length, DSBCB_SETPOSITION_WRAP);
-            }
-        }
-
-        *pOutBuffer = resample_buf;
-        *ppdwOutBufferBytes = resample_buf_len;
+        // TODO
+        // TODO error handling
+        mixer_play_buffer(self, pwfxFormat, dwFrames, pMain, pOutBuffer, ppdwOutBufferBytes);
     }
     else {
         // TODO nothing to play for now
         // TODO support secondary buffers
+        // TODO if secondary buffer is not looping - stop it when it reaches the end (update status)
         // TODO handle position notifications.
+        // TODO handle position notifications when buffer stopped in the middle of playback
+        for (DWORD i = 0; i < arr_get_count(pSecondary); i++) {
+            dsb* instance = NULL;
+
+            if (SUCCEEDED(arr_get_item(pSecondary, i, &instance))) {
+                DWORD status = DSBSTATUS_NONE;
+
+                if (SUCCEEDED(dsb_get_status(instance, &status))) {
+                    if (status & DSBSTATUS_PLAYING) {
+                        // TODO error handling
+                        mixer_play_buffer(self, pwfxFormat, dwFrames, instance, pOutBuffer, ppdwOutBufferBytes);
+                    }
+                }
+            }
+        }
     }
 
     return hr;
@@ -196,6 +226,7 @@ HRESULT DELTACALL mixer_allocate(allocator* pAlloc, mixer** ppOut) {
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(mixer), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

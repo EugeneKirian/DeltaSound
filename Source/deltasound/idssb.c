@@ -253,11 +253,16 @@ HRESULT DELTACALL idssb_set_velocity(idssb* self, D3DVALUE x, D3DVALUE y, D3DVAL
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL idssb_allocate(allocator* pAlloc, idssb** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     idssb* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idssb), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

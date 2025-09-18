@@ -28,7 +28,7 @@ typedef IReferenceClock* LPREFERENCECLOCK;
 
 #define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   13
 
-static const DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
+const static DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
     0,
     DSBCAPS_STATIC,
     //DSBCAPS_LOCHARDWARE,

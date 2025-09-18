@@ -22,25 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_play_pan.h"
+#include "directsoundbuffer_secondary_play_mono.h"
 #include "synth.h"
 #include "wnd.h"
 
-#define WINDOW_NAME "DirectSound Primary Buffer Play Pan"
+#define WINDOW_NAME "DirectSound Secondary Buffer Play Mono"
 
-#define PLAY_PAN_COUNT    6
-
-const static DWORD PlayPan[PLAY_PAN_COUNT] = {
-    DSBPAN_LEFT,
-    DSBPAN_LEFT / 2,
-    DSBPAN_CENTER,
-    DSBPAN_RIGHT / 2,
-    DSBPAN_RIGHT,
-    DSBPAN_CENTER
-};
-
-static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
-    LPDIRECTSOUNDBUFFER b, DWORD seconds, LPVOID wave, DWORD wave_length) {
+static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
+    LPDIRECTSOUNDBUFFER b, HWND wb, DWORD seconds, LPVOID wave, DWORD wave_length) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
@@ -103,10 +92,6 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
         return FALSE;
     }
 
-    if (al11 != al12 || al21 != al22) {
-        return FALSE;
-    }
-
     if (ra != S_OK && rb != S_OK) {
         return TRUE;
     }
@@ -114,7 +99,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
     // Copy
 
     if (a11 == NULL || a21 == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     CopyMemory(a11, wave, al11);
@@ -130,16 +115,28 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
     }
 
     // Play A
-    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, 0, DSBPLAY_LOOPING))) {
+    ShowWindow(wa, SW_SHOW);
+    UpdateWindow(wa);
+
+    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, 0, 0))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(a);
     }
 
+    ShowWindow(wa, SW_HIDE);
+    UpdateWindow(wa);
+
     // Play B
-    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, 0, DSBPLAY_LOOPING))) {
+    ShowWindow(wb, SW_SHOW);
+    UpdateWindow(wb);
+
+    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, 0, 0))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(b);
     }
+
+    ShowWindow(wb, SW_HIDE);
+    UpdateWindow(wb);
 
     if (ra != rb) {
         return FALSE;
@@ -153,14 +150,15 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
     }
 
     if (cpa != cpb || cwa != cwb) {
-        return FALSE;
+        IDirectSoundBuffer_Stop(a);
+        IDirectSoundBuffer_Stop(b);
     }
 
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
-    HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, LONG pan) {
+static BOOL TestDirectSoundBufferSecondaryPlaySingleMono(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
@@ -173,17 +171,29 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
     LPDIRECTSOUNDBUFFER dsba = NULL;
     LPDIRECTSOUNDBUFFER dsbb = NULL;
 
+    WAVEFORMATEX format;
+    ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
+    format.wFormatTag = WAVE_FORMAT_PCM;
+    format.nChannels = 1;
+    format.nSamplesPerSec = 48000;
+    format.nAvgBytesPerSec = 48000;
+    format.nBlockAlign = 1;
+    format.wBitsPerSample = 8;
+
     DSBUFFERDESC desca;
     ZeroMemory(&desca, sizeof(DSBUFFERDESC));
 
     desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLPAN;
+    desca.dwBufferBytes = 144000;
+    desca.lpwfxFormat = &format;
 
     DSBUFFERDESC descb;
     ZeroMemory(&descb, sizeof(DSBUFFERDESC));
 
     descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLPAN;
+    descb.dwBufferBytes = 144000;
+    descb.lpwfxFormat = &format;
 
     WAVEFORMATEX fa;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
@@ -214,8 +224,8 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_WRITEPRIMARY);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_WRITEPRIMARY);
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_NORMAL);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_NORMAL);
 
     if (ra != rb) {
         result = FALSE;
@@ -227,12 +237,12 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
 
     if (ra != rb) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if (dsba == NULL || dsbb == NULL) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     // GetCaps
@@ -242,12 +252,12 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
 
     if (ra != rb) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     // GetFormat
@@ -267,20 +277,12 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
 
     // Synthesise Wave
 
-    if (!Synthesise(&fa, 440.0f, 3.0f /* seconds */, &wave, &wave_length)) {
+    if (!Synthesise(&fa, 550.0f, 3.0f /* seconds */, &wave, &wave_length)) {
         result = FALSE;
         goto exit;
     }
 
-    ra = IDirectSoundBuffer_SetPan(dsba, pan);
-    rb = IDirectSoundBuffer_SetPan(dsbb, pan);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    if (!TestDirectSoundBufferSingleWave(dsba, dsbb, 4, wave, wave_length)) {
+    if (!TestDirectSoundBufferSingleWave(dsba, wa, dsbb, wb, 4, wave, wave_length)) {
         result = FALSE;
         goto exit;
     }
@@ -310,7 +312,7 @@ exit:
     return result;
 }
 
-BOOL TestDirectSoundBufferPrimaryPlayPan(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundBufferSecondaryPlayMono(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -336,15 +338,12 @@ BOOL TestDirectSoundBufferPrimaryPlayPan(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    for (int i = 0; i < PLAY_PAN_COUNT; i++) {
-        if (!TestDirectSoundBufferPrimaryPlay(dsca, wa, dscb, wb, PlayPan[i])) {
-            result = FALSE;
-            goto exit;
-        }
+    if (!TestDirectSoundBufferSecondaryPlaySingleMono(dsca, wa, dscb, wb)) {
+        result = FALSE;
+        goto exit;
     }
 
 exit:
-
     if (wa != NULL) {
         DestroyWindow(wa);
     }

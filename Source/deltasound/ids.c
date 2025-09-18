@@ -201,6 +201,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
     }
 
     // TODO Additional guid3DAlgorithm value checks
+    // TODO guid3DAlgorithm is used in 3d buffer in secondary buffers.
 
     if (pUnkOuter != NULL) {
         return DSERR_NOAGGREGATION;
@@ -282,11 +283,16 @@ HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     ids* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 
@@ -351,7 +357,7 @@ HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC 
 
     // dwFlags
 
-    if (pcDesc->dwFlags & DSBCAPS_LOCDEFER && !(pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)) {
+    if (pcDesc->dwFlags & DSBCAPS_LOCDEFER) {
         return E_INVALIDARG;
     }
 

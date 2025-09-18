@@ -69,6 +69,11 @@ VOID DELTACALL dsn_release(dsn* self) {
 
     DeleteCriticalSection(&self->Lock);
 
+    if (self->Notifications != NULL) {
+        allocator_free(self->Allocator, self->Notifications);
+    }
+
+
     allocator_free(self->Allocator, self);
 }
 
@@ -143,13 +148,7 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
         return DSERR_CONTROLUNAVAIL;
     }
 
-    HRESULT hr = S_OK;
-    DWORD status = 0;
-    if (FAILED(hr = dsb_get_status(self->Instance, &status))) {
-        return hr;
-    }
-
-    if (status & DSBSTATUS_PLAYING) {
+    if (self->Instance->Status & DSBSTATUS_PLAYING) {
         return DSERR_INVALIDCALL;
     }
 
@@ -162,6 +161,7 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
         return E_INVALIDARG;
     }
 
+    HRESULT hr = S_OK;
     const DWORD length = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
     LPDSBPOSITIONNOTIFY items = NULL;
 
@@ -171,15 +171,12 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
         if (SUCCEEDED(hr = dsn_validate_notification_positions(self, dwPositionNotifies, items))) {
             EnterCriticalSection(&self->Lock);
 
-            if (self->NotificationCount < dwPositionNotifies) {
-                if (FAILED(hr = allocator_reallocate(self->Allocator, self->Notifications, length, &self->Notifications))) {
-                    LeaveCriticalSection(&self->Lock);
-                    goto exit;
-                }
-            }
-
             self->NotificationCount = dwPositionNotifies;
-            CopyMemory(self->Notifications, items, length);
+            LPVOID notes = InterlockedExchangePointer(&self->Notifications, items);
+
+            if (notes != NULL) {
+                allocator_free(self->Allocator, notes);
+            }
 
             LeaveCriticalSection(&self->Lock);
         }
@@ -203,12 +200,8 @@ HRESULT DELTACALL dsn_allocate(allocator* pAlloc, dsn** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsn), &instance))) {
         instance->Allocator = pAlloc;
 
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, 0, &instance->Notifications))) {
-            *ppOut = instance;
-            return S_OK;
-        }
+        *ppOut = instance;
 
-        allocator_free(pAlloc, instance);
     }
 
     return hr;

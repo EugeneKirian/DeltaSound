@@ -143,11 +143,16 @@ HRESULT DELTACALL iksp_query_support(iksp* self, REFGUID rguidPropSet, ULONG ulI
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL iksp_allocate(allocator* pAlloc, iksp** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     iksp* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(iksp), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

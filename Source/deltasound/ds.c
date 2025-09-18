@@ -271,7 +271,7 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
 
     // TODO other validations
 
-    self->HWND = hwnd;
+    self->HWND = hwnd; // TODO Get root parent window (topmost unowned window)
     self->Level = dwLevel;
 
     // NOTE. Multiple changes are allowed.
@@ -283,16 +283,58 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
     return S_OK;
 }
 
+HRESULT DELTACALL ds_get_status(ds* self, LPDWORD pdwStatus) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (pdwStatus == NULL) {
+        return E_INVALIDARG;
+    }
+
+    // TODO synchronization
+
+    HRESULT hr = S_OK;
+    DWORD status = DSBSTATUS_NONE;
+
+    if (FAILED(hr = dsb_get_status(self->Main, &status))) {
+        return hr;
+    }
+
+    if (status & DSBSTATUS_PLAYING) {
+        *pdwStatus = DS_STATUS_PLAYING;
+        return hr;
+    }
+
+    for (DWORD i = 0; i < arr_get_count(self->Buffers); i++) {
+        dsb* instance = NULL;
+        if (SUCCEEDED(arr_get_item(self->Buffers, i, &instance))) {
+            if (SUCCEEDED(hr = dsb_get_status(instance, &status))) {
+                if (status & DSBSTATUS_PLAYING) {
+                    *pdwStatus = DS_STATUS_PLAYING;
+                    return hr;
+                }
+            }
+        }
+    }
+
+    return hr;
+}
+
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     ds* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
-        return S_OK;
     }
 
     return hr;

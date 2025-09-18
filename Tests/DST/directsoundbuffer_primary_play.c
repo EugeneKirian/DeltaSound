@@ -28,15 +28,9 @@ SOFTWARE.
 
 #define WINDOW_NAME "DirectSound Primary Buffer Play"
 
-#define COOPERATIVE_LEVEL_COUNT 4
-
-static const DWORD CooperativeLevels[COOPERATIVE_LEVEL_COUNT] = {
-    DSSCL_NORMAL, DSSCL_PRIORITY, DSSCL_EXCLUSIVE, DSSCL_WRITEPRIMARY
-};
-
 #define BUFFER_FLAG_COUNT       10
 
-static const DWORD BufferFlags[BUFFER_FLAG_COUNT] =
+const static DWORD BufferFlags[BUFFER_FLAG_COUNT] =
 {
     DSBCAPS_PRIMARYBUFFER,
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRL3D,
@@ -52,65 +46,11 @@ static const DWORD BufferFlags[BUFFER_FLAG_COUNT] =
 
 #define PLAY_PRIORITY_COUNT 4
 
-const static PlayPriority[PLAY_PRIORITY_COUNT] = {
+const static DWORD PlayPriority[PLAY_PRIORITY_COUNT] = {
     0,
     1,
     0xFFFFFFFF - 1,
     0xFFFFFFFF
-};
-
-#define PLAY_FLAGS_COUNT    39
-
-const static PlayFlags[PLAY_FLAGS_COUNT] = {
-    0,
-    DSBPLAY_LOOPING,
-
-    DSBPLAY_LOCHARDWARE,
-    DSBPLAY_LOCSOFTWARE,
-    DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE,
-
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE,
-    DSBPLAY_LOOPING | DSBPLAY_LOCSOFTWARE,
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE,
-
-    DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_TERMINATEBY_PRIORITY,
-
-    DSBPLAY_LOOPING | DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_LOOPING | DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_LOOPING | DSBPLAY_TERMINATEBY_PRIORITY,
-    DSBPLAY_LOOPING | DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_DISTANCE | DSBPLAY_TERMINATEBY_PRIORITY,
-
-    DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_PRIORITY,
-    DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_DISTANCE | DSBPLAY_TERMINATEBY_PRIORITY,
-
-    DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_PRIORITY,
-    DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_DISTANCE | DSBPLAY_TERMINATEBY_PRIORITY,
-
-    DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_PRIORITY,
-    DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_DISTANCE | DSBPLAY_TERMINATEBY_PRIORITY,
-
-    DSBPLAY_LOOPING | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_LOOPING | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_LOOPING | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_PRIORITY,
-    DSBPLAY_LOOPING | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_DISTANCE | DSBPLAY_TERMINATEBY_PRIORITY,
-
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_PRIORITY,
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_DISTANCE | DSBPLAY_TERMINATEBY_PRIORITY,
-
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME,
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_DISTANCE,
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_PRIORITY,
-    DSBPLAY_LOOPING | DSBPLAY_LOCHARDWARE | DSBPLAY_LOCSOFTWARE | DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_DISTANCE | DSBPLAY_TERMINATEBY_PRIORITY
 };
 
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
@@ -186,6 +126,10 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     }
 
     // Copy
+
+    if (a11 == NULL || a21 == NULL) {
+        DebugBreak(); return FALSE;
+    }
 
     CopyMemory(a11, wave, al11);
     CopyMemory(a21, wave, al12);
@@ -406,6 +350,10 @@ static BOOL TestDirectSoundBufferStreamWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
 
     // Copy
 
+    if (a11 == NULL || a21 == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
     CopyMemory(a11, wave, al11);
     CopyMemory(a21, wave, al12);
 
@@ -479,6 +427,14 @@ static BOOL TestDirectSoundBufferPrimaryPlaySynthetic(
     LPVOID wave = NULL;
     DWORD wave_length = 0;
 
+    DSBCAPS capsa;
+    ZeroMemory(&capsa, sizeof(DSBCAPS));
+    capsa.dwSize = sizeof(DSBCAPS);
+
+    DSBCAPS capsb;
+    ZeroMemory(&capsb, sizeof(DSBCAPS));
+    capsb.dwSize = sizeof(DSBCAPS);
+
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
 
@@ -502,18 +458,6 @@ static BOOL TestDirectSoundBufferPrimaryPlaySynthetic(
     rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
 
     if (ra != rb) {
-        DSBCAPS capsa;
-        ZeroMemory(&capsa, sizeof(DSBCAPS));
-
-        capsa.dwSize = sizeof(DSBCAPS);
-
-        DSBCAPS capsb;
-        ZeroMemory(&capsb, sizeof(DSBCAPS));
-
-        capsb.dwSize = sizeof(DSBCAPS);
-        ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
-        rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
-
         result = FALSE;
         goto exit;
     }
@@ -523,7 +467,22 @@ static BOOL TestDirectSoundBufferPrimaryPlaySynthetic(
         goto exit;
     }
 
-    // Get Format
+    // GetCaps
+
+    ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
+    rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
+
+    if (ra != rb) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    // GetFormat
 
     ra = IDirectSoundBuffer_GetFormat(dsba, &fa, sizeof(WAVEFORMATEX), &fas);
     rb = IDirectSoundBuffer_GetFormat(dsbb, &fb, sizeof(WAVEFORMATEX), &fbs);
@@ -546,8 +505,8 @@ static BOOL TestDirectSoundBufferPrimaryPlaySynthetic(
     }
 
     for (int i = 0; i < PLAY_PRIORITY_COUNT; i++) {
-        for (int k = 0; k < PLAY_FLAGS_COUNT; k++) {
-            if (!TestDirectSoundBufferSingleWave(dsba, dsbb, 4, wave, wave_length, PlayPriority[i], PlayFlags[k])) {
+        for (int k = 0; k < BUFFER_PLAY_FLAGS_COUNT; k++) {
+            if (!TestDirectSoundBufferSingleWave(dsba, dsbb, 4, wave, wave_length, PlayPriority[i], BufferPlayFlags[k])) {
                 result = FALSE;
                 goto exit;
             }
@@ -555,8 +514,8 @@ static BOOL TestDirectSoundBufferPrimaryPlaySynthetic(
     }
 
     for (int i = 0; i < PLAY_PRIORITY_COUNT; i++) {
-        for (int k = 0; k < PLAY_FLAGS_COUNT; k++) {
-            if (!TestDirectSoundBufferStreamWave(dsba, dsbb, wave, wave_length, PlayPriority[i], PlayFlags[k])) {
+        for (int k = 0; k < BUFFER_PLAY_FLAGS_COUNT; k++) {
+            if (!TestDirectSoundBufferStreamWave(dsba, dsbb, wave, wave_length, PlayPriority[i], BufferPlayFlags[k])) {
                 result = FALSE;
                 goto exit;
             }

@@ -24,17 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include <windows.h>
-#include <dsound.h>
-#include <mmreg.h>
+#include "base.h"
 
-typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
-
-#define COOPERATIVE_LEVEL_COUNT 5
-
-const extern DWORD CooperativeLevels[COOPERATIVE_LEVEL_COUNT];
-
-
-#define BUFFER_PLAY_FLAGS_COUNT    39
-
-const extern DWORD BufferPlayFlags[BUFFER_PLAY_FLAGS_COUNT];
+BOOL TestDirectSoundBufferSecondaryPlayFrequency(HMODULE a, HMODULE b);

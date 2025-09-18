@@ -242,21 +242,7 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
         return DSERR_BUFFERLOST;
     }
 
-    HRESULT hr = S_OK;
-
-    if (pdwCurrentPlayCursor != NULL) {
-        if (FAILED(hr = dsbcb_get_read_position(self->Buffer, pdwCurrentPlayCursor))) {
-            return hr;
-        }
-    }
-
-    if (pdwCurrentWriteCursor != NULL) {
-        if (FAILED(hr = dsbcb_get_write_position(self->Buffer, pdwCurrentWriteCursor))) {
-            return hr;
-        }
-    }
-
-    return hr;
+    return dsbcb_get_current_position(self->Buffer, pdwCurrentPlayCursor, pdwCurrentWriteCursor);
 }
 
 HRESULT DELTACALL dsb_get_format(dsb* self,
@@ -289,12 +275,6 @@ HRESULT DELTACALL dsb_get_volume(dsb* self, PFLOAT pfVolume) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLVOLUME)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -309,12 +289,6 @@ HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLPAN)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -327,12 +301,6 @@ HRESULT DELTACALL dsb_get_pan(dsb* self, PFLOAT pfPan) {
 HRESULT DELTACALL dsb_get_frequency(dsb* self, LPDWORD pdwFrequency) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
-    }
-
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
     }
 
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
@@ -350,20 +318,13 @@ HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus) {
         return DSERR_UNINITIALIZED;
     }
 
-    DWORD status = self->Status;
-
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_NONE) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
-    }
-    else {
+    if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            status |= DSBSTATUS_BUFFERLOST;
+            self->Status = DSBSTATUS_BUFFERLOST;
         }
     }
 
-    *pdwStatus = status;
+    *pdwStatus = self->Status;
 
     return S_OK;
 }
@@ -400,6 +361,8 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
         CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
     }
 
+    // TODO Store Spatial (3D) algo
+
     return dsbcb_resize(self->Buffer, self->Caps.dwBufferBytes);
 }
 
@@ -408,10 +371,6 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
-    }
-
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
     }
 
     HRESULT hr = S_OK;
@@ -423,6 +382,11 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         }
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        hr = DSERR_BUFFERLOST;
+        goto fail;
+    }
+
+    if (self->Status & DSBSTATUS_BUFFERLOST) {
         hr = DSERR_BUFFERLOST;
         goto fail;
     }
@@ -478,10 +442,6 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
             return DSERR_PRIOLEVELNEEDED;
@@ -491,9 +451,17 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         return DSERR_BUFFERLOST;
     }
 
+    if (self->Status & DSBSTATUS_BUFFERLOST) {
+        return DSERR_BUFFERLOST;
+    }
+
     if ((dwFlags & DSBPLAY_TERMINATEBY_TIME)
         && (dwFlags & DSBPLAY_TERMINATEBY_PRIORITY)) {
         return E_INVALIDARG;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
     }
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
@@ -514,15 +482,18 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
             return E_INVALIDARG;
         }
 
-        // TODO iterate through all secondary buffers,
-        // stop them, and mark as lost.
+        // TODO synchroinzation
+
+        for (DWORD i = 0; i < arr_get_count(self->Instance->Buffers); i++) {
+            dsb* instance = NULL;
+            if (SUCCEEDED(arr_get_item(self->Instance->Buffers, i, &instance))) {
+                // TODO update read and write positions to zero?
+                instance->Play = DSBPLAY_NONE;
+                instance->Status = DSBSTATUS_BUFFERLOST;
+            }
+        }
     }
     else {
-        if (!(self->Caps.dwFlags & (DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE))
-            && (dwFlags & DSBPLAY_TERMINATEBY_DISTANCE)) {
-            return E_INVALIDARG;
-        }
-
         if (!(self->Caps.dwFlags & DSBCAPS_LOCDEFER)) {
             if (dwPriority != 0) {
                 return E_INVALIDARG;
@@ -532,33 +503,33 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
                 return E_INVALIDARG;
             }
 
-            if (dwFlags & (DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_PRIORITY)) {
+            if (dwFlags & (DSBPLAY_TERMINATEBY_TIME
+                | DSBPLAY_TERMINATEBY_PRIORITY | DSBPLAY_TERMINATEBY_DISTANCE)) {
                 return E_INVALIDARG;
             }
         }
     }
 
-    self->Priority = dwPriority;
-
-    self->Status = self->Status | DSBSTATUS_PLAYING;
-
-    if (dwFlags & DSBPLAY_LOOPING) {
-        self->Status = self->Status | DSBSTATUS_LOOPING;
-    }
-
-    if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
-        self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
-    }
-
-    // TODO store play flags for future use
-
     HRESULT hr = S_OK;
-    DWORD position = 0;
+    DWORD read = 0, write = 0;
 
-    if (SUCCEEDED(hr = dsbcb_get_write_position(self->Buffer, &position))) {
-        hr = dsbcb_set_write_position(self->Buffer,
-            position + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign,
-            DSBCB_SETPOSITION_WRAP);
+    if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
+        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, read,
+            write + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign, DSBCB_SETPOSITION_WRAP))) {
+
+            self->Play = dwFlags;
+            self->Priority = dwPriority;
+
+            self->Status = DSBSTATUS_PLAYING;
+
+            if (dwFlags & DSBPLAY_LOOPING) {
+                self->Status = self->Status | DSBSTATUS_LOOPING;
+            }
+
+            if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
+                self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
+            }
+        }
     }
 
     return hr;
@@ -580,17 +551,9 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return E_INVALIDARG;
     }
 
-    HRESULT hr = S_OK;
-
-    if (FAILED(hr = dsbcb_set_read_position(self->Buffer, dwNewPosition, DSBCB_SETPOSITION_NONE))) {
-        return hr;
-    }
-
-    if (FAILED(hr = dsbcb_set_write_position(self->Buffer, dwNewPosition , DSBCB_SETPOSITION_NONE))) {
-        return hr;
-    }
-
-    return S_OK;
+    return dsbcb_set_current_position(self->Buffer,
+        BLOCKALIGN(dwNewPosition, self->Format->nBlockAlign),
+        BLOCKALIGN(dwNewPosition, self->Format->nBlockAlign), DSBCB_SETPOSITION_NONE);
 }
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
@@ -602,7 +565,8 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         return DSERR_INVALIDCALL;
     }
 
-    if (self->Instance->Level == DSSCL_NORMAL) {
+    if (self->Instance->Level == DSSCL_NONE
+        || self->Instance->Level == DSSCL_NORMAL) {
         return DSERR_PRIOLEVELNEEDED;
     }
 
@@ -641,10 +605,6 @@ HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLVOLUME)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -659,10 +619,6 @@ HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLPAN)) {
         return DSERR_CONTROLUNAVAIL;
     }
@@ -675,10 +631,6 @@ HRESULT DELTACALL dsb_set_pan(dsb* self, FLOAT fPan) {
 HRESULT DELTACALL dsb_set_frequency(dsb* self, DWORD dwFrequency) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
-    }
-
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
     }
 
     if (!(self->Caps.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
@@ -705,12 +657,16 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
         }
     }
 
-    self->Status &= ~(DSBSTATUS_LOOPING | DSBSTATUS_PLAYING);
+    if (self->Status & DSBSTATUS_BUFFERLOST) {
+        return DSERR_BUFFERLOST;
+    }
+
+    self->Play = DSBPLAY_NONE;
+    self->Status = DSBSTATUS_NONE;
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            dsbcb_set_read_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
-            dsbcb_set_write_position(self->Buffer, 0, DSBCB_SETPOSITION_NONE);
+            dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
         }
     }
 
@@ -721,10 +677,6 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
     LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
-    }
-
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
     }
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
@@ -758,12 +710,20 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
         }
     }
 
+    self->Status = DSBSTATUS_NONE;
+
+    dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
+
     return S_OK;
 }
 
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
@@ -775,7 +735,6 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
             return S_OK;
         }
 
-        allocator_free(pAlloc, instance->Format);
         allocator_free(pAlloc, instance);
     }
 

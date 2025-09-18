@@ -120,11 +120,16 @@ HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNo
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL idsn_allocate(allocator* pAlloc, idsn** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     idsn* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsn), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

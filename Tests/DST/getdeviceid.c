@@ -31,6 +31,16 @@ typedef HRESULT(WINAPI* LPDIRECTSOUNDENUMERATEA)(LPDSENUMCALLBACKA, LPVOID);
 
 #define MAX_STORAGE_COUNT           128
 
+#define MAX_GETDEVICEID_TEST_COUNT  5
+
+const static LPCGUID get_device_id_tests[MAX_GETDEVICEID_TEST_COUNT] = {
+    &GUID_NULL,
+    &DSDEVID_DefaultPlayback,
+    &DSDEVID_DefaultCapture,
+    &DSDEVID_DefaultVoicePlayback,
+    &DSDEVID_DefaultVoiceCapture
+};
+
 typedef struct callback_context {
     UINT    Count;
     GUID*   Items;
@@ -47,16 +57,6 @@ static BOOL CALLBACK EnumerateDeviceCallBackA(LPGUID guid, LPCSTR desc, LPCSTR m
 
     return context->Count < MAX_STORAGE_COUNT;
 }
-
-#define MAX_GETDEVICEID_TEST_COUNT  5
-
-static const LPCGUID get_device_id_tests[MAX_GETDEVICEID_TEST_COUNT] = {
-    &GUID_NULL,
-    &DSDEVID_DefaultPlayback,
-    &DSDEVID_DefaultCapture,
-    &DSDEVID_DefaultVoicePlayback,
-    &DSDEVID_DefaultVoiceCapture
-};
 
 static BOOL CompareResults(LPCGUID a, LPCGUID b) {
     if (a != NULL && b != NULL) {

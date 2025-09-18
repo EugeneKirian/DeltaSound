@@ -114,15 +114,19 @@ HRESULT DELTACALL deltasound_remove_ds(deltasound* self, ds* pDS) {
 
     HRESULT hr = S_OK;
 
+    EnterCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < arr_get_count(self->Items); i++) {
         ds* instance = NULL;
 
         if (SUCCEEDED(hr = arr_get_item(self->Items, i, &instance))) {
             if (instance == pDS) {
-                return arr_remove_item(self->Items, i, NULL);
+                hr = arr_remove_item(self->Items, i, NULL);
             }
         }
     }
+
+    LeaveCriticalSection(&self->Lock);
 
     return hr;
 }
@@ -138,11 +142,16 @@ HRESULT DELTACALL deltasound_can_unload(deltasound* self) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     deltasound* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

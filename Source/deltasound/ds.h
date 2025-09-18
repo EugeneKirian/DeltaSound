@@ -27,6 +27,9 @@ SOFTWARE.
 #include "arr.h"
 #include "intfc.h"
 
+#define DS_STATUS_NONE      0
+#define DS_STATUS_PLAYING   1
+
 typedef struct deltasound deltasound;
 typedef struct dsdevice dsdevice;
 typedef struct dsb dsb;
@@ -63,3 +66,5 @@ HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
 HRESULT DELTACALL ds_set_cooperative_level(ds* pDS, HWND hwnd, DWORD dwLevel);
 
 HRESULT DELTACALL ds_initialize(ds* pDS, LPCGUID pcGuidDevice);
+
+HRESULT DELTACALL ds_get_status(ds* pDS, LPDWORD pdwStatus);
