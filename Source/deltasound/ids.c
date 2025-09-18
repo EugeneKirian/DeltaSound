@@ -258,8 +258,11 @@ HRESULT DELTACALL ids_set_cooperative_level(ids* self, HWND hwnd, DWORD dwLevel)
 }
 
 HRESULT DELTACALL ids_compact(ids* self) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    return ds_compact(self->Instance);
 }
 
 HRESULT DELTACALL ids_get_speaker_config(ids* self, LPDWORD pdwSpeakerConfig) {

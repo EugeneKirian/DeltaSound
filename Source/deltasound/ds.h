@@ -64,6 +64,7 @@ HRESULT DELTACALL ds_remove_dsb(ds* pDS, dsb* pDSB);
 HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
 
 HRESULT DELTACALL ds_set_cooperative_level(ds* pDS, HWND hwnd, DWORD dwLevel);
+HRESULT DELTACALL ds_compact(ds* pDS);
 
 HRESULT DELTACALL ds_initialize(ds* pDS, LPCGUID pcGuidDevice);
 
