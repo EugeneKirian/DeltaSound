@@ -72,7 +72,6 @@ VOID DELTACALL dsn_release(dsn* self) {
         allocator_free(self->Allocator, self->Notifications);
     }
 
-
     allocator_free(self->Allocator, self);
 }
 
@@ -166,27 +165,29 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
 
     HRESULT hr = S_OK;
     const DWORD length = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
-    LPDSBPOSITIONNOTIFY items = NULL;
+    LPDSBPOSITIONNOTIFY notes = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &items))) {
-        CopyMemory(items, pcPositionNotifies, length);
+    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &notes))) {
+        CopyMemory(notes, pcPositionNotifies, length);
 
-        if (SUCCEEDED(hr = dsn_validate_notifications(self, dwPositionNotifies, items))) {
+        if (SUCCEEDED(hr = dsn_validate_notifications(self, dwPositionNotifies, notes))) {
             EnterCriticalSection(&self->Lock);
 
-            self->NotificationCount = dwPositionNotifies;
-            LPVOID notes = InterlockedExchangePointer(&self->Notifications, items);
-
-            if (notes != NULL) {
-                allocator_free(self->Allocator, notes);
+            if (self->Notifications != NULL) {
+                allocator_free(self->Allocator, self->Notifications);
             }
 
+            self->Notifications = notes;
+            self->NotificationCount = dwPositionNotifies;
+
             LeaveCriticalSection(&self->Lock);
+
+            return S_OK;
         }
     }
 
-    if (items != NULL) {
-        allocator_free(self->Allocator, items);
+    if (notes != NULL) {
+        allocator_free(self->Allocator, notes);
     }
 
     return hr;

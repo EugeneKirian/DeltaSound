@@ -658,7 +658,7 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
 
     return S_OK;
 
-    // TODO. NOTE
+    // TODO
     // DirectSound recognizes the WAVE_FORMAT_EXTENSIBLE format tag
     // and correctly plays multiple-channel and compressed formats in hardware buffers,
     // as long as these formats are supported by the driver.

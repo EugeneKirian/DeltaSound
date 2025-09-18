@@ -149,11 +149,9 @@ ULONG DELTACALL idssb_remove_ref(idssb* self) {
         return 0;
     }
 
-    LONG result = self->RefCount;
+    LONG result = InterlockedDecrement(&self->RefCount);
 
-    if (InterlockedDecrement(&self->RefCount) <= 0) {
-        result = self->RefCount = 0;
-
+    if ((result = max(result, 0)) == 0) {
         if (self->Instance != NULL) {
             dssb_remove_ref(self->Instance, self);
         }

@@ -82,13 +82,13 @@ HRESULT DELTACALL rcm_remove_ref(rcm* self) {
         return 0;
     }
 
-    if (InterlockedDecrement(&self->RefCount) <= 0) {
-        self->RefCount = 0;
+    LONG result = InterlockedDecrement(&self->RefCount);
 
+    if ((result = max(result, 0)) == 0) {
         rcm_release(self);
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL rcm_get_data(rcm* self, LPVOID* ppData) {
