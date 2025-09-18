@@ -25,9 +25,10 @@ SOFTWARE.
 #include "arena.h"
 #include "arr.h"
 
-#define DEFAULT_BLOCK_SIZE      (1 * 1024 * 1024)
+#define DEFAULT_BLOCK_SIZE      (256 * 1024)
 
-// TODO align memory addresses!!
+// TODO align memory addresses
+// TODO Both allocations, and offsets!
 
 typedef struct block {
     allocator*  Allocator;
@@ -94,10 +95,10 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
         return E_INVALIDARG;
     }
 
-    EnterCriticalSection(&self->Lock);
-
     HRESULT hr = S_OK;
     block* region = NULL;
+
+    EnterCriticalSection(&self->Lock);
 
     for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
         if (SUCCEEDED(hr = arr_get_item(self->Blocks, i, &region))) {

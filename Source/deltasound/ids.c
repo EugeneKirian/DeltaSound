@@ -201,6 +201,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
     }
 
     // TODO Additional guid3DAlgorithm value checks
+    // TODO guid3DAlgorithm is used in 3d buffer in secondary buffers.
 
     if (pUnkOuter != NULL) {
         return DSERR_NOAGGREGATION;
@@ -329,14 +330,6 @@ HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pc
         return E_INVALIDARG;
     }
 
-    // guid3DAlgorithm
-
-    if (pcDesc->dwSize == sizeof(dsb_desc_max)
-        && (pcDesc->dwFlags & DSBCAPS_CTRL3D)
-        && !IsEqualGUID(&pcDesc->guid3DAlgorithm, &DS3DALG_DEFAULT)) {
-        return E_INVALIDARG;
-    }
-
     return S_OK;
 }
 
@@ -351,7 +344,7 @@ HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC 
 
     // dwFlags
 
-    if (pcDesc->dwFlags & DSBCAPS_LOCDEFER && !(pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)) {
+    if (pcDesc->dwFlags & DSBCAPS_LOCDEFER) {
         return E_INVALIDARG;
     }
 

@@ -111,6 +111,10 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
 
     // Copy
 
+    if (a11 == NULL || a21 == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
     CopyMemory(a11, wave, al11);
     CopyMemory(a21, wave, al12);
 
@@ -189,6 +193,14 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
     LPVOID wave = NULL;
     DWORD wave_length = 0;
 
+    DSBCAPS capsa;
+    ZeroMemory(&capsa, sizeof(DSBCAPS));
+    capsa.dwSize = sizeof(DSBCAPS);
+
+    DSBCAPS capsb;
+    ZeroMemory(&capsb, sizeof(DSBCAPS));
+    capsb.dwSize = sizeof(DSBCAPS);
+
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
 
@@ -212,28 +224,31 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
     rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
 
     if (ra != rb) {
-        DSBCAPS capsa;
-        ZeroMemory(&capsa, sizeof(DSBCAPS));
-
-        capsa.dwSize = sizeof(DSBCAPS);
-
-        DSBCAPS capsb;
-        ZeroMemory(&capsb, sizeof(DSBCAPS));
-
-        capsb.dwSize = sizeof(DSBCAPS);
-        ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
-        rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
-
         result = FALSE;
-        goto exit;
+        DebugBreak(); goto exit;
     }
 
     if (dsba == NULL || dsbb == NULL) {
         result = FALSE;
-        goto exit;
+        DebugBreak(); goto exit;
     }
 
-    // Get Format
+    // GetCaps
+
+    ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
+    rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
+
+    if (ra != rb) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    // GetFormat
 
     ra = IDirectSoundBuffer_GetFormat(dsba, &fa, sizeof(WAVEFORMATEX), &fas);
     rb = IDirectSoundBuffer_GetFormat(dsbb, &fb, sizeof(WAVEFORMATEX), &fbs);

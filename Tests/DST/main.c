@@ -45,7 +45,8 @@ SOFTWARE.
 #include "directsoundbuffer_secondary_get.h"
 #include "directsoundbuffer_secondary_set.h"
 #include "directsoundbuffer_secondary_lock.h"
-// TODO play
+#include "directsoundbuffer_secondary_play.h"
+// TODO play volume, pan, frequency
 #include "directsoundbuffer_secondary_notify.h"
 // TODO play with notifications
 
@@ -115,6 +116,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferSecondaryGet);
     TEST(DirectSoundBufferSecondarySet);
     TEST(DirectSoundBufferSecondaryLock);
+    TEST(DirectSoundBufferSecondaryPlay);
 
     TEST(DirectSoundBufferSecondaryNotify);
 

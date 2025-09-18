@@ -120,6 +120,7 @@ HRESULT DELTACALL dsn_remove_ref(dsn* self, idsn* pIDSN) {
     return S_OK;
 }
 
+// TODO better interface to avoid race conditions?
 HRESULT DELTACALL dsn_get_notification_positions(dsn* self, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies) {
     if (pdwPositionNotifies == NULL) {
         return E_INVALIDARG;
@@ -144,7 +145,8 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
     }
 
     HRESULT hr = S_OK;
-    DWORD status = 0;
+    DWORD status = DSBSTATUS_NONE;
+
     if (FAILED(hr = dsb_get_status(self->Instance, &status))) {
         return hr;
     }

@@ -88,6 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <DisableSpecificWarnings>6387;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <DisableSpecificWarnings>6387;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <DisableSpecificWarnings>6387;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,6 +134,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <DisableSpecificWarnings>6387;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,6 +154,7 @@
     <ClCompile Include="directsoundbuffer_secondary_get.c" />
     <ClCompile Include="directsoundbuffer_secondary_lock.c" />
     <ClCompile Include="directsoundbuffer_secondary_notify.c" />
+    <ClCompile Include="directsoundbuffer_secondary_play.c" />
     <ClCompile Include="directsoundbuffer_secondary_query_interface.c" />
     <ClCompile Include="directsoundbuffer_secondary_set.c" />
     <ClCompile Include="directsound_basics.c" />
@@ -164,6 +169,7 @@
     <ClCompile Include="directsound_create.c" />
     <ClCompile Include="getdeviceid.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="misc.c" />
     <ClCompile Include="synth.c" />
     <ClCompile Include="wnd.c" />
   </ItemGroup>
@@ -180,6 +186,7 @@
     <ClInclude Include="directsoundbuffer_secondary_get.h" />
     <ClInclude Include="directsoundbuffer_secondary_lock.h" />
     <ClInclude Include="directsoundbuffer_secondary_notify.h" />
+    <ClInclude Include="directsoundbuffer_secondary_play.h" />
     <ClInclude Include="directsoundbuffer_secondary_query_interface.h" />
     <ClInclude Include="directsoundbuffer_secondary_set.h" />
     <ClInclude Include="directsound_basics.h" />

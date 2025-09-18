@@ -386,6 +386,8 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
         CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
     }
 
+    // TODO Store Spatial (3D) algo
+
     return dsbcb_resize(self->Buffer, self->Caps.dwBufferBytes);
 }
 
@@ -394,10 +396,6 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
     if (self->Instance == NULL) {
         return DSERR_UNINITIALIZED;
-    }
-
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
     }
 
     HRESULT hr = S_OK;
@@ -469,10 +467,6 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
             return DSERR_PRIOLEVELNEEDED;
@@ -489,6 +483,10 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
     if ((dwFlags & DSBPLAY_TERMINATEBY_TIME)
         && (dwFlags & DSBPLAY_TERMINATEBY_PRIORITY)) {
         return E_INVALIDARG;
+    }
+
+    if (self->Instance->Level == DSSCL_NONE) {
+        return DSERR_PRIOLEVELNEEDED;
     }
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
@@ -521,11 +519,6 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         }
     }
     else {
-        if (!(self->Caps.dwFlags & (DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE))
-            && (dwFlags & DSBPLAY_TERMINATEBY_DISTANCE)) {
-            return E_INVALIDARG;
-        }
-
         if (!(self->Caps.dwFlags & DSBCAPS_LOCDEFER)) {
             if (dwPriority != 0) {
                 return E_INVALIDARG;
@@ -535,7 +528,8 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
                 return E_INVALIDARG;
             }
 
-            if (dwFlags & (DSBPLAY_TERMINATEBY_TIME | DSBPLAY_TERMINATEBY_PRIORITY)) {
+            if (dwFlags & (DSBPLAY_TERMINATEBY_TIME
+                | DSBPLAY_TERMINATEBY_PRIORITY | DSBPLAY_TERMINATEBY_DISTANCE)) {
                 return E_INVALIDARG;
             }
         }
@@ -582,7 +576,9 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return E_INVALIDARG;
     }
 
-    return dsbcb_set_current_position(self->Buffer, dwNewPosition, dwNewPosition, DSBCB_SETPOSITION_NONE);
+    return dsbcb_set_current_position(self->Buffer,
+        BLOCKALIGN(dwNewPosition, self->Format->nBlockAlign),
+        BLOCKALIGN(dwNewPosition, self->Format->nBlockAlign), DSBCB_SETPOSITION_NONE);
 }
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
@@ -719,10 +715,6 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
             return DSERR_PRIOLEVELNEEDED;
@@ -755,6 +747,8 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
     }
 
     self->Status = DSBSTATUS_NONE;
+
+    dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
 
     return S_OK;
 }
