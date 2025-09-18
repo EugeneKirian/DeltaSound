@@ -720,6 +720,10 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
@@ -731,7 +735,6 @@ HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
             return S_OK;
         }
 
-        allocator_free(pAlloc, instance->Format);
         allocator_free(pAlloc, instance);
     }
 

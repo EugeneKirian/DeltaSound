@@ -192,7 +192,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
     else {
         // TODO nothing to play for now
         // TODO support secondary buffers
-        // TODO if secondary buffer is not looping - stop it when it reaches the end 
+        // TODO if secondary buffer is not looping - stop it when it reaches the end (update status)
         // TODO handle position notifications.
         // TODO handle position notifications when buffer stopped in the middle of playback
         for (DWORD i = 0; i < arr_get_count(pSecondary); i++) {
@@ -226,6 +226,7 @@ HRESULT DELTACALL mixer_allocate(allocator* pAlloc, mixer** ppOut) {
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(mixer), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

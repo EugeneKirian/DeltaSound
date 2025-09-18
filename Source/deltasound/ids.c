@@ -283,11 +283,16 @@ HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     ids* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

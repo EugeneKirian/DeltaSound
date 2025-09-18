@@ -232,11 +232,16 @@ HRESULT DELTACALL idssl_commit_deferred_settings(idssl* self) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL idssl_allocate(allocator* pAlloc, idssl** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     idssl* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idssl), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

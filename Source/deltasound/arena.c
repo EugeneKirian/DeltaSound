@@ -60,6 +60,7 @@ HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut) {
 
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Blocks))) {
             *ppOut = instance;
+
             return S_OK;
         }
 
@@ -162,7 +163,9 @@ HRESULT DELTACALL block_create(allocator* pAlloc, DWORD dwBytes, block** ppOut) 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc, dwBytes, &instance->Block))) {
             instance->Allocator = pAlloc;
             instance->Capacity = dwBytes;
+
             *ppOut = instance;
+
             return S_OK;
         }
 

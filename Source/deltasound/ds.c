@@ -286,13 +286,17 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     ds* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
-        return S_OK;
     }
 
     return hr;

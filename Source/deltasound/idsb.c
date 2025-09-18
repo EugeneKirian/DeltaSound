@@ -413,11 +413,16 @@ HRESULT DELTACALL idsb_restore(idsb* self) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL idsb_allocate(allocator* pAlloc, idsb** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     idsb* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsb), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

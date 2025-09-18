@@ -51,7 +51,7 @@ const static DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
 };
 
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
-    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
+    LPDIRECTSOUNDBUFFER ma, LPDIRECTSOUNDBUFFER mb, DWORD seconds, LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
@@ -138,18 +138,12 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
 
     // Play A
     if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, priority, flags))) {
-        Sleep(1);
-        // TODO check secondary buffer status
-        // TODO check primary buffer status
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(a);
     }
 
     // Play B
     if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, priority, flags))) {
-        Sleep(1);
-        // TODO check secondary buffer status
-        // TODO check primary buffer status
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(b);
     }
@@ -173,7 +167,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferSecondaryPlayOnce(
+static BOOL TestDirectSoundBufferSecondaryPlaySingle(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
@@ -186,6 +180,8 @@ static BOOL TestDirectSoundBufferSecondaryPlayOnce(
 
     LPDIRECTSOUNDBUFFER dsba = NULL;
     LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsbma = NULL;
+    LPDIRECTSOUNDBUFFER dsbmb = NULL;
 
     WAVEFORMATEX format;
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
@@ -212,6 +208,12 @@ static BOOL TestDirectSoundBufferSecondaryPlayOnce(
     descb.dwFlags = flags;
     descb.dwBufferBytes = 132300;
     descb.lpwfxFormat = &format;
+
+    DSBUFFERDESC descm;
+    ZeroMemory(&descm, sizeof(DSBUFFERDESC));
+
+    descm.dwSize = sizeof(DSBUFFERDESC);
+    descm.dwFlags = DSBCAPS_PRIMARYBUFFER;
 
     WAVEFORMATEX fa;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
@@ -249,6 +251,15 @@ static BOOL TestDirectSoundBufferSecondaryPlayOnce(
         result = FALSE;
         goto exit;
     }
+
+    ra = IDirectSound_CreateSoundBuffer(dsa, &descm, &dsbma, NULL);
+    rb = IDirectSound_CreateSoundBuffer(dsa, &descm, &dsbmb, NULL);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
 
     ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
@@ -305,7 +316,7 @@ static BOOL TestDirectSoundBufferSecondaryPlayOnce(
     }
 
     for (int k = 0; k < BUFFER_PLAY_FLAGS_COUNT; k++) {
-        if (!TestDirectSoundBufferSingleWave(dsba, dsbb, 4, wave, wave_length, 0, BufferPlayFlags[k])) {
+        if (!TestDirectSoundBufferSingleWave(dsba, dsbb, dsbma, dsbmb, 4, wave, wave_length, 0, BufferPlayFlags[k])) {
             result = FALSE;
             goto exit;
         }
@@ -323,6 +334,14 @@ exit:
 
     if (dsbb != NULL) {
         IDirectSoundBuffer_Release(dsbb);
+    }
+
+    if (dsbma != NULL) {
+        IDirectSoundBuffer_Release(dsbma);
+    }
+
+    if (dsbmb != NULL) {
+        IDirectSoundBuffer_Release(dsbmb);
     }
 
     if (dsa != NULL) {
@@ -364,15 +383,13 @@ BOOL TestDirectSoundBufferSecondaryPlay(HMODULE a, HMODULE b) {
 
     for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
-            if (!TestDirectSoundBufferSecondaryPlayOnce(dsca, wa, dscb, wb,
+            if (!TestDirectSoundBufferSecondaryPlaySingle(dsca, wa, dscb, wb,
                 BufferFlags[k], CooperativeLevels[i])) {
                 result = FALSE;
                 goto exit;
             }
         }
     }
-
-    // TODO play looping
 
 exit:
     if (wa != NULL) {

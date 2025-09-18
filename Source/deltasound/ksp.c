@@ -114,13 +114,17 @@ HRESULT DELTACALL ksp_remove_ref(ksp* self, iksp* pIKSP) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL ksp_allocate(allocator* pAlloc, ksp** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     ksp* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ksp), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
-        return S_OK;
     }
 
     return hr;

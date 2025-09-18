@@ -157,6 +157,7 @@ HRESULT DELTACALL dsdevice_allocate(allocator* pAlloc, dsdevice** ppOut) {
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsdevice), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

@@ -114,13 +114,17 @@ HRESULT DELTACALL dssl_remove_ref(dssl* self, idssl* pIDSSL) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL dssl_allocate(allocator* pAlloc, dssl** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dssl* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssl), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
-        return S_OK;
     }
 
     return hr;

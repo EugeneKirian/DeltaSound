@@ -318,6 +318,10 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL dsbcb_allocate(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dsbcb* instance = NULL;
 
@@ -329,7 +333,6 @@ HRESULT DELTACALL dsbcb_allocate(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut
             return S_OK;
         }
 
-        allocator_free(pAlloc, instance->Buffer);
         allocator_free(pAlloc, instance);
     }
 

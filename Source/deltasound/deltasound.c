@@ -142,11 +142,16 @@ HRESULT DELTACALL deltasound_can_unload(deltasound* self) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL deltasound_allocate(allocator* pAlloc, deltasound** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     deltasound* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(deltasound), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
     }
 

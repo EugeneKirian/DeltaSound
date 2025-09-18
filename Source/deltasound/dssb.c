@@ -114,13 +114,17 @@ HRESULT DELTACALL dssb_remove_ref(dssb* self, idssb* pIDSSB) {
 /* ---------------------------------------------------------------------- */
 
 HRESULT DELTACALL dssb_allocate(allocator* pAlloc, dssb** ppOut) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dssb* instance = NULL;
 
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssb), &instance))) {
         instance->Allocator = pAlloc;
+
         *ppOut = instance;
-        return S_OK;
     }
 
     return hr;
