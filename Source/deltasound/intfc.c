@@ -34,12 +34,13 @@ typedef struct intf {
 
 struct intfc {
     allocator*          Allocator;
+
     CRITICAL_SECTION    Lock;
 
     DWORD               Count;
     DWORD               Capacity;
 
-    intf*         Items;
+    intf*               Items;
 };
 
 HRESULT DELTACALL intfc_resize(intfc* pIntfc);

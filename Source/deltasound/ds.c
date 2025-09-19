@@ -49,6 +49,8 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
                     ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
                 if (SUCCEEDED(hr = dsb_create(pAlloc, id, &main))) {
+                    InitializeCriticalSection(&instance->Lock);
+
                     instance->Main = main;
 
                     *ppOut = instance;
@@ -71,6 +73,12 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 VOID DELTACALL ds_release(ds* self) {
     if (self == NULL) { return; }
 
+    if (self->Device != NULL) {
+        dsdevice_release(self->Device);
+    }
+
+    DeleteCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         ids* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
@@ -81,9 +89,10 @@ VOID DELTACALL ds_release(ds* self) {
     intfc_release(self->Interfaces);
 
     for (DWORD i = arr_get_count(self->Buffers); i != 0; i--) {
-        dsb* instane = NULL;
-        if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instane))) {
-            dsb_release(instane);
+        dsb* instance = NULL;
+
+        if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instance))) {
+            dsb_release(instance);
         }
     }
 
@@ -91,53 +100,48 @@ VOID DELTACALL ds_release(ds* self) {
 
     dsb_release(self->Main);
 
-    if (self->Device != NULL) {
-        dsdevice_release(self->Device);
-    }
-
     if (self->Instance != NULL) {
         deltasound_remove_ds(self->Instance, self);
     }
-
-    // TODO cleanup logic
 
     allocator_free(self->Allocator, self);
 }
 
 HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, LPVOID* ppOut) {
-    // TODO synchronization
-
+    HRESULT hr = E_NOINTERFACE;
     ids* instance = NULL;
 
-    if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
+    EnterCriticalSection(&self->Lock);
+
+    if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
         ids_add_ref(instance);
 
         *ppOut = instance;
 
-        return S_OK;
+        goto exit;
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSound, riid)
         || (IsEqualIID(&IID_IDirectSound8, &self->ID) && IsEqualIID(&IID_IDirectSound8, riid))) {
-        HRESULT hr = S_OK;
-
         if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ds_add_ref(self, instance))) {
                 instance->Instance = self;
 
                 *ppOut = instance;
 
-                return S_OK;
+                goto exit;
             }
 
             ids_release(instance);
         }
-
-        return hr;
     }
 
-    return E_NOINTERFACE;
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL ds_add_ref(ds* self, ids* pIDS) {
@@ -173,18 +177,24 @@ HRESULT DELTACALL ds_create_sound_buffer(ds* self, REFIID riid, LPCDSBUFFERDESC 
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
+    EnterCriticalSection(&self->Lock);
+
     if (SUCCEEDED(hr = dsb_create(self->Allocator, riid, &instance))) {
         if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
             if (SUCCEEDED(hr = arr_add_item(self->Buffers, instance))) {
 
                 *ppOut = instance;
 
-                return S_OK;
+                goto exit;
             }
         }
 
         dsb_release(instance);
     }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
 
     return hr;
 }
@@ -270,6 +280,8 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         return DSERR_NODRIVER;
     }
 
+    EnterCriticalSection(&self->Lock);
+
     if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, info.Type, &info, &self->Device))) {
         DSBUFFERDESC desc;
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
@@ -278,9 +290,13 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         desc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_LOCSOFTWARE;
 
         if (SUCCEEDED(hr = dsb_initialize(self->Main, self, &desc))) {
-            return S_OK;
+            goto exit;
         }
     }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
 
     return hr;
 }
@@ -289,6 +305,8 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
     if (self->Device == NULL) {
         return DSERR_UNINITIALIZED;
     }
+
+    EnterCriticalSection(&self->Lock);
 
     // TODO other validations
 
@@ -300,6 +318,8 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
 
     // TODO, if new level is DSSCL_WRITEPRIMARY
     // then stop all secondary buffers and mark them as lost?
+
+    LeaveCriticalSection(&self->Lock);
 
     return S_OK;
 }
@@ -325,8 +345,6 @@ HRESULT DELTACALL ds_get_status(ds* self, LPDWORD pdwStatus) {
         return E_INVALIDARG;
     }
 
-    // TODO synchronization
-
     HRESULT hr = S_OK;
     DWORD status = DSBSTATUS_NONE;
 
@@ -339,17 +357,25 @@ HRESULT DELTACALL ds_get_status(ds* self, LPDWORD pdwStatus) {
         return hr;
     }
 
+    EnterCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < arr_get_count(self->Buffers); i++) {
         dsb* instance = NULL;
         if (SUCCEEDED(arr_get_item(self->Buffers, i, &instance))) {
             if (SUCCEEDED(hr = dsb_get_status(instance, &status))) {
                 if (status & DSBSTATUS_PLAYING) {
+
                     *pdwStatus = DS_STATUS_PLAYING;
-                    return hr;
+
+                    goto exit;
                 }
             }
         }
     }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
 
     return hr;
 }

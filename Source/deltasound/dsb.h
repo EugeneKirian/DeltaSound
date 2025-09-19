@@ -47,31 +47,31 @@ typedef struct dssl dssl;
 typedef struct dssb dssb;
 
 typedef struct dsb {
-    allocator*      Allocator;
-    GUID            ID;
-    ds*             Instance;
-    intfc*          Interfaces;
-    ksp*            PropertySet;
-    dssl*           SpatialListener;
-    dssb*           SpatialBuffer;
-    dsn*            Notifications;
+    allocator*          Allocator;
+    GUID                ID;
+    ds*                 Instance;
+    intfc*              Interfaces;
+    ksp*                PropertySet;
+    dssl*               SpatialListener;
+    dssb*               SpatialBuffer;
+    dsn*                Notifications;
 
-    // TODO Lock
+    CRITICAL_SECTION    Lock;
 
-    DSBCAPS         Caps;
-    dsbcb*          Buffer;
+    DSBCAPS             Caps;
+    dsbcb*              Buffer;
 
-    LPWAVEFORMATEX  Format;
+    LPWAVEFORMATEX      Format;
 
-    DWORD           Frequency;
-    FLOAT           Pan;
-    FLOAT           Volume;
-    DWORD           Priority;
+    DWORD               Frequency;
+    FLOAT               Pan;
+    FLOAT               Volume;
+    DWORD               Priority;
 
-    DWORD           Play;
-    DWORD           Status;
+    DWORD               Play;
+    DWORD               Status;
 
-    GUID            SpatialAlgorithm;
+    GUID                SpatialAlgorithm;
 } dsb;
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut);

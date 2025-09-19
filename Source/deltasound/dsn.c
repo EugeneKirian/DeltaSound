@@ -57,6 +57,8 @@ HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
 VOID DELTACALL dsn_release(dsn* self) {
     if (self == NULL) { return; }
 
+    DeleteCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         idsn* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
@@ -66,8 +68,6 @@ VOID DELTACALL dsn_release(dsn* self) {
 
     intfc_release(self->Interfaces);
 
-    DeleteCriticalSection(&self->Lock);
-
     if (self->Notifications != NULL) {
         allocator_free(self->Allocator, self->Notifications);
     }
@@ -76,21 +76,25 @@ VOID DELTACALL dsn_release(dsn* self) {
 }
 
 HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
-    // TODO synchronization
+    HRESULT hr = E_NOINTERFACE;
 
-    idsn* instance = NULL;
+    EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
-        idsn_add_ref(instance);
+    {
+        idsn* instance = NULL;
 
-        *ppOut = instance;
+        if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
+            idsn_add_ref(instance);
 
-        return S_OK;
+            *ppOut = instance;
+
+            goto exit;
+        }
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSoundNotify, riid)) {
-        HRESULT hr = S_OK;
+        idsn* instance = NULL;
 
         if (SUCCEEDED(hr = idsn_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dsn_add_ref(self, instance))) {
@@ -98,20 +102,22 @@ HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
 
                 *ppOut = instance;
 
-                return S_OK;
+                goto exit;
             }
 
             idsn_release(instance);
         }
-
-        return hr;
     }
     else if (IsEqualIID(&IID_IDirectSoundBuffer, riid)
         || IsEqualIID(&IID_IKsPropertySet, riid)) {
-        return dsb_query_interface(self->Instance, riid, ppOut);
+        hr = dsb_query_interface(self->Instance, riid, ppOut);
     }
 
-    return E_NOINTERFACE;
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL dsn_add_ref(dsn* self, idsn* pIDSN) {

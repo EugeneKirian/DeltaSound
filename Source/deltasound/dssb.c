@@ -33,13 +33,13 @@ HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut) {
     HRESULT hr = S_OK;
     dssb* instance = NULL;
 
-
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssb), &instance))) {
         instance->Allocator = pAlloc;
 
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
 
@@ -55,6 +55,8 @@ HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut) {
 VOID DELTACALL dssb_release(dssb* self) {
     if (self == NULL) { return; }
 
+    DeleteCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         idssb* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
@@ -68,21 +70,25 @@ VOID DELTACALL dssb_release(dssb* self) {
 }
 
 HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, LPVOID* ppOut) {
-    // TODO synchronization
+    HRESULT hr = E_NOINTERFACE;
 
-    idssb* instance = NULL;
+    EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
-        idssb_add_ref(instance);
+    {
+        idssb* instance = NULL;
 
-        *ppOut = instance;
+        if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
+            idssb_add_ref(instance);
 
-        return S_OK;
+            *ppOut = instance;
+
+            goto exit;
+        }
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSound3DBuffer, riid)) {
-        HRESULT hr = S_OK;
+        idssb* instance = NULL;
 
         if (SUCCEEDED(hr = idssb_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dssb_add_ref(self, instance))) {
@@ -90,18 +96,18 @@ HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, LPVOID* ppOut) {
 
                 *ppOut = instance;
 
-                return S_OK;
+                goto exit;
             }
 
             idssb_release(instance);
         }
-
-        return hr;
     }
 
-    // TODO NOT IMPLEMENTED
+exit:
 
-    return E_NOINTERFACE;
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL dssb_add_ref(dssb* self, idssb* pIDSSB) {

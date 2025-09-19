@@ -30,10 +30,12 @@ SOFTWARE.
 typedef struct dsb dsb;
 
 typedef struct dssl {
-    allocator*  Allocator;
-    GUID        ID;
-    dsb*        Instance;
-    intfc*      Interfaces;
+    allocator*          Allocator;
+    GUID                ID;
+    dsb*                Instance;
+    intfc*              Interfaces;
+
+    CRITICAL_SECTION    Lock;
 } dssl;
 
 HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut);

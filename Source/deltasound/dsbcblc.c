@@ -37,7 +37,6 @@ struct dsbcblc {
     dsbcbl*             Items;
 };
 
-HRESULT DELTACALL dsbcblc_allocate(allocator* pAlloc, dsbcblc** ppOut);
 HRESULT DELTACALL dsbcblc_resize(dsbcblc* self);
 
 HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut) {
@@ -87,13 +86,13 @@ HRESULT DELTACALL dsbcblc_add_item(dsbcblc* self, dsbcbl* pItem) {
         return E_INVALIDARG;
     }
 
+    HRESULT hr = S_OK;
+
     EnterCriticalSection(&self->Lock);
 
     if (self->Capacity < self->Count + 1) {
-        HRESULT hr = S_OK;
         if (FAILED(hr = dsbcblc_resize(self))) {
-            LeaveCriticalSection(&self->Lock);
-            return hr;
+            goto exit;
         }
     }
 
@@ -101,9 +100,11 @@ HRESULT DELTACALL dsbcblc_add_item(dsbcblc* self, dsbcbl* pItem) {
 
     self->Count++;
 
+exit:
+
     LeaveCriticalSection(&self->Lock);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT DELTACALL dsbcblc_get_item(dsbcblc* self, DWORD dwIndex, dsbcbl** ppItem) {
