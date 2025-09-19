@@ -108,6 +108,7 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundGetCaps);
     TEST(DirectSoundDuplicatePrimary);
     TEST(DirectSoundDuplicateSecondary);
+    // TODO duplicate with spatial buffers
 
     //TEST(DirectSoundBufferPrimaryBasics);
     //TEST(DirectSoundBufferPrimaryQueryInterface);
@@ -133,6 +134,8 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundBufferSecondaryPlayStereo);
 
     //TEST(DirectSoundBufferSecondaryNotify);
+
+    // TODO Tests play with notifications
 
 exit:
 

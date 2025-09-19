@@ -101,6 +101,8 @@ ULONG DELTACALL idsn_remove_ref(idsn* self) {
     LONG result = InterlockedDecrement(&self->RefCount);
 
     if ((result = max(result, 0)) == 0) {
+        self->RefCount = 0;
+
         if (self->Instance != NULL) {
             dsn_remove_ref(self->Instance, self);
         }

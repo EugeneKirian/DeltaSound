@@ -85,6 +85,8 @@ HRESULT DELTACALL rcm_remove_ref(rcm* self) {
     LONG result = InterlockedDecrement(&self->RefCount);
 
     if ((result = max(result, 0)) == 0) {
+        self->RefCount = 0;
+
         rcm_release(self);
     }
 

@@ -204,6 +204,7 @@ INT CDECLCALL dsn_position_notify_compare(LPCDSBPOSITIONNOTIFY a, LPCDSBPOSITION
 }
 
 HRESULT DELTACALL dsn_validate_notifications(dsn* self, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies) {
+    // TODO sort in-place explicitly without qsort.
     qsort(pPositionNotifies, dwPositionNotifies,
         sizeof(DSBPOSITIONNOTIFY), dsn_position_notify_compare);
 

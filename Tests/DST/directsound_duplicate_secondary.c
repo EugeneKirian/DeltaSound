@@ -90,10 +90,18 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
 
     DWORD cpa = 0, cwa = 0, cpb = 0, cwb = 0;
 
+    DWORD fa = 0, fb = 0;
+    DWORD va = 0, vb = 0;
+    DWORD pa = 0, pb = 0;
+
     HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
     HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
 
     if (dsba == NULL || dsbb == NULL) {
+        if (flags & DSBCAPS_LOCHARDWARE) {
+            goto exit;
+        }
+
         result = FALSE;
         goto exit;
     }
@@ -122,6 +130,38 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
         goto exit;
     }
 
+    // SetFrequency
+
+    ra = IDirectSoundBuffer_SetFrequency(dsba, 96000);
+    rb = IDirectSoundBuffer_SetFrequency(dsbb, 96000);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    // SetPan
+
+    ra = IDirectSoundBuffer_SetPan(dsba, DSBPAN_LEFT);
+    rb = IDirectSoundBuffer_SetPan(dsbb, DSBPAN_LEFT);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    // SetVolume
+
+    ra = IDirectSoundBuffer_SetVolume(dsba, DSBVOLUME_MIN / 2);
+    rb = IDirectSoundBuffer_SetVolume(dsbb, DSBVOLUME_MIN / 2);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    // SetCurrentPosition
+
     ra = IDirectSoundBuffer_SetCurrentPosition(dsba, 10000);
     rb = IDirectSoundBuffer_SetCurrentPosition(dsbb, 10000);
 
@@ -129,6 +169,8 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
         result = FALSE;
         goto exit;
     }
+
+    // Duplicate
 
     ra = IDirectSound_DuplicateSoundBuffer(a, dsba, &dsbac);
     rb = IDirectSound_DuplicateSoundBuffer(b, dsbb, &dsbbc);
@@ -143,6 +185,8 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
         goto exit;
     }
 
+    // GetCaps
+
     ra = IDirectSoundBuffer_GetCaps(dsbac, &capsa);
     rb = IDirectSoundBuffer_GetCaps(dsbbc, &capsb);
 
@@ -156,6 +200,8 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
         goto exit;
     }
 
+    // GetCurrentPosition
+
     ra = IDirectSoundBuffer_GetCurrentPosition(dsbac, &cpa, &cwa);
     rb = IDirectSoundBuffer_GetCurrentPosition(dsbbc, &cpb, &cwa);
 
@@ -165,6 +211,51 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
     }
 
     if (cpa != cpb || cwa != cwa) {
+        result = FALSE;
+        goto exit;
+    }
+
+    // GetFrequency
+
+    ra = IDirectSoundBuffer_GetFrequency(dsbac, &fa);
+    rb = IDirectSoundBuffer_GetFrequency(dsbbc, &fb);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (pa != pb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    // GetPan
+
+    ra = IDirectSoundBuffer_GetPan(dsbac, &pa);
+    rb = IDirectSoundBuffer_GetPan(dsbbc, &pb);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (pa != pb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    // GetVolume
+
+    ra = IDirectSoundBuffer_GetVolume(dsbac, &va);
+    rb = IDirectSoundBuffer_GetVolume(dsbbc, &vb);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (va != vb) {
         result = FALSE;
         goto exit;
     }
@@ -225,9 +316,11 @@ BOOL TestDirectSoundDuplicateSecondary(HMODULE a, HMODULE b) {
         }
     }
 
-    // TODO various settings such as volume, frequency, pan..
 
     // TODO test while playing, check priority, status, etc...
+    // TODO in what state buffer is created if the original is playing?
+    // TODO what happens to the flags?
+    // TODO todo what happens with notifications?
 
 exit:
 

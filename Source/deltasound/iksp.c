@@ -111,6 +111,8 @@ ULONG DELTACALL iksp_remove_ref(iksp* self) {
     LONG result = InterlockedDecrement(&self->RefCount);
 
     if ((result = max(result, 0)) == 0) {
+        self->RefCount = 0;
+
         if (self->Instance != NULL) {
             ksp_remove_ref(self->Instance, self);
         }

@@ -154,6 +154,8 @@ ULONG DELTACALL idsb_remove_ref(idsb* self) {
     LONG result = InterlockedDecrement(&self->RefCount);
 
     if ((result = max(result, 0)) == 0) {
+        self->RefCount = 0;
+
         if (!(self->Instance->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             if (self->Instance != NULL) {
                 dsb_remove_ref(self->Instance, self);

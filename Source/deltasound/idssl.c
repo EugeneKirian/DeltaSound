@@ -143,6 +143,8 @@ ULONG DELTACALL idssl_remove_ref(idssl* self) {
     LONG result = InterlockedDecrement(&self->RefCount);
 
     if ((result = max(result, 0)) == 0) {
+        self->RefCount = 0;
+
         if (self->Instance != NULL) {
             dssl_remove_ref(self->Instance, self);
         }
