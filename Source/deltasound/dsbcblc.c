@@ -48,7 +48,9 @@ HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut) {
     HRESULT hr = S_OK;
     dsbcblc* instance = NULL;
 
-    if (SUCCEEDED(hr = dsbcblc_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsbcblc), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Count = 0;
         instance->Capacity = DEFAULT_CAPACITY;
 
@@ -57,10 +59,11 @@ HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
+
             return S_OK;
         }
 
-        dsbcblc_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -70,6 +73,7 @@ VOID DELTACALL dsbcblc_release(dsbcblc* self) {
     if (self == NULL) { return; }
 
     DeleteCriticalSection(&self->Lock);
+
     allocator_free(self->Allocator, self->Items);
     allocator_free(self->Allocator, self);
 }
@@ -148,23 +152,6 @@ DWORD DELTACALL dsbcblc_get_count(dsbcblc* self) {
 }
 
 /* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL dsbcblc_allocate(allocator* pAlloc, dsbcblc** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    dsbcblc* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsbcblc), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
 
 HRESULT DELTACALL dsbcblc_resize(dsbcblc* self) {
     if (self == NULL) {

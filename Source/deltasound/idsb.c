@@ -95,8 +95,6 @@ const static idsb_vft idsb_self = {
     idsb_restore
 };
 
-HRESULT DELTACALL idsb_allocate(allocator* pAlloc, idsb** ppOut);
-
 HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -105,10 +103,13 @@ HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut) {
     HRESULT hr = S_OK;
     idsb* instance = NULL;
 
-    if (SUCCEEDED(hr = idsb_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsb), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Self = &idsb_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
+
         *ppOut = instance;
     }
 
@@ -150,7 +151,9 @@ ULONG DELTACALL idsb_remove_ref(idsb* self) {
         return 0;
     }
 
-    if (InterlockedDecrement(&self->RefCount) <= 0) {
+    LONG result = InterlockedDecrement(&self->RefCount);
+
+    if ((result = max(result, 0)) == 0) {
         self->RefCount = 0;
 
         if (!(self->Instance->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
@@ -161,7 +164,7 @@ ULONG DELTACALL idsb_remove_ref(idsb* self) {
         }
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL idsb_get_caps(idsb* self, LPDSBCAPS pCaps) {
@@ -408,23 +411,4 @@ HRESULT DELTACALL idsb_restore(idsb* self) {
     }
 
     return dsb_restore(self->Instance);
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL idsb_allocate(allocator* pAlloc, idsb** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    idsb* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsb), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

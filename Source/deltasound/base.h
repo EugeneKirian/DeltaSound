@@ -36,3 +36,5 @@ SOFTWARE.
 #define CDECLCALL   __cdecl
 
 #define UNUSED(X)   ((VOID)X)
+
+#define IS_VALID_HANDLE(h)  (((h) != NULL) && ((h) != INVALID_HANDLE_VALUE))

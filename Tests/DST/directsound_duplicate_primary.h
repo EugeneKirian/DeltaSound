@@ -24,21 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "iksp.h"
+#include "base.h"
 
-typedef struct dsb dsb;
-typedef struct intfc intfc;
-
-typedef struct ksp {
-    allocator*  Allocator;
-    GUID        ID;
-    dsb*        Instance;
-    intfc*      Interfaces;
-} ksp;
-
-HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut);
-VOID DELTACALL ksp_release(ksp* pKSP);
-
-HRESULT DELTACALL ksp_query_interface(ksp* pKSP, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL ksp_add_ref(ksp* pKSP, iksp* pIKSP);
-HRESULT DELTACALL ksp_remove_ref(ksp* pKSP, iksp* pIKSP);
+BOOL TestDirectSoundDuplicatePrimary(HMODULE a, HMODULE b);

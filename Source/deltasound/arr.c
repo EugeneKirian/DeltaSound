@@ -37,7 +37,6 @@ struct arr {
     LPVOID*             Items;
 };
 
-HRESULT DELTACALL arr_allocate(allocator* pAlloc, arr** ppOut);
 HRESULT DELTACALL arr_resize(arr* pArray);
 
 HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut) {
@@ -48,7 +47,9 @@ HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut) {
     HRESULT hr = S_OK;
     arr* instance = NULL;
 
-    if (SUCCEEDED(hr = arr_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(arr), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Count = 0;
         instance->Capacity = DEFAULT_CAPACITY;
 
@@ -57,10 +58,11 @@ HRESULT DELTACALL arr_create(allocator* pAlloc, arr** ppOut) {
             InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
+
             return S_OK;
         }
 
-        arr_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -154,28 +156,7 @@ DWORD DELTACALL arr_get_count(arr* self) {
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL arr_allocate(allocator* pAlloc, arr** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    arr* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(arr), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
-
 HRESULT DELTACALL arr_resize(arr* self) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     HRESULT hr = S_OK;
 
     const DWORD capacity = max(self->Capacity, 1) * DEFAULT_CAPACITY_MULTIPLIER;

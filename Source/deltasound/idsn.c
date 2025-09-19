@@ -41,8 +41,6 @@ const static idsn_vft idsn_self = {
     idsn_set_notification_positions
 };
 
-HRESULT DELTACALL idsn_allocate(allocator* pAlloc, idsn** ppOut);
-
 HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -51,10 +49,14 @@ HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
     HRESULT hr = S_OK;
     idsn* instance = NULL;
 
-    if (SUCCEEDED(hr = idsn_allocate(pAlloc, &instance))) {
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsn), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Self = &idsn_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
+
         *ppOut = instance;
     }
 
@@ -96,7 +98,9 @@ ULONG DELTACALL idsn_remove_ref(idsn* self) {
         return 0;
     }
 
-    if (InterlockedDecrement(&self->RefCount) <= 0) {
+    LONG result = InterlockedDecrement(&self->RefCount);
+
+    if ((result = max(result, 0)) == 0) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
@@ -106,7 +110,7 @@ ULONG DELTACALL idsn_remove_ref(idsn* self) {
         idsn_release(self);
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
@@ -115,23 +119,4 @@ HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNo
     }
 
     return dsn_set_notification_positions(self->Instance, dwPositionNotifies, pcPositionNotifies);
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL idsn_allocate(allocator* pAlloc, idsn** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    idsn* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsn), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

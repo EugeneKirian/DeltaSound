@@ -29,8 +29,6 @@ SOFTWARE.
 #include "dsdevice.h"
 #include "ids.h"
 
-HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut);
-
 HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -39,7 +37,9 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     HRESULT hr = S_OK;
     ds* instance = NULL;
 
-    if (SUCCEEDED(hr = ds_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
+        instance->Allocator = pAlloc;
+
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
@@ -50,13 +50,19 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
 
                 if (SUCCEEDED(hr = dsb_create(pAlloc, id, &main))) {
                     instance->Main = main;
+
                     *ppOut = instance;
+
                     return S_OK;
                 }
+
+                arr_release(instance->Buffers);
             }
+
+            intfc_release(instance->Interfaces);
         }
 
-        ds_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -83,9 +89,7 @@ VOID DELTACALL ds_release(ds* self) {
 
     arr_release(self->Buffers);
 
-    if (self->Main != NULL) {
-        dsb_release(self->Main);
-    }
+    dsb_release(self->Main);
 
     if (self->Device != NULL) {
         dsdevice_release(self->Device);
@@ -107,7 +111,9 @@ HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, LPVOID* ppOut) {
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
         ids_add_ref(instance);
+
         *ppOut = instance;
+
         return S_OK;
     }
 
@@ -119,7 +125,9 @@ HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ds_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 
@@ -146,16 +154,19 @@ HRESULT DELTACALL ds_remove_ref(ds* self, ids* pIDS) {
     return S_OK;
 }
 
-HRESULT DELTACALL ds_create_dsb(ds* self, REFIID riid, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
+HRESULT DELTACALL ds_create_sound_buffer(ds* self, REFIID riid, LPCDSBUFFERDESC pcDesc, dsb** ppOut) {
     if (self->Device == NULL) {
         return DSERR_UNINITIALIZED;
     }
 
     if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        const DWORD flags = (pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)
-            ? (pcDesc->dwFlags & (~DSBCAPS_LOCHARDWARE)) : pcDesc->dwFlags;
-        dsb_set_flags(self->Main, flags | DSBCAPS_LOCSOFTWARE);
+        self->Main->Caps.dwFlags =
+            (pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)
+            ? (pcDesc->dwFlags & (~DSBCAPS_LOCHARDWARE)) | DSBCAPS_LOCSOFTWARE
+            : pcDesc->dwFlags | DSBCAPS_LOCSOFTWARE;
+
         *ppOut = self->Main;
+
         return S_OK;
     }
 
@@ -165,7 +176,9 @@ HRESULT DELTACALL ds_create_dsb(ds* self, REFIID riid, LPCDSBUFFERDESC pcDesc, d
     if (SUCCEEDED(hr = dsb_create(self->Allocator, riid, &instance))) {
         if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
             if (SUCCEEDED(hr = arr_add_item(self->Buffers, instance))) {
+
                 *ppOut = instance;
+
                 return S_OK;
             }
         }
@@ -215,6 +228,14 @@ HRESULT DELTACALL ds_get_caps(ds* self, LPDSCAPS pCaps) {
     pCaps->dwMaxHwMixingStreamingBuffers = 1;
 
     return S_OK;
+}
+
+HRESULT DELTACALL ds_duplicate_sound_buffer(ds* self, dsb* pDSBufferOriginal, dsb** ppDSBufferDuplicate) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    return dsb_duplicate(pDSBufferOriginal, ppDSBufferDuplicate);
 }
 
 HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
@@ -328,25 +349,6 @@ HRESULT DELTACALL ds_get_status(ds* self, LPDWORD pdwStatus) {
                 }
             }
         }
-    }
-
-    return hr;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL ds_allocate(allocator* pAlloc, ds** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    ds* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
     }
 
     return hr;

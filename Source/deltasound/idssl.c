@@ -84,8 +84,6 @@ const static idssl_vft idssl_self = {
     idssl_commit_deferred_settings
 };
 
-HRESULT DELTACALL idssl_allocate(allocator* pAlloc, idssl** ppOut);
-
 HRESULT DELTACALL idssl_create(allocator* pAlloc, REFIID riid, idssl** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -94,10 +92,13 @@ HRESULT DELTACALL idssl_create(allocator* pAlloc, REFIID riid, idssl** ppOut) {
     HRESULT hr = S_OK;
     idssl* instance = NULL;
 
-    if (SUCCEEDED(hr = idssl_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idssl), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Self = &idssl_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
+
         *ppOut = instance;
     }
 
@@ -139,7 +140,9 @@ ULONG DELTACALL idssl_remove_ref(idssl* self) {
         return 0;
     }
 
-    if (InterlockedDecrement(&self->RefCount) <= 0) {
+    LONG result = InterlockedDecrement(&self->RefCount);
+
+    if ((result = max(result, 0)) == 0) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
@@ -149,7 +152,7 @@ ULONG DELTACALL idssl_remove_ref(idssl* self) {
         idssl_release(self);
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL idssl_get_all_parameters(idssl* self, LPDS3DLISTENER pListener) {
@@ -227,23 +230,4 @@ HRESULT DELTACALL idssl_set_velocity(idssl* self, D3DVALUE x, D3DVALUE y, D3DVAL
 HRESULT DELTACALL idssl_commit_deferred_settings(idssl* self) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL idssl_allocate(allocator* pAlloc, idssl** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    idssl* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idssl), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

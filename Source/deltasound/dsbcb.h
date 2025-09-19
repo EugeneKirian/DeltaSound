@@ -34,13 +34,13 @@ typedef struct dsbcb dsbcb;
 HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut);
 VOID DELTACALL dsbcb_release(dsbcb* pBuffer);
 
+HRESULT DELTACALL dsbcb_duplicate(dsbcb* pBuffer, dsbcb** ppOut);
+
 HRESULT DELTACALL dsbcb_get_current_position(dsbcb* pBuffer, LPDWORD pdwReadBytes, LPDWORD pdwWriteBytes);
 HRESULT DELTACALL dsbcb_set_current_position(dsbcb* pBuffer, DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags);
 
 HRESULT DELTACALL dsbcb_get_size(dsbcb* pBuffer, LPDWORD pdwBytes);
 HRESULT DELTACALL dsbcb_get_lockable_size(dsbcb* pBuffer, LPDWORD pdwBytes);
-
-HRESULT DELTACALL dsbcb_resize(dsbcb* pBuffer, DWORD dwBytes);
 
 HRESULT DELTACALL dsbcb_lock(dsbcb* pBuffer, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2);

@@ -25,8 +25,6 @@ SOFTWARE.
 #include "dsb.h"
 #include "dssb.h"
 
-HRESULT DELTACALL dssb_allocate(allocator* pAlloc, dssb** ppOut);
-
 HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -35,16 +33,20 @@ HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut) {
     HRESULT hr = S_OK;
     dssb* instance = NULL;
 
-    if (SUCCEEDED(hr = dssb_allocate(pAlloc, &instance))) {
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssb), &instance))) {
+        instance->Allocator = pAlloc;
+
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+
             *ppOut = instance;
 
             return S_OK;
         }
 
-        dssb_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -72,7 +74,9 @@ HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, LPVOID* ppOut) {
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
         idssb_add_ref(instance);
+
         *ppOut = instance;
+
         return S_OK;
     }
 
@@ -83,7 +87,9 @@ HRESULT DELTACALL dssb_query_interface(dssb* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = idssb_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dssb_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 
@@ -109,23 +115,4 @@ HRESULT DELTACALL dssb_remove_ref(dssb* self, idssb* pIDSSB) {
     // what to do when the buffer is released? Keep the actual settings and conntinue using them?
 
     return S_OK;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL dssb_allocate(allocator* pAlloc, dssb** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    dssb* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssb), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

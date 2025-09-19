@@ -23,9 +23,8 @@ SOFTWARE.
 */
 
 #include "dsb.h"
+#include "intfc.h"
 #include "ksp.h"
-
-HRESULT DELTACALL ksp_allocate(allocator* pAlloc, ksp** ppOut);
 
 HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -35,10 +34,13 @@ HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
     HRESULT hr = S_OK;
     ksp* instance = NULL;
 
-    if (SUCCEEDED(hr = ksp_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ksp), &instance))) {
+        instance->Allocator = pAlloc;
+
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+
             *ppOut = instance;
 
             return S_OK;
@@ -72,7 +74,9 @@ HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
 
     if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
         iksp_add_ref(instance);
+
         *ppOut = instance;
+
         return S_OK;
     }
 
@@ -83,7 +87,9 @@ HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = iksp_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ksp_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 
@@ -109,23 +115,4 @@ HRESULT DELTACALL ksp_remove_ref(ksp* self, iksp* pIKSP) {
     // Release Property Set? Restore initial configuration?
 
     return S_OK;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL ksp_allocate(allocator* pAlloc, ksp** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    ksp* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ksp), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
 }

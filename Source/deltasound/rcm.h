@@ -13,8 +13,8 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WrcmblcANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WrcmblcANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -24,21 +24,15 @@ SOFTWARE.
 
 #pragma once
 
-#include "iksp.h"
+#include "allocator.h"
 
-typedef struct dsb dsb;
-typedef struct intfc intfc;
+typedef struct rcm rcm;
 
-typedef struct ksp {
-    allocator*  Allocator;
-    GUID        ID;
-    dsb*        Instance;
-    intfc*      Interfaces;
-} ksp;
+HRESULT DELTACALL rcm_create(allocator* pAlloc, DWORD dwBytes, rcm** ppOut);
+VOID DELTACALL rcm_release(rcm* pMem);
 
-HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut);
-VOID DELTACALL ksp_release(ksp* pKSP);
+HRESULT DELTACALL rcm_add_ref(rcm* pMem);
+HRESULT DELTACALL rcm_remove_ref(rcm* pMem);
 
-HRESULT DELTACALL ksp_query_interface(ksp* pKSP, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL ksp_add_ref(ksp* pKSP, iksp* pIKSP);
-HRESULT DELTACALL ksp_remove_ref(ksp* pKSP, iksp* pIKSP);
+HRESULT DELTACALL rcm_get_data(rcm* pMem, LPVOID* ppData);
+HRESULT DELTACALL rcm_get_size(rcm* pMem, LPDWORD pdwBytes);

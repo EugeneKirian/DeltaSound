@@ -42,6 +42,7 @@
     <ClInclude Include="intfc.h" />
     <ClInclude Include="ksp.h" />
     <ClInclude Include="mixer.h" />
+    <ClInclude Include="rcm.h" />
     <ClInclude Include="uuid.h" />
     <ClInclude Include="wave_format.h" />
   </ItemGroup>
@@ -68,6 +69,7 @@
     <ClCompile Include="intfc.c" />
     <ClCompile Include="ksp.c" />
     <ClCompile Include="mixer.c" />
+    <ClCompile Include="rcm.c" />
     <ClCompile Include="uuid.c" />
     <ClCompile Include="wave_format.c" />
   </ItemGroup>

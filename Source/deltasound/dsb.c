@@ -33,8 +33,6 @@ SOFTWARE.
 
 #define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
 
-HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut);
-
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -43,18 +41,24 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
-    if (SUCCEEDED(hr = dsb_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsb), &instance))) {
+        instance->Allocator = pAlloc;
+
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
-        if (SUCCEEDED(hr = dsbcb_create(pAlloc, 0, &instance->Buffer))) {
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX) /* TODO */, &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
                 instance->Caps.dwSize = sizeof(DSBCAPS);
+
                 *ppOut = instance;
+
                 return S_OK;
             }
+
+            allocator_free(pAlloc, instance->Format);
         }
 
-        dsb_release(instance);
+        allocator_free(pAlloc, instance);
     }
 
     return hr;
@@ -80,18 +84,73 @@ VOID DELTACALL dsb_release(dsb* self) {
         ksp_release(self->PropertySet);
     }
 
-    dsbcb_release(self->Buffer);
+    if (self->Buffer != NULL) {
+        dsbcb_release(self->Buffer);
+    }
 
     allocator_free(self->Allocator, self->Format);
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsb_set_flags(dsb* self, DWORD dwFlags) { // TODO Is this needed?
-    self->Caps.dwFlags = dwFlags;
+HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
 
-    // TODO properly update things when new flags are set
+    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        return DSERR_INVALIDCALL;
+    }
 
-    return S_OK;
+    HRESULT hr = S_OK;
+    dsb* instance = NULL;
+
+    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(dsb), &instance))) {
+        instance->Allocator = self->Allocator;
+
+        CopyMemory(&instance->ID, &self->ID, sizeof(GUID));
+
+        if (SUCCEEDED(hr = allocator_allocate(self->Allocator, SIZEOFFORMATEX(self->Format), &instance->Format))) {
+            if (SUCCEEDED(hr = intfc_create(self->Allocator, &instance->Interfaces))) {
+                if (SUCCEEDED(hr = dsbcb_duplicate(self->Buffer, &instance->Buffer))) {
+                    instance->Instance = self->Instance;
+
+                    // TODO PropertySet ?
+                    // TODO SpatialBuffer ?
+                    // TODO Notifications ?
+
+                    CopyMemory(&instance->Caps, &self->Caps, sizeof(DSBCAPS));
+                    CopyMemory(instance->Format, self->Format, SIZEOFFORMATEX(self->Format));
+
+                    instance->Volume = self->Volume;
+                    instance->Pan = self->Pan;
+                    instance->Frequency = self->Frequency;
+                    instance->Priority = self->Priority;
+
+                    CopyMemory(&instance->SpatialAlgorithm, &self->SpatialAlgorithm, sizeof(GUID));
+
+                    instance->Play = DSBPLAY_NONE;
+                    instance->Status = DSBSTATUS_NONE;
+
+                    if (SUCCEEDED(hr = arr_add_item(self->Instance->Buffers, instance))) {
+
+                        *ppOut = instance;
+
+                        return S_OK;
+                    }
+
+                    dsbcb_release(instance->Buffer);
+                }
+
+                intfc_release(instance->Interfaces);
+            }
+
+            allocator_free(self->Allocator, instance->Format);
+        }
+
+        allocator_free(self->Allocator, instance);
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
@@ -102,7 +161,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
 
         if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
             idsb_add_ref(instance);
+
             *ppOut = instance;
+
             return S_OK;
         }
     }
@@ -116,7 +177,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         if (SUCCEEDED(hr = idsb_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dsb_add_ref(self, instance))) {
                 instance->Instance = self;
+
                 *ppOut = instance;
+
                 return S_OK;
             }
 
@@ -358,12 +421,14 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     }
     else {
         self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
-        CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
+        CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX)); // TODO support larger structs
     }
 
-    // TODO Store Spatial (3D) algo
+    if (pcDesc->dwSize == sizeof(DSBUFFERDESC)) {
+        CopyMemory(&self->SpatialAlgorithm, &pcDesc->guid3DAlgorithm, sizeof(GUID));
+    }
 
-    return dsbcb_resize(self->Buffer, self->Caps.dwBufferBytes);
+    return dsbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
 }
 
 HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
@@ -593,11 +658,17 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         // TODO stop the buffer, update the format, and resume playback
     }
 
-    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
+    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX)); // TODO support larger structs
 
     self->Format->cbSize = 0;
 
     return S_OK;
+
+    // TODO
+    // DirectSound recognizes the WAVE_FORMAT_EXTENSIBLE format tag
+    // and correctly plays multiple-channel and compressed formats in hardware buffers,
+    // as long as these formats are supported by the driver.
+    // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee419020(v=vs.85)
 }
 
 HRESULT DELTACALL dsb_set_volume(dsb* self, FLOAT fVolume) {
@@ -715,28 +786,4 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
     dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
 
     return S_OK;
-}
-
-/* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL dsb_allocate(allocator* pAlloc, dsb** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    dsb* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsb), &instance))) {
-        instance->Allocator = pAlloc;
-
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX), &instance->Format))) {
-            *ppOut = instance;
-            return S_OK;
-        }
-
-        allocator_free(pAlloc, instance);
-    }
-
-    return hr;
 }

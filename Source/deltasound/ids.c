@@ -65,22 +65,24 @@ const static ids_vft ids_self = {
     ids_initialize
 };
 
-HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut);
 HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc);
 HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc);
 
 HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
-    if (pAlloc == NULL || riid  == NULL || ppOut == NULL) {
+    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
     ids* instance = NULL;
 
-    if (SUCCEEDED(hr = ids_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
+        instance->Allocator = pAlloc;
+
         instance->Self = &ids_self;
         CopyMemory(&instance->ID, riid, sizeof(GUID));
         instance->RefCount = 1;
+
         *ppOut = instance;
     }
 
@@ -122,7 +124,9 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
         return 0;
     }
 
-    if (InterlockedDecrement(&self->RefCount) <= 0) {
+    LONG result = InterlockedDecrement(&self->RefCount);
+
+    if ((result = max(result, 0)) == 0) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
@@ -132,7 +136,7 @@ ULONG DELTACALL ids_remove_ref(ids* self) {
         ids_release(self);
     }
 
-    return self->RefCount;
+    return result;
 }
 
 HRESULT DELTACALL ids_create_sound_buffer(ids* self,
@@ -212,7 +216,7 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
     REFIID id = IsEqualIID(&self->ID, &IID_IDirectSound)
         ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
-    if (SUCCEEDED(hr = ds_create_dsb(self->Instance, id, pcDesc, &instance))) {
+    if (SUCCEEDED(hr = ds_create_sound_buffer(self->Instance, id, pcDesc, &instance))) {
         hr = dsb_query_interface(instance, id, ppBuffer);
     }
 
@@ -236,8 +240,27 @@ HRESULT DELTACALL ids_get_caps(ids* self, LPDSCAPS pDSCaps) {
 }
 
 HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, idsb* pDSBufferOriginal, idsb** ppDSBufferDuplicate) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pDSBufferOriginal == NULL || ppDSBufferDuplicate == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (!IsEqualIID(&pDSBufferOriginal->ID, &IID_IDirectSoundBuffer)
+        && !IsEqualIID(&pDSBufferOriginal->ID, &IID_IDirectSoundBuffer8)) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    dsb* instance = NULL;
+
+    if (SUCCEEDED(hr = ds_duplicate_sound_buffer(self->Instance, pDSBufferOriginal->Instance, &instance))) {
+        hr = dsb_query_interface(instance, &pDSBufferOriginal->ID, ppDSBufferDuplicate);
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL ids_set_cooperative_level(ids* self, HWND hwnd, DWORD dwLevel) {
@@ -285,28 +308,7 @@ HRESULT DELTACALL ids_initialize(ids* self, LPCGUID pcGuidDevice) {
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL ids_allocate(allocator* pAlloc, ids** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    ids* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ids), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
-
 HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     if (pcDesc == NULL) {
         return E_INVALIDARG;
     }
@@ -350,10 +352,6 @@ HRESULT DELTACALL ids_validate_primary_buffer_desc(ids* self, LPCDSBUFFERDESC pc
 }
 
 HRESULT DELTACALL ids_validate_secondary_buffer_desc(ids* self, LPCDSBUFFERDESC pcDesc) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
     if (pcDesc == NULL) {
         return E_INVALIDARG;
     }
