@@ -88,6 +88,8 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
     ZeroMemory(&capsb, sizeof(DSBCAPS));
     capsb.dwSize = sizeof(DSBCAPS);
 
+    DWORD cpa = 0, cwa = 0, cpb = 0, cwb = 0;
+
     HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
     HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
 
@@ -120,6 +122,14 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
         goto exit;
     }
 
+    ra = IDirectSoundBuffer_SetCurrentPosition(dsba, 10000);
+    rb = IDirectSoundBuffer_SetCurrentPosition(dsbb, 10000);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
     ra = IDirectSound_DuplicateSoundBuffer(a, dsba, &dsbac);
     rb = IDirectSound_DuplicateSoundBuffer(b, dsbb, &dsbbc);
 
@@ -142,6 +152,19 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
     }
 
     if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ra = IDirectSoundBuffer_GetCurrentPosition(dsbac, &cpa, &cwa);
+    rb = IDirectSoundBuffer_GetCurrentPosition(dsbbc, &cpb, &cwa);
+
+    if (ra != rb) {
+        result = FALSE;
+        goto exit;
+    }
+
+    if (cpa != cpb || cwa != cwa) {
         result = FALSE;
         goto exit;
     }
