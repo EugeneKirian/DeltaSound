@@ -48,6 +48,8 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX) /* TODO */, &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+                InitializeCriticalSection(&instance->Lock);
+
                 instance->Caps.dwSize = sizeof(DSBCAPS);
 
                 *ppOut = instance;
@@ -66,6 +68,11 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 
 VOID DELTACALL dsb_release(dsb* self) {
     if (self == NULL) { return; }
+
+    self->Play = DSBPLAY_NONE;
+    self->Status = DSBSTATUS_NONE;
+
+    DeleteCriticalSection(&self->Lock);
 
     for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         idsb* instance = NULL;
@@ -104,6 +111,8 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
+    EnterCriticalSection(&self->Lock);
+
     if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(dsb), &instance))) {
         instance->Allocator = self->Allocator;
 
@@ -112,6 +121,8 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
         if (SUCCEEDED(hr = allocator_allocate(self->Allocator, SIZEOFFORMATEX(self->Format), &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(self->Allocator, &instance->Interfaces))) {
                 if (SUCCEEDED(hr = dsbcb_duplicate(self->Buffer, &instance->Buffer))) {
+                    InitializeCriticalSection(&instance->Lock);
+
                     instance->Instance = self->Instance;
 
                     // TODO PropertySet ?
@@ -135,7 +146,7 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
 
                         *ppOut = instance;
 
-                        return S_OK;
+                        goto exit;
                     }
 
                     dsbcb_release(instance->Buffer);
@@ -150,28 +161,33 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
         allocator_free(self->Allocator, instance);
     }
 
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
     return hr;
 }
 
 HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
-    // TODO synchronization
+    HRESULT hr = E_NOINTERFACE;
+
+    EnterCriticalSection(&self->Lock);
 
     {
         idsb* instance = NULL;
 
-        if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
+        if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
             idsb_add_ref(instance);
 
             *ppOut = instance;
 
-            return S_OK;
+            goto exit;
         }
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSoundBuffer, riid)
         || (IsEqualIID(&IID_IDirectSoundBuffer8, &self->ID) && IsEqualIID(&IID_IDirectSoundBuffer8, riid))) {
-        HRESULT hr = S_OK;
         idsb* instance = NULL;
 
         if (SUCCEEDED(hr = idsb_create(self->Allocator, riid, &instance))) {
@@ -180,30 +196,27 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
 
                 *ppOut = instance;
 
-                return S_OK;
+                goto exit;
             }
 
             idsb_release(instance);
         }
-
-        return hr;
     }
     else if (IsEqualIID(&IID_IDirectSound3DListener, riid)) {
         if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
             if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
                 if (self->SpatialListener == NULL) {
-                    HRESULT hr = S_OK;
                     dssl* instance = NULL;
 
                     if (FAILED(hr = dssl_create(self->Allocator, riid, &instance))) {
-                        return hr;
+                        goto exit;
                     }
 
                     instance->Instance = self;
                     self->SpatialListener = instance;
                 }
 
-                return dssl_query_interface(self->SpatialListener, riid, ppOut);
+                hr = dssl_query_interface(self->SpatialListener, riid, ppOut);
             }
         }
     }
@@ -211,18 +224,17 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             if (self->Caps.dwFlags & DSBCAPS_CTRL3D) {
                 if (self->SpatialBuffer == NULL) {
-                    HRESULT hr = S_OK;
                     dssb* instance = NULL;
 
                     if (FAILED(hr = dssb_create(self->Allocator, riid, &instance))) {
-                        return hr;
+                        goto exit;
                     }
 
                     instance->Instance = self;
                     self->SpatialBuffer = instance;
                 }
 
-                return dssb_query_interface(self->SpatialBuffer, riid, ppOut);
+                hr = dssb_query_interface(self->SpatialBuffer, riid, ppOut);
             }
         }
     }
@@ -230,38 +242,40 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
                 if (self->Notifications == NULL) {
-                    HRESULT hr = S_OK;
                     dsn* instance = NULL;
 
                     if (FAILED(hr = dsn_create(self->Allocator, riid, &instance))) {
-                        return hr;
+                        goto exit;
                     }
 
                     instance->Instance = self;
                     self->Notifications = instance;
                 }
 
-                return dsn_query_interface(self->Notifications, riid, ppOut);
+                hr = dsn_query_interface(self->Notifications, riid, ppOut);
             }
         }
     }
     else if (IsEqualIID(&IID_IKsPropertySet, riid)) {
         if (self->PropertySet == NULL) {
-            HRESULT hr = S_OK;
             ksp* instance = NULL;
 
             if (FAILED(hr = ksp_create(self->Allocator, riid, &instance))) {
-                return hr;
+                goto exit;
             }
 
             instance->Instance = self;
             self->PropertySet = instance;
         }
 
-        return ksp_query_interface(self->PropertySet, riid, ppOut);
+        hr = ksp_query_interface(self->PropertySet, riid, ppOut);
     }
 
-    return E_NOINTERFACE;
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL dsb_add_ref(dsb* self, idsb* pIDSB) {
@@ -547,12 +561,9 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
             return E_INVALIDARG;
         }
 
-        // TODO synchroinzation
-
         for (DWORD i = 0; i < arr_get_count(self->Instance->Buffers); i++) {
             dsb* instance = NULL;
             if (SUCCEEDED(arr_get_item(self->Instance->Buffers, i, &instance))) {
-                // TODO update read and write positions to zero?
                 instance->Play = DSBPLAY_NONE;
                 instance->Status = DSBSTATUS_BUFFERLOST;
             }

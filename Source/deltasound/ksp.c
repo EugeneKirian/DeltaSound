@@ -40,6 +40,7 @@ HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
 
@@ -55,6 +56,8 @@ HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
 VOID DELTACALL ksp_release(ksp* self) {
     if (self == NULL) { return; }
 
+    DeleteCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         iksp* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
@@ -68,21 +71,25 @@ VOID DELTACALL ksp_release(ksp* self) {
 }
 
 HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
-    // TODO synchronization
+    HRESULT hr = E_NOINTERFACE;
 
-    iksp* instance = NULL;
+    EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
-        iksp_add_ref(instance);
+    {
+        iksp* instance = NULL;
 
-        *ppOut = instance;
+        if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
+            iksp_add_ref(instance);
 
-        return S_OK;
+            *ppOut = instance;
+
+            goto exit;
+        }
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IKsPropertySet, riid)) {
-        HRESULT hr = S_OK;
+        iksp* instance = NULL;
 
         if (SUCCEEDED(hr = iksp_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ksp_add_ref(self, instance))) {
@@ -90,18 +97,18 @@ HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
 
                 *ppOut = instance;
 
-                return S_OK;
+                goto exit;
             }
 
             iksp_release(instance);
         }
-
-        return hr;
     }
 
-    // TODO NOT IMPLEMENTED
+exit:
 
-    return E_NOINTERFACE;
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL ksp_add_ref(ksp* self, iksp* pIKSP) {

@@ -39,6 +39,7 @@ HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            InitializeCriticalSection(&instance->Lock);
 
             *ppOut = instance;
 
@@ -54,6 +55,8 @@ HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
 VOID DELTACALL dssl_release(dssl* self) {
     if (self == NULL) { return; }
 
+    DeleteCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
         idssl* instance = NULL;
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
@@ -67,21 +70,25 @@ VOID DELTACALL dssl_release(dssl* self) {
 }
 
 HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, LPVOID* ppOut) {
-    // TODO synchronization
+    HRESULT hr = E_NOINTERFACE;
 
-    idssl* instance = NULL;
+    EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(intfc_query_item(self->Interfaces, riid, &instance))) {
-        idssl_add_ref(instance);
+    {
+        idssl* instance = NULL;
 
-        *ppOut = instance;
+        if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
+            idssl_add_ref(instance);
 
-        return S_OK;
+            *ppOut = instance;
+
+            goto exit;
+        }
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSound3DListener, riid)) {
-        HRESULT hr = S_OK;
+        idssl* instance = NULL;
 
         if (SUCCEEDED(hr = idssl_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dssl_add_ref(self, instance))) {
@@ -89,18 +96,18 @@ HRESULT DELTACALL dssl_query_interface(dssl* self, REFIID riid, LPVOID* ppOut) {
 
                 *ppOut = instance;
 
-                return S_OK;
+                goto exit;
             }
 
             idssl_release(instance);
         }
-
-        return hr;
     }
 
-    // TODO NOT IMPLEMENTED
+exit:
 
-    return E_NOINTERFACE;
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL dssl_add_ref(dssl* self, idssl* pIDSSL) {

@@ -30,10 +30,12 @@ SOFTWARE.
 typedef struct dsb dsb;
 
 typedef struct dssb {
-    allocator*  Allocator;
-    GUID        ID;
-    dsb*        Instance;
-    intfc*      Interfaces;
+    allocator*          Allocator;
+    GUID                ID;
+    dsb*                Instance;
+    intfc*              Interfaces;
+
+    CRITICAL_SECTION    Lock;
 } dssb;
 
 HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut);

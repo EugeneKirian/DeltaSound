@@ -74,6 +74,8 @@ HRESULT DELTACALL arena_create(allocator* pAlloc, arena** ppOut) {
 VOID DELTACALL arena_release(arena* self) {
     if (self == NULL) { return; }
 
+    DeleteCriticalSection(&self->Lock);
+
     for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
         block* region = NULL;
 
@@ -81,8 +83,6 @@ VOID DELTACALL arena_release(arena* self) {
             block_release(region);
         }
     }
-
-    DeleteCriticalSection(&self->Lock);
 
     allocator_free(self->Allocator, self->Blocks);
     allocator_free(self->Allocator, self);

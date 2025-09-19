@@ -30,10 +30,12 @@ typedef struct dsb dsb;
 typedef struct intfc intfc;
 
 typedef struct ksp {
-    allocator*  Allocator;
-    GUID        ID;
-    dsb*        Instance;
-    intfc*      Interfaces;
+    allocator*          Allocator;
+    GUID                ID;
+    dsb*                Instance;
+    intfc*              Interfaces;
+
+    CRITICAL_SECTION    Lock;
 } ksp;
 
 HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut);

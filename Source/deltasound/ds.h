@@ -36,19 +36,19 @@ typedef struct dsb dsb;
 typedef struct ids ids;
 
 typedef struct ds {
-    allocator*  Allocator;
-    GUID        ID;
-    deltasound* Instance;
-    intfc*      Interfaces;
+    allocator*          Allocator;
+    GUID                ID;
+    deltasound*         Instance;
+    intfc*              Interfaces;
 
-    // TODO Lock!!
+    CRITICAL_SECTION    Lock;
 
-    HWND        HWND;
-    DWORD       Level;
-    dsdevice*   Device;
+    HWND                HWND;
+    DWORD               Level;
+    dsdevice*           Device;
 
-    dsb*        Main;       // Primary Buffer
-    arr*        Buffers;    // Secondary Buffers
+    dsb*                Main;       // Primary Buffer
+    arr*                Buffers;    // Secondary Buffers
 } ds;
 
 HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut);
