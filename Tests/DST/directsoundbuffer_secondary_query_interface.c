@@ -26,9 +26,9 @@ SOFTWARE.
 
 typedef IReferenceClock* LPREFERENCECLOCK;
 
-#define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   13
+#define MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT   13
 
-const static DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
+const static DWORD CreateSecondaryBufferSuccessFlags[MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT] = {
     0,
     DSBCAPS_STATIC,
     //DSBCAPS_LOCHARDWARE,
@@ -548,7 +548,7 @@ BOOL TestDirectSoundBufferSecondaryQueryInterface(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    for (int i = 0; i < MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT; i++) {
+    for (int i = 0; i < MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT; i++) {
         if (!TestDirectSoundBufferPrimaryQueryInterfaces(dsca, dscb,
             CreateSecondaryBufferSuccessFlags[i])) {
             return FALSE;

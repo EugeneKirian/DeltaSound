@@ -166,6 +166,8 @@
     <ClCompile Include="directsound_compact.c" />
     <ClCompile Include="directsound_createsoundbuffer_primary.c" />
     <ClCompile Include="directsound_createsoundbuffer_secondary.c" />
+    <ClCompile Include="directsound_duplicate_primary.c" />
+    <ClCompile Include="directsound_duplicate_secondary.c" />
     <ClCompile Include="directsound_enumerate.c" />
     <ClCompile Include="directsound_getcaps.c" />
     <ClCompile Include="directsound_setcooperativelevel.c" />
@@ -204,6 +206,8 @@
     <ClInclude Include="directsound_compact.h" />
     <ClInclude Include="directsound_createsoundbuffer_primary.h" />
     <ClInclude Include="directsound_createsoundbuffer_secondary.h" />
+    <ClInclude Include="directsound_duplicate_primary.h" />
+    <ClInclude Include="directsound_duplicate_secondary.h" />
     <ClInclude Include="directsound_enumerate.h" />
     <ClInclude Include="directsound_getcaps.h" />
     <ClInclude Include="directsound_setcooperativelevel.h" />

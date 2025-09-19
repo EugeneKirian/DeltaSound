@@ -27,6 +27,8 @@ SOFTWARE.
 #include "directsound_compact.h"
 #include "directsound_createsoundbuffer_primary.h"
 #include "directsound_createsoundbuffer_secondary.h"
+#include "directsound_duplicate_primary.h"
+#include "directsound_duplicate_secondary.h"
 #include "directsound_enumerate.h"
 #include "directsound_getcaps.h"
 #include "directsound_setcooperativelevel.h"
@@ -104,6 +106,8 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundCreateSoundBufferSecondary);
     //TEST(DirectSoundSetCooperativeLevel);
     //TEST(DirectSoundGetCaps);
+    TEST(DirectSoundDuplicatePrimary);
+    TEST(DirectSoundDuplicateSecondary);
 
     //TEST(DirectSoundBufferPrimaryBasics);
     //TEST(DirectSoundBufferPrimaryQueryInterface);
@@ -128,7 +132,7 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundBufferSecondaryPlayMono);
     //TEST(DirectSoundBufferSecondaryPlayStereo);
 
-    TEST(DirectSoundBufferSecondaryNotify);
+    //TEST(DirectSoundBufferSecondaryNotify);
 
 exit:
 

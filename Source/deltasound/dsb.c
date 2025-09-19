@@ -44,9 +44,9 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsb), &instance))) {
         instance->Allocator = pAlloc;
 
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX), &instance->Format))) {
-            CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(GUID));
 
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX) /* TODO */, &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
                 instance->Caps.dwSize = sizeof(DSBCAPS);
 
@@ -98,7 +98,7 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
     }
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        return E_INVALIDARG;
+        return DSERR_INVALIDCALL;
     }
 
     HRESULT hr = S_OK;
@@ -107,35 +107,41 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(dsb), &instance))) {
         instance->Allocator = self->Allocator;
 
+        CopyMemory(&instance->ID, &self->ID, sizeof(GUID));
+
         if (SUCCEEDED(hr = allocator_allocate(self->Allocator, SIZEOFFORMATEX(self->Format), &instance->Format))) {
-            if (SUCCEEDED(hr = dsbcb_duplicate(self->Buffer, &instance->Buffer))) {
-                instance->Instance = self->Instance;
+            if (SUCCEEDED(hr = intfc_create(self->Allocator, &instance->Interfaces))) {
+                if (SUCCEEDED(hr = dsbcb_duplicate(self->Buffer, &instance->Buffer))) {
+                    instance->Instance = self->Instance;
 
-                // TODO PropertySet ?
-                // TODO SpatialBuffer ?
-                // TODO Notifications ?
+                    // TODO PropertySet ?
+                    // TODO SpatialBuffer ?
+                    // TODO Notifications ?
 
-                CopyMemory(&instance->Caps, &self->Caps, sizeof(DSBCAPS));
-                CopyMemory(instance->Format, self->Format, SIZEOFFORMATEX(self->Format));
+                    CopyMemory(&instance->Caps, &self->Caps, sizeof(DSBCAPS));
+                    CopyMemory(instance->Format, self->Format, SIZEOFFORMATEX(self->Format));
 
-                instance->Volume = self->Volume;
-                instance->Pan = self->Pan;
-                instance->Frequency = self->Frequency;
-                instance->Priority = self->Priority;
+                    instance->Volume = self->Volume;
+                    instance->Pan = self->Pan;
+                    instance->Frequency = self->Frequency;
+                    instance->Priority = self->Priority;
 
-                CopyMemory(&instance->SpatialAlgorithm, &self->SpatialAlgorithm, sizeof(GUID));
+                    CopyMemory(&instance->SpatialAlgorithm, &self->SpatialAlgorithm, sizeof(GUID));
 
-                // TODO play ?
-                // TODO status ?
+                    // TODO play ?
+                    // TODO status ?
 
-                if (SUCCEEDED(hr = arr_add_item(self->Instance->Buffers, instance))) {
+                    if (SUCCEEDED(hr = arr_add_item(self->Instance->Buffers, instance))) {
 
-                    *ppOut = instance;
+                        *ppOut = instance;
 
-                    return S_OK;
+                        return S_OK;
+                    }
+
+                    dsbcb_release(instance->Buffer);
                 }
 
-                dsbcb_release(instance->Buffer);
+                intfc_release(instance->Interfaces);
             }
 
             allocator_free(self->Allocator, instance->Format);
@@ -415,7 +421,7 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     }
     else {
         self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
-        CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX));
+        CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX)); // TODO support larger structs
     }
 
     if (pcDesc->dwSize == sizeof(DSBUFFERDESC)) {
@@ -652,7 +658,7 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         // TODO stop the buffer, update the format, and resume playback
     }
 
-    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
+    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX)); // TODO support larger structs
 
     self->Format->cbSize = 0;
 

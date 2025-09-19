@@ -200,15 +200,11 @@ HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
         goto exit;
     }
 
-    {
-        const DWORD size = sizeof(WAVEFORMATEX) + wfx->cbSize;
-
-        if (FAILED(hr = allocator_allocate(self->Allocator, size, &self->Format))) {
-            goto exit;
-        }
-
-        CopyMemory(self->Format, wfx, size);
+    if (FAILED(hr = allocator_allocate(self->Allocator, SIZEOFFORMATEX(wfx), &self->Format))) {
+        goto exit;
     }
+
+    CopyMemory(self->Format, wfx, SIZEOFFORMATEX(wfx));
 
     CoTaskMemFree(wfx);
 

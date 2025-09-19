@@ -255,7 +255,7 @@ HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, idsb* pDSBufferOriginal,
     dsb* instance = NULL;
 
     if (SUCCEEDED(hr = ds_duplicate_sound_buffer(self->Instance, pDSBufferOriginal->Instance, &instance))) {
-        hr = dsb_query_interface(instance, &self->ID, ppDSBufferDuplicate);
+        hr = dsb_query_interface(instance, &pDSBufferOriginal->ID, ppDSBufferDuplicate);
     }
 
     return hr;

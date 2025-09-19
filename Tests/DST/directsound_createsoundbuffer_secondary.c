@@ -28,9 +28,9 @@ const static GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {
     0x0000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
 };
 
-#define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   17
+#define MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT 17
 
-const static DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
+const static DWORD CreateSecondaryBufferSuccessFlags[MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT] = {
     0,
     DSBCAPS_STATIC,
     DSBCAPS_LOCHARDWARE,
@@ -50,9 +50,9 @@ const static DWORD CreateSecondaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_
     DSBCAPS_TRUEPLAYPOSITION
 };
 
-#define MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT   6
+#define MAX_SECONDARY_BUFFER_INVALID_FLAG_COUNT 6
 
-static const DWORD CreateSecondaryBufferInvalidFlags[MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT] = {
+static const DWORD CreateSecondaryBufferInvalidFlags[MAX_SECONDARY_BUFFER_INVALID_FLAG_COUNT] = {
     DSBCAPS_LOCHARDWARE,
     DSBCAPS_CTRLFX,
     DSBCAPS_MUTE3DATMAXDISTANCE,
@@ -898,7 +898,7 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    for (int i = 0; i < MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT; i++) {
+    for (int i = 0; i < MAX_SECONDARY_BUFFER_INVALID_FLAG_COUNT; i++) {
         if (!TestDirectSoundCreateBufferSecondaryInvalidFlags(dsa, dsb, CreateSecondaryBufferInvalidFlags[i])) {
             result = FALSE;
             goto exit;
@@ -915,7 +915,7 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    for (int i = 0; i < MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT; i++) {
+    for (int i = 0; i < MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT; i++) {
         if (!TestDirectSoundCreateBufferSecondaryFlags(dsa, dsb, CreateSecondaryBufferSuccessFlags[i])) {
             result = FALSE;
             goto exit;
