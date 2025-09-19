@@ -197,7 +197,10 @@ HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
         // TODO if secondary buffer is not looping - stop it when it reaches the end (update status)
         // TODO handle position notifications.
         // TODO handle position notifications when buffer stopped in the middle of playback
-        for (DWORD i = 0; i < arr_get_count(pSecondary); i++) {
+
+        const DWORD count = arr_get_count(pSecondary);
+
+        for (DWORD i = 0; i < count; i++) {
             dsb* instance = NULL;
 
             if (SUCCEEDED(arr_get_item(pSecondary, i, &instance))) {

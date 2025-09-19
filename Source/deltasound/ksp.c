@@ -58,8 +58,11 @@ VOID DELTACALL ksp_release(ksp* self) {
 
     DeleteCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
+    const DWORD count = intfc_get_count(self->Interfaces);
+
+    for (DWORD i = 0; i < count; i++) {
         iksp* instance = NULL;
+
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
             iksp_release(instance);
         }

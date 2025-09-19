@@ -245,8 +245,11 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
 
     EnterCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < dsbcblc_get_count(self->Locks); i++) {
+    const DWORD count = dsbcblc_get_count(self->Locks);
+
+    for (DWORD i = 0; i < count; i++) {
         dsbcbl* l = NULL;
+
         if (SUCCEEDED(dsbcblc_get_item(self->Locks, i, &l))) {
             // Match
             if (l->Audio1 == lock.Audio1 && l->Audio2 == lock.Audio2) {
@@ -291,8 +294,11 @@ HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPt
 
     EnterCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < dsbcblc_get_count(self->Locks); i++) {
+    const DWORD count = dsbcblc_get_count(self->Locks);
+
+    for (DWORD i = 0; i < count; i++) {
         dsbcbl* l = NULL;
+
         if (SUCCEEDED(dsbcblc_get_item(self->Locks, i, &l))) {
             if (l->Audio1 == pvAudioPtr1 && l->Audio2 == pvAudioPtr2) {
                 dsbcblc_remove_item(self->Locks, i);

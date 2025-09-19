@@ -74,8 +74,11 @@ VOID DELTACALL dsb_release(dsb* self) {
 
     DeleteCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
+    const DWORD count = intfc_get_count(self->Interfaces);
+
+    for (DWORD i = 0; i < count; i++) {
         idsb* instance = NULL;
+
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
             idsb_release(instance);
         }
@@ -561,8 +564,11 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
             return E_INVALIDARG;
         }
 
-        for (DWORD i = 0; i < arr_get_count(self->Instance->Buffers); i++) {
+        const DWORD count = arr_get_count(self->Instance->Buffers);
+
+        for (DWORD i = 0; i < count; i++) {
             dsb* instance = NULL;
+
             if (SUCCEEDED(arr_get_item(self->Instance->Buffers, i, &instance))) {
                 instance->Play = DSBPLAY_NONE;
                 instance->Status = DSBSTATUS_BUFFERLOST;

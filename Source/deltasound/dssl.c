@@ -57,8 +57,11 @@ VOID DELTACALL dssl_release(dssl* self) {
 
     DeleteCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
+    const DWORD count = intfc_get_count(self->Interfaces);
+
+    for (DWORD i = 0; i < count; i++) {
         idssl* instance = NULL;
+
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
             idssl_release(instance);
         }

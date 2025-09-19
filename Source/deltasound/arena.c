@@ -76,7 +76,9 @@ VOID DELTACALL arena_release(arena* self) {
 
     DeleteCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
+    const DWORD count = arr_get_count(self->Blocks);
+
+    for (DWORD i = 0; i < count; i++) {
         block* region = NULL;
 
         if (SUCCEEDED(arr_get_item(self->Blocks, i, &region))) {
@@ -102,11 +104,15 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
 
     EnterCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
+    const DWORD count = arr_get_count(self->Blocks);
+
+    for (DWORD i = 0; i < count; i++) {
         if (SUCCEEDED(hr = arr_get_item(self->Blocks, i, &region))) {
             if (dwBytes < region->Capacity - region->Size) {
                 region->Size += dwBytes;
+
                 *ppMem = (LPVOID)((size_t)region->Block + region->Size);
+
                 goto exit;
             }
         }
@@ -137,7 +143,9 @@ HRESULT DELTACALL arena_clear(arena* self) {
 
     EnterCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < arr_get_count(self->Blocks); i++) {
+    const DWORD count = arr_get_count(self->Blocks);
+
+    for (DWORD i = 0; i < count; i++) {
         block* region = NULL;
 
         if (SUCCEEDED(arr_get_item(self->Blocks, i, &region))) {

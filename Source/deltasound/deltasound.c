@@ -54,8 +54,11 @@ VOID DELTACALL deltasound_release(deltasound* self) {
 
     DeleteCriticalSection(&self->Lock);
 
-    for (DWORD i = arr_get_count(self->Items); i != 0; i--) {
+    const DWORD count = arr_get_count(self->Items);
+
+    for (DWORD i = count; i != 0; i--) {
         ds* instance = NULL;
+
         if (SUCCEEDED(arr_remove_item(self->Items, i - 1, &instance))) {
             ds_release(instance);
         }
@@ -120,7 +123,9 @@ HRESULT DELTACALL deltasound_remove_ds(deltasound* self, ds* pDS) {
 
     EnterCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < arr_get_count(self->Items); i++) {
+    const DWORD count = arr_get_count(self->Items);
+
+    for (DWORD i = 0; i < count; i++) {
         ds* instance = NULL;
 
         if (SUCCEEDED(hr = arr_get_item(self->Items, i, &instance))) {
