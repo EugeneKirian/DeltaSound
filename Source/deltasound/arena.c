@@ -27,8 +27,9 @@ SOFTWARE.
 
 #define DEFAULT_BLOCK_SIZE      (256 * 1024)
 
-// TODO align memory addresses
-// TODO Both allocations, and offsets!
+#define ALIGNMENT               64
+
+#define ALIGN(X)                (((X) + ALIGNMENT - 1) & ~((ALIGNMENT) - 1))
 
 typedef struct block {
     allocator*  Allocator;
@@ -103,6 +104,8 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
     block* region = NULL;
 
     EnterCriticalSection(&self->Lock);
+
+    dwBytes = ALIGN(dwBytes);
 
     const DWORD count = arr_get_count(self->Blocks);
 
