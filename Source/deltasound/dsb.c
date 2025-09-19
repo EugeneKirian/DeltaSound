@@ -128,8 +128,8 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
 
                     CopyMemory(&instance->SpatialAlgorithm, &self->SpatialAlgorithm, sizeof(GUID));
 
-                    // TODO play ?
-                    // TODO status ?
+                    instance->Play = DSBPLAY_NONE;
+                    instance->Status = DSBSTATUS_NONE;
 
                     if (SUCCEEDED(hr = arr_add_item(self->Instance->Buffers, instance))) {
 

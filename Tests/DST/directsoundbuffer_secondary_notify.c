@@ -631,6 +631,21 @@ static BOOL TestDirectSoundBufferSecondaryNotifySet(LPDIRECTSOUNDBUFFER a, LPDIR
                 return FALSE;
             }
         }
+
+        // Valid
+        {
+            notifications[0].dwOffset = 8;
+            notifications[1].dwOffset = 6;
+            notifications[2].dwOffset = 4;
+            notifications[3].dwOffset = 2;
+
+            ra = IDirectSoundNotify_SetNotificationPositions(na, 4, notifications);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, 4, notifications);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
     }
 
     IDirectSoundNotify_Release(na);

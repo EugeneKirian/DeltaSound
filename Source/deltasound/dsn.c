@@ -195,18 +195,21 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
 
 /* ---------------------------------------------------------------------- */
 
-INT CDECLCALL dsn_position_notify_compare(LPCDSBPOSITIONNOTIFY a, LPCDSBPOSITIONNOTIFY b) {
-    if (a->dwOffset < b->dwOffset) { return -1; }
-
-    if (a->dwOffset > b->dwOffset) { return 1; }
-
-    return 0;
-}
-
 HRESULT DELTACALL dsn_validate_notifications(dsn* self, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies) {
-    // TODO sort in-place explicitly without qsort.
-    qsort(pPositionNotifies, dwPositionNotifies,
-        sizeof(DSBPOSITIONNOTIFY), dsn_position_notify_compare);
+    // Sort notifications in ascending order.
+    for (DWORD i = 0; i < dwPositionNotifies; i++) {
+        for (DWORD j = 0; j < dwPositionNotifies; j++) {
+            if (i == j) {
+                continue;
+            }
+
+            if (pPositionNotifies[i].dwOffset < pPositionNotifies[j].dwOffset) {
+                DSBPOSITIONNOTIFY t = pPositionNotifies[j];
+                pPositionNotifies[j] = pPositionNotifies[i];
+                pPositionNotifies[i] = t;
+            }
+        }
+    }
 
     for (DWORD i = 0; i < dwPositionNotifies - 1; i++) {
         if (pPositionNotifies[i].dwOffset == pPositionNotifies[i + 1].dwOffset) {
