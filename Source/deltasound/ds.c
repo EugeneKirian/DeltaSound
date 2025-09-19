@@ -79,20 +79,28 @@ VOID DELTACALL ds_release(ds* self) {
 
     DeleteCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < intfc_get_count(self->Interfaces); i++) {
-        ids* instance = NULL;
-        if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
-            ids_release(instance);
+    {
+        const DWORD count = intfc_get_count(self->Interfaces);
+
+        for (DWORD i = 0; i < count; i++) {
+            ids* instance = NULL;
+
+            if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
+                ids_release(instance);
+            }
         }
     }
 
     intfc_release(self->Interfaces);
 
-    for (DWORD i = arr_get_count(self->Buffers); i != 0; i--) {
-        dsb* instance = NULL;
+    {
+        const DWORD count = arr_get_count(self->Buffers);
+        for (DWORD i = count; i != 0; i--) {
+            dsb* instance = NULL;
 
-        if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instance))) {
-            dsb_release(instance);
+            if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instance))) {
+                dsb_release(instance);
+            }
         }
     }
 
@@ -201,8 +209,9 @@ exit:
 
 HRESULT DELTACALL ds_remove_dsb(ds* self, dsb* pDSB) {
     HRESULT hr = S_OK;
+    const DWORD count = arr_get_count(self->Buffers);
 
-    for (DWORD i = 0; i < arr_get_count(self->Buffers); i++) {
+    for (DWORD i = 0; i < count; i++) {
         dsb* instance = NULL;
 
         if (SUCCEEDED(hr = arr_get_item(self->Buffers, i, &instance))) {
@@ -359,8 +368,11 @@ HRESULT DELTACALL ds_get_status(ds* self, LPDWORD pdwStatus) {
 
     EnterCriticalSection(&self->Lock);
 
-    for (DWORD i = 0; i < arr_get_count(self->Buffers); i++) {
+    const DWORD count = arr_get_count(self->Buffers);
+
+    for (DWORD i = 0; i < count; i++) {
         dsb* instance = NULL;
+
         if (SUCCEEDED(arr_get_item(self->Buffers, i, &instance))) {
             if (SUCCEEDED(hr = dsb_get_status(instance, &status))) {
                 if (status & DSBSTATUS_PLAYING) {
