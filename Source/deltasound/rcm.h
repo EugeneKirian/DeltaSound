@@ -35,4 +35,4 @@ HRESULT DELTACALL rcm_add_ref(rcm* pMem);
 HRESULT DELTACALL rcm_remove_ref(rcm* pMem);
 
 HRESULT DELTACALL rcm_get_data(rcm* pMem, LPVOID* ppData);
-HRESULT DELTACALL rcm_get_size(rcm* pMem, LPDWORD pdwBytes);
+HRESULT DELTACALL rcm_get_length(rcm* pMem, LPDWORD pdwBytes);

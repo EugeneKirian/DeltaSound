@@ -489,7 +489,7 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     }
 
     DWORD lockable = 0;
-    if (FAILED(hr = dsbcb_get_lockable_size(self->Buffer, &lockable))) {
+    if (FAILED(hr = dsbcb_get_lockable_length(self->Buffer, &lockable))) {
         goto fail;
     }
 
@@ -609,7 +609,7 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
 
     if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
         if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, read,
-            write + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign, DSBCB_SETPOSITION_WRAP))) {
+            write + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign, DSBCB_SETPOSITION_LOOPING))) {
 
             self->Play = dwFlags;
             self->Priority = dwPriority;

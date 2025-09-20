@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include "base.h"
 
+// TODO rename wave.h
+
 #define SIZEOFFORMAT(pwfx)      ((pwfx->wFormatTag == WAVE_FORMAT_PCM) ? (sizeof(PCMWAVEFORMAT)) : (sizeof(WAVEFORMATEX) + pwfx->cbSize))
 
 #define SIZEOFFORMATEX(pwfx)    (sizeof(WAVEFORMATEX) + ((pwfx->wFormatTag == WAVE_FORMAT_PCM) ? 0 : pwfx->cbSize))

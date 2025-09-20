@@ -113,7 +113,8 @@ HRESULT DELTACALL dsbcb_duplicate(dsbcb* self, dsbcb** ppOut) {
     return hr;
 }
 
-HRESULT DELTACALL dsbcb_get_current_position(dsbcb* self, LPDWORD pdwReadBytes, LPDWORD pdwWriteBytes) {
+HRESULT DELTACALL dsbcb_get_current_position(dsbcb* self,
+    LPDWORD pdwReadBytes, LPDWORD pdwWriteBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -133,7 +134,8 @@ HRESULT DELTACALL dsbcb_get_current_position(dsbcb* self, LPDWORD pdwReadBytes, 
     return S_OK;
 }
 
-HRESULT DELTACALL dsbcb_set_current_position(dsbcb* self, DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags) {
+HRESULT DELTACALL dsbcb_set_current_position(dsbcb* self,
+    DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -141,8 +143,8 @@ HRESULT DELTACALL dsbcb_set_current_position(dsbcb* self, DWORD dwReadBytes, DWO
     HRESULT hr = S_OK;
     DWORD size = 0;
 
-    if (SUCCEEDED(hr = rcm_get_size(self->Buffer, &size))) {
-        if (dwFlags & DSBCB_SETPOSITION_WRAP) {
+    if (SUCCEEDED(hr = rcm_get_length(self->Buffer, &size))) {
+        if (dwFlags & DSBCB_SETPOSITION_LOOPING) {
             dwReadBytes = dwReadBytes % size;
             dwWriteBytes = dwWriteBytes % size;
         }
@@ -158,7 +160,7 @@ HRESULT DELTACALL dsbcb_set_current_position(dsbcb* self, DWORD dwReadBytes, DWO
     return hr;
 }
 
-HRESULT DELTACALL dsbcb_get_size(dsbcb* self, LPDWORD pdwBytes) {
+HRESULT DELTACALL dsbcb_get_length(dsbcb* self, LPDWORD pdwBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -167,10 +169,10 @@ HRESULT DELTACALL dsbcb_get_size(dsbcb* self, LPDWORD pdwBytes) {
         return E_INVALIDARG;
     }
 
-    return rcm_get_size(self->Buffer, pdwBytes);
+    return rcm_get_length(self->Buffer, pdwBytes);
 }
 
-HRESULT DELTACALL dsbcb_get_lockable_size(dsbcb* self, LPDWORD pdwBytes) {
+HRESULT DELTACALL dsbcb_get_lockable_length(dsbcb* self, LPDWORD pdwBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -182,7 +184,7 @@ HRESULT DELTACALL dsbcb_get_lockable_size(dsbcb* self, LPDWORD pdwBytes) {
     HRESULT hr = S_OK;
     DWORD size = 0;
 
-    if (SUCCEEDED(hr = rcm_get_size(self->Buffer, &size))) {
+    if (SUCCEEDED(hr = rcm_get_length(self->Buffer, &size))) {
         *pdwBytes = self->ReadPosition < self->WritePosition
             ? size + self->ReadPosition - self->WritePosition
             : size - self->ReadPosition + self->WritePosition;
@@ -200,7 +202,7 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
     HRESULT hr = S_OK;
     DWORD size = 0;
 
-    if (FAILED(hr = rcm_get_size(self->Buffer, &size))) {
+    if (FAILED(hr = rcm_get_length(self->Buffer, &size))) {
         return hr;
     }
 
@@ -210,7 +212,7 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
 
     DWORD lockable = 0;
 
-    if (FAILED(hr = dsbcb_get_lockable_size(self, &lockable))) {
+    if (FAILED(hr = dsbcb_get_lockable_length(self, &lockable))) {
         return hr;
     }
 
@@ -313,7 +315,8 @@ HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPt
     return E_INVALIDARG;
 }
 
-HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytesRead) {
+HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes,
+    LPVOID pData, LPDWORD pdwBytesRead, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -323,27 +326,37 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
     }
 
     HRESULT hr = S_OK;
-    DWORD size = 0;
+    DWORD length = 0, max = 0;
 
-    if (FAILED(hr = rcm_get_size(self->Buffer, &size))) {
+    if (FAILED(hr = rcm_get_length(self->Buffer, &length))) {
         return hr;
     }
 
-    const DWORD maximum = self->ReadPosition < self->WritePosition
-        ? self->WritePosition - self->ReadPosition
-        : size + self->WritePosition - self->ReadPosition;
+    if (dwFlags & DSBCB_READ_LOOPING) {
+        max = self->ReadPosition < self->WritePosition
+            ? self->WritePosition - self->ReadPosition
+            : length + self->WritePosition - self->ReadPosition;
 
-    if (maximum < dwBytes) {
-        dwBytes = maximum;
+        // TODO. Read many iterations when buffer is very small and it is looping ?
+        // TODO. Tests needed. Should it ignore read and write positions
+        // and just wrap around making copying the data until needed numbers of bytes copied?
+    }
+    else {
+        max = length - self->ReadPosition;
+    }
+
+    if (max < dwBytes) {
+        dwBytes = max;
     }
 
     LPVOID buffer = NULL;
 
+    EnterCriticalSection(&self->Lock);
+
     if (SUCCEEDED(hr = rcm_get_data(self->Buffer, &buffer))) {
-        EnterCriticalSection(&self->Lock);
 
         if (pData != NULL) {
-            const DWORD read = min(dwBytes, size - self->ReadPosition);
+            const DWORD read = min(dwBytes, length - self->ReadPosition);
             CopyMemory(pData, (LPVOID)((size_t)buffer + self->ReadPosition), read);
 
             if (read < dwBytes) {
@@ -351,12 +364,12 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
             }
         }
 
-        LeaveCriticalSection(&self->Lock);
-
         if (pdwBytesRead != NULL) {
             *pdwBytesRead = dwBytes;
         }
     }
+
+    LeaveCriticalSection(&self->Lock);
 
     return hr;
 }

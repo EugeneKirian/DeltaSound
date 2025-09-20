@@ -25,6 +25,7 @@ SOFTWARE.
 #include "arena.h"
 #include "ds.h"
 #include "mixer.h"
+#include "wave_format.h"
 
 #include <math.h>
 
@@ -79,8 +80,12 @@ VOID DELTACALL mixer_release(mixer* self) {
 // TODO refactor this plug
 // TODO this pretends that secondary buffer is same as primary
 // TODO add support of multiple buffers
-HRESULT DELTACALL mixer_play_buffer(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
-    DWORD dwFrames, dsb* buffer, LPVOID* pOutBuffer, LPDWORD ppdwOutBufferBytes) {
+/*
+HRESULT DELTACALL mixer_play_buffer(mixer* self, DWORD dwBufferCount, dsb* pBuffers,
+    PWAVEFORMATEXTENSIBLE pwfxFormat, DWORD dwFrames, LPVOID* pOutBuffer, LPDWORD ppdwOutBufferBytes) {
+
+
+
     const DWORD in_frequency = buffer->Frequency == DSBFREQUENCY_ORIGINAL
         ? buffer->Format->nSamplesPerSec : buffer->Frequency;
 
@@ -166,55 +171,97 @@ HRESULT DELTACALL mixer_play_buffer(mixer* self, PWAVEFORMATEXTENSIBLE pwfxForma
 
     return hr;
 }
+*/
 
-HRESULT DELTACALL mixer_mix(mixer* self, PWAVEFORMATEXTENSIBLE pwfxFormat,
-    DWORD dwFrames, dsb* pMain, arr* pSecondary, LPVOID* pOutBuffer, LPDWORD ppdwOutBufferBytes) {
+typedef struct mix_buffer {
+    dsb*    Instance;
+
+    LPVOID  InData;
+    DWORD   InDataSize;
+
+
+} mix_buffer;
+
+// TODO
+HRESULT DELTACALL mixer_get_buffer_length(LPCWAVEFORMATEX pwfxIn, DWORD dwFrequency,
+    LPCWAVEFORMATEX pwfxOut, DWORD dwFrames, LPDWORD pdwBytes) {
+    // TODO validations
+
+    const DWORD frequency = dwFrequency == DSBFREQUENCY_ORIGINAL
+        ? pwfxIn->nSamplesPerSec : dwFrequency;
+
+    const FLOAT ratio = (FLOAT)frequency / (FLOAT)pwfxOut->nSamplesPerSec;
+
+    *pdwBytes = (DWORD)roundf(ratio * dwFrames) * pwfxIn->nBlockAlign;
+
+    return S_OK;
+}
+
+HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
+    PWAVEFORMATEXTENSIBLE pwfxFormat, DWORD dwFrames, LPVOID* pOutBuffer, LPDWORD ppdwOutBufferBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
 
     if (pwfxFormat == NULL || dwFrames == 0
-        || pMain == NULL || pOutBuffer == NULL || ppdwOutBufferBytes == NULL) {
+        || dwBuffers == 0 || ppBuffers == NULL
+        || pOutBuffer == NULL || ppdwOutBufferBytes == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
+
     if (FAILED(hr = arena_clear(self->Arena))) {
         return hr;
     }
 
-    const BOOL main = pMain->Instance->Level == DSSCL_WRITEPRIMARY
-        && (pMain->Status & DSBSTATUS_PLAYING);
+    mix_buffer* buffers = NULL;
 
-    if (main) {
-        // TODO
-        // TODO error handling
-        mixer_play_buffer(self, pwfxFormat, dwFrames, pMain, pOutBuffer, ppdwOutBufferBytes);
+    if (FAILED(hr = arena_allocate(self->Arena, dwBuffers * sizeof(mix_buffer), &buffers))) {
+        return hr;
     }
-    else {
-        // TODO nothing to play for now
-        // TODO support secondary buffers
-        // TODO if secondary buffer is not looping - stop it when it reaches the end (update status)
-        // TODO handle position notifications.
-        // TODO handle position notifications when buffer stopped in the middle of playback
 
-        const DWORD count = arr_get_count(pSecondary);
+    for (DWORD i = 0; i < dwBuffers; i++) {
+        buffers[i].Instance = ppBuffers[i];
+    }
 
-        for (DWORD i = 0; i < count; i++) {
-            dsb* instance = NULL;
+    // TODO multi-threaded mixing
 
-            if (SUCCEEDED(arr_get_item(pSecondary, i, &instance))) {
-                DWORD status = DSBSTATUS_NONE;
+    // TODO. Assumption is that inputs are non-IEEE PCM
 
-                if (SUCCEEDED(dsb_get_status(instance, &status))) {
-                    if (status & DSBSTATUS_PLAYING) {
-                        // TODO error handling
-                        mixer_play_buffer(self, pwfxFormat, dwFrames, instance, pOutBuffer, ppdwOutBufferBytes);
-                    }
-                }
-            }
+    // 1. Read the data from the actual buffers.
+    for (DWORD i = 0; i < dwBuffers; i++) {
+        dsb* instance = ppBuffers[i];
+        DWORD length = 0;
+
+        if (FAILED(hr = mixer_get_buffer_length(instance->Format, instance->Frequency,
+            &pwfxFormat->Format, dwFrames, &length))) {
+            return hr;
+        }
+
+        if (FAILED(hr = arena_allocate(self->Arena,
+            length, &buffers[i].InData))) {
+            return hr;
+        }
+
+        if (FAILED(hr = dsbcb_read(instance->Buffer, length,
+            buffers[i].InData, &buffers[i].InDataSize,
+            (instance->Status & DSBSTATUS_LOOPING) ? DSBCB_READ_LOOPING : DSBCB_READ_NONE))) {
+            return hr;
         }
     }
+
+    // TODO
+    // 1. read in data from the buffer, until the end, or looping.
+    //      use frequency override when applicable
+    // 2. convert to float
+    // 3. upmix/downmix (number of channels)
+    // 3. resample (before effects are applied)
+    // 4. apply attenuation (volume & pan)
+    // 5. convert to requested format if not pcm ieee
+    // 6. update buffer statuses for non-looping
+    // 6 trigger appropriate notifications.
+
 
     return hr;
 }
