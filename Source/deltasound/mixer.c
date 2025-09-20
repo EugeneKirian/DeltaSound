@@ -439,9 +439,10 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self,
             offset += bytes * dwChannels;
         }
 
-        if (offset < dwInBufferBytes) {
+        if (dwInBufferBytes <= offset) {
             // Input buffer has fewer frames than required.
             // Stop processing and leave the rest as silence (zeros).
+            break;
         }
     }
 
