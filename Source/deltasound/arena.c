@@ -126,6 +126,7 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
 
         if (SUCCEEDED(hr = arr_add_item(self->Blocks, region))) {
             *ppMem = region->Block;
+
             goto exit;
         }
 

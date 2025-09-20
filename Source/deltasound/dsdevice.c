@@ -267,36 +267,29 @@ HRESULT DELTACALL dsdevice_render(dsdevice* self, DWORD dwBuffers, dsb** ppBuffe
     }
 
     HRESULT hr = S_OK;
-    DWORD status = DS_STATUS_NONE;
+    UINT32 padding = 0;
 
-    if (SUCCEEDED(hr = ds_get_status(self->Instance, &status))) {
-        if (status & DS_STATUS_PLAYING) {
-            UINT32 padding = 0;
+    if (SUCCEEDED(hr = IAudioClient_GetCurrentPadding(self->AudioClient, &padding))) {
+        const UINT32 frames =
+            (UINT32)(self->AudioClientBufferSize * TARGET_BUFFER_PADDING_IN_SECONDS) - padding;
 
-            if (SUCCEEDED(hr = IAudioClient_GetCurrentPadding(self->AudioClient, &padding))) {
-                const UINT32 frames =
-                    (UINT32)(self->AudioClientBufferSize * TARGET_BUFFER_PADDING_IN_SECONDS) - padding;
+        if (frames != 0) {
+            BYTE* lock = NULL;
 
-                if (frames != 0) {
-                    BYTE* lock = NULL;
+            if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
+                LPVOID buffer = NULL;
+                DWORD length = 0;
 
-                    if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
+                if (SUCCEEDED(hr = mixer_mix(self->Mixer, dwBuffers, ppBuffers,
+                    self->Format, frames, &buffer, &length))) {
+                    CopyMemory(lock, buffer, length);
 
-                        LPVOID buffer = NULL;
-                        DWORD buffer_size = 0;
-
-                        if (SUCCEEDED(mixer_mix(self->Mixer, dwBuffers, ppBuffers,
-                            self->Format, frames, &buffer, &buffer_size))) {
-                            CopyMemory(lock, buffer, buffer_size);
-
-                            IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
-                                buffer_size / self->Format->Format.nBlockAlign, 0);
-                        }
-                        else {
-                            IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
-                                0, AUDCLNT_BUFFERFLAGS_SILENT);
-                        }
-                    }
+                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
+                        length / self->Format->Format.nBlockAlign, 0);
+                }
+                else {
+                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
+                        0, AUDCLNT_BUFFERFLAGS_SILENT);
                 }
             }
         }
