@@ -37,6 +37,7 @@ SOFTWARE.
 #include "directsoundbuffer_primary_query_interface.h"
 #include "directsoundbuffer_primary_get.h"
 #include "directsoundbuffer_primary_set.h"
+#include "directsoundbuffer_primary_stop.h"
 #include "directsoundbuffer_primary_lock.h"
 #include "directsoundbuffer_primary_play.h"
 #include "directsoundbuffer_primary_play_pan.h"
@@ -47,6 +48,7 @@ SOFTWARE.
 #include "directsoundbuffer_secondary_query_interface.h"
 #include "directsoundbuffer_secondary_get.h"
 #include "directsoundbuffer_secondary_set.h"
+#include "directsoundbuffer_secondary_stop.h"
 #include "directsoundbuffer_secondary_lock.h"
 #include "directsoundbuffer_secondary_play.h"
 #include "directsoundbuffer_secondary_play_frequency.h"
@@ -115,6 +117,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferPrimaryPlay);
     TEST(DirectSoundBufferPrimaryPlayPan);
     TEST(DirectSoundBufferPrimaryPlayVolume);
+    TEST(DirectSoundBufferPrimaryStop);
 
     TEST(DirectSoundBufferPrimaryNotify);
 
@@ -129,6 +132,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferSecondaryPlayVolume);
     TEST(DirectSoundBufferSecondaryPlayMono);
     TEST(DirectSoundBufferSecondaryPlayStereo);
+    TEST(DirectSoundBufferSecondaryStop);
 
     TEST(DirectSoundBufferSecondaryNotify);
 
