@@ -301,8 +301,6 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         hr = dsb_initialize(self->Main, self, &desc);
     }
 
-exit:
-
     LeaveCriticalSection(&self->Lock);
 
     return hr;
@@ -329,6 +327,12 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
                 instance->Status = DSBSTATUS_BUFFERLOST;
             }
         }
+    }
+    else {
+        self->Main->Play = DSBPLAY_NONE;
+        self->Main->Status = DSBSTATUS_NONE;
+
+        dsbcb_set_current_position(self->Main->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
     }
 
     LeaveCriticalSection(&self->Lock);
