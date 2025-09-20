@@ -735,16 +735,6 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
         return DSERR_UNINITIALIZED;
     }
 
-    if (self->Instance->Level == DSSCL_NONE) {
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
-            return DSERR_PRIOLEVELNEEDED;
-        }
-    }
-
     if (self->Status & DSBSTATUS_BUFFERLOST) {
         return DSERR_BUFFERLOST;
     }

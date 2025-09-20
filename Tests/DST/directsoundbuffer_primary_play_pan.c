@@ -114,7 +114,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
     // Copy
 
     if (a11 == NULL || a21 == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     CopyMemory(a11, wave, al11);
@@ -227,12 +227,12 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
 
     if (ra != rb) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if (dsba == NULL || dsbb == NULL) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     // GetCaps
@@ -242,12 +242,12 @@ static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
 
     if (ra != rb) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     // GetFormat
