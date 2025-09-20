@@ -319,6 +319,7 @@ HRESULT DELTACALL dsb_get_current_position(dsb* self,
         }
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        self->Play = DSBPLAY_NONE;
         self->Status = DSBSTATUS_BUFFERLOST;
 
         return DSERR_BUFFERLOST;
@@ -402,6 +403,7 @@ HRESULT DELTACALL dsb_get_status(dsb* self, LPDWORD pdwStatus) {
 
     if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+            self->Play = DSBPLAY_NONE;
             self->Status = DSBSTATUS_BUFFERLOST;
         }
     }
@@ -466,6 +468,7 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         }
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        self->Play = DSBPLAY_NONE;
         self->Status = DSBSTATUS_BUFFERLOST;
 
         hr = DSERR_BUFFERLOST;
@@ -536,6 +539,7 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         }
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        self->Play = DSBPLAY_NONE;
         self->Status = DSBSTATUS_BUFFERLOST;
 
         return DSERR_BUFFERLOST;
@@ -634,6 +638,7 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return DSERR_INVALIDCALL;
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        self->Play = DSBPLAY_NONE;
         self->Status = DSBSTATUS_BUFFERLOST;
 
         return DSERR_BUFFERLOST;
@@ -747,6 +752,7 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
 
     if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+            self->Play = DSBPLAY_NONE;
             self->Status = DSBSTATUS_BUFFERLOST;
 
             return DSERR_BUFFERLOST;
@@ -781,6 +787,7 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
         }
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+        self->Play = DSBPLAY_NONE;
         self->Status = DSBSTATUS_BUFFERLOST;
 
         return DSERR_BUFFERLOST;
@@ -804,6 +811,7 @@ HRESULT DELTACALL dsb_unlock(dsb* self,
 HRESULT DELTACALL dsb_restore(dsb* self) {
     if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+            self->Play = DSBPLAY_NONE;
             self->Status = DSBSTATUS_BUFFERLOST;
 
             return DSERR_BUFFERLOST;

@@ -43,6 +43,7 @@ SOFTWARE.
 #include "directsoundbuffer_primary_play_pan.h"
 #include "directsoundbuffer_primary_play_volume.h"
 #include "directsoundbuffer_primary_notify.h"
+#include "directsoundbuffer_primary_play_setcooperativelevel.h"
 
 #include "directsoundbuffer_secondary_basics.h"
 #include "directsoundbuffer_secondary_query_interface.h"
@@ -57,6 +58,7 @@ SOFTWARE.
 #include "directsoundbuffer_secondary_play_mono.h"
 #include "directsoundbuffer_secondary_play_stereo.h"
 #include "directsoundbuffer_secondary_notify.h"
+#include "directsoundbuffer_secondary_play_setcooperativelevel.h"
 
 #include "directsoundcapture_enumerate.h"
 
@@ -120,6 +122,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferPrimaryStop);
 
     TEST(DirectSoundBufferPrimaryNotify);
+    TEST(DirectSoundBufferPrimaryPlaySetCooperativeLevel);
 
     TEST(DirectSoundBufferSecondaryBasics);
     TEST(DirectSoundBufferSecondaryQueryInterface);
@@ -135,6 +138,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferSecondaryStop);
 
     TEST(DirectSoundBufferSecondaryNotify);
+    TEST(DirectSoundBufferSecondaryPlaySetCooperativeLevel);
 
     // TODO Tests play with notifications
 
