@@ -298,9 +298,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         desc.dwSize = sizeof(DSBUFFERDESC);
         desc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_LOCSOFTWARE;
 
-        if (SUCCEEDED(hr = dsb_initialize(self->Main, self, &desc))) {
-            goto exit;
-        }
+        hr = dsb_initialize(self->Main, self, &desc);
     }
 
 exit:
@@ -317,16 +315,21 @@ HRESULT DELTACALL ds_set_cooperative_level(ds* self, HWND hwnd, DWORD dwLevel) {
 
     EnterCriticalSection(&self->Lock);
 
-    // TODO other validations
-
     self->HWND = hwnd; // TODO Get root parent window (topmost unowned window)
     self->Level = dwLevel;
 
-    // NOTE. Multiple changes are allowed.
-    // They have to be properly handled.
+    if (dwLevel == DSSCL_WRITEPRIMARY) {
+        const DWORD count = arr_get_count(self->Buffers);
 
-    // TODO, if new level is DSSCL_WRITEPRIMARY
-    // then stop all secondary buffers and mark them as lost?
+        for (DWORD i = 0; i < count; i++) {
+            dsb* instance = NULL;
+
+            if (SUCCEEDED(arr_get_item(self->Buffers, i, &instance))) {
+                instance->Play = DSBPLAY_NONE;
+                instance->Status = DSBSTATUS_BUFFERLOST;
+            }
+        }
+    }
 
     LeaveCriticalSection(&self->Lock);
 
