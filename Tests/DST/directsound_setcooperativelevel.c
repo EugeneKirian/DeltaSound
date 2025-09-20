@@ -223,6 +223,62 @@ static BOOL TestDirectSoundSetCooperativeLevelAlreadySet(
     return TRUE;
 }
 
+static BOOL TestDirectSoundSetCooperativeLevelChangeWindow(
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, HWND wc) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUND dsa = NULL;
+    LPDIRECTSOUND dsb = NULL;
+
+    HRESULT ra = a(NULL, &dsa, NULL);
+    HRESULT rb = b(NULL, &dsb, NULL);
+
+    if (ra != rb) {
+        return FALSE;
+    }
+
+    if (dsa == NULL || dsb == NULL) {
+        return FALSE;
+    }
+
+    {
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_NORMAL);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_NORMAL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSound_SetCooperativeLevel(dsa, wc, DSSCL_PRIORITY);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wc, DSSCL_PRIORITY);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSound_SetCooperativeLevel(dsa, wa, DSSCL_NORMAL);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wb, DSSCL_NORMAL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        ra = IDirectSound_SetCooperativeLevel(dsa, wc, DSSCL_PRIORITY);
+        rb = IDirectSound_SetCooperativeLevel(dsb, wc, DSSCL_PRIORITY);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    IDirectSound_Release(dsa);
+    IDirectSound_Release(dsb);
+
+    return TRUE;
+}
+
 static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
     if (a == NULL || b == NULL) {
@@ -301,8 +357,9 @@ BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b) {
 
     HWND wa = InitWindow(WINDOW_NAME);
     HWND wb = InitWindow(WINDOW_NAME);
+    HWND wc = InitWindow(WINDOW_NAME);
 
-    if (wa == NULL || wb == NULL) {
+    if (wa == NULL || wb == NULL || wc == NULL) {
         result = FALSE;
         goto exit;
     }
@@ -322,6 +379,11 @@ BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b) {
         goto exit;
     }
 
+    if (!TestDirectSoundSetCooperativeLevelChangeWindow(dsca, wa, dscb, wb, wc)) {
+        result = FALSE;
+        goto exit;
+    }
+
     if (!TestDirectSoundSetCooperativeLevelMultipleInstances(dsca, wa, dscb, wb)) {
         result = FALSE;
         goto exit;
@@ -334,6 +396,10 @@ exit:
 
     if (wb != NULL) {
         DestroyWindow(wb);
+    }
+
+    if (wb != NULL) {
+        DestroyWindow(wc);
     }
 
     UnregisterClassA(WINDOW_NAME, GetModuleHandleA(NULL));
