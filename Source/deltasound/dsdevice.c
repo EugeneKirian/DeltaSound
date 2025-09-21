@@ -31,6 +31,8 @@ SOFTWARE.
 #define REFTIMES_PER_SEC                    10000000
 #define TARGET_BUFFER_PADDING_IN_SECONDS    (1.0f / 60.0f)
 
+#define AUDCLNT_BUFFERFLAGS_NONE            0
+
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 #define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
 
@@ -278,17 +280,16 @@ HRESULT DELTACALL dsdevice_render(dsdevice* self, DWORD dwBuffers, dsb** ppBuffe
 
             if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
                 LPVOID buffer = NULL;
-                DWORD frames = 0;
+                DWORD available = 0;
 
                 if (SUCCEEDED(hr = mixer_mix(self->Mixer, dwBuffers, ppBuffers,
-                    self->Format, frames, &buffer, &frames))) {
-                    CopyMemory(lock, buffer, frames * self->Format->Format.nBlockAlign);
+                    self->Format, frames, &buffer, &available))) {
+                    CopyMemory(lock, buffer, available * self->Format->Format.nBlockAlign);
 
-                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
+                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, available, AUDCLNT_BUFFERFLAGS_NONE);
                 }
                 else {
-                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
-                        0, AUDCLNT_BUFFERFLAGS_SILENT);
+                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, 0, AUDCLNT_BUFFERFLAGS_SILENT);
                 }
             }
         }
