@@ -321,9 +321,23 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
     // TODO updating of statuses and triggering notifications should NOT be inside mixer
 
-    // TODO 
-    // Update buffer statuses for non-looping
-    // Trigger appropriate notifications.
+    for (DWORD i = 0; i < dwBuffers; i++) {
+        DWORD status = DSBSTATUS_NONE;
+
+        if (SUCCEEDED(hr = dsb_get_status(ppBuffers[i], &status))) {
+            if (status & DSBSTATUS_PLAYING) {
+                DWORD read = 0, write = 0;
+
+                if (SUCCEEDED(hr = dsbcb_get_current_position(ppBuffers[i]->Buffer, &read, &write))) {
+                    hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
+                        read + buffers[i].InDataSize, write + buffers[i].InDataSize,
+                        DSBCB_SETPOSITION_LOOPING /* TODO proper flags for single play buffers*/);
+                }
+            }
+        }
+    }
+
+    // TODO  Trigger appropriate notifications.
 
     *pOutBuffer = result;
     *pdwOutBufferBytes = result_length;
