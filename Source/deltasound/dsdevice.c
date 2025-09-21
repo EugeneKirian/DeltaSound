@@ -278,14 +278,13 @@ HRESULT DELTACALL dsdevice_render(dsdevice* self, DWORD dwBuffers, dsb** ppBuffe
 
             if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(self->AudioRenderer, frames, &lock))) {
                 LPVOID buffer = NULL;
-                DWORD length = 0;
+                DWORD frames = 0;
 
                 if (SUCCEEDED(hr = mixer_mix(self->Mixer, dwBuffers, ppBuffers,
-                    self->Format, frames, &buffer, &length))) {
-                    CopyMemory(lock, buffer, length);
+                    self->Format, frames, &buffer, &frames))) {
+                    CopyMemory(lock, buffer, frames * self->Format->Format.nBlockAlign);
 
-                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
-                        length / self->Format->Format.nBlockAlign, 0);
+                    hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer, frames, 0);
                 }
                 else {
                     hr = IAudioRenderClient_ReleaseBuffer(self->AudioRenderer,
