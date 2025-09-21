@@ -371,12 +371,12 @@ HRESULT DELTACALL mixer_attenuate(mixer* self, DWORD dwFrames, FLOAT fVolume, FL
 // TODO name
 // TODO forward declare
 // TODO signature
-inline FLOAT DELTACALL convert_to_float(DWORD dwBits, INT nValue) {
+inline FLOAT DELTACALL convert_to_float(DWORD dwBits, LPVOID pValue) {
     if (dwBits == 8) {
-        return ((FLOAT)nValue - 128.0f) / 128.0f;
+        return ((FLOAT)(*(PBYTE)pValue) - 128.0f) / 128.0f;
     }
     else if (dwBits == 16) {
-        return  (FLOAT)nValue / 32768.0f;
+        return  (FLOAT)(*(PSHORT)pValue) / 32768.0f;
     }
 
     return 0.0f;
@@ -419,7 +419,7 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self,
     for (DWORD i = 0; i < dwFrames; i++) {
         if (dwChannels == 1) {
             const FLOAT v =
-                convert_to_float(dwBits, *(PBYTE)((size_t)pInBuffer + offset));
+                convert_to_float(dwBits, (LPVOID)((size_t)pInBuffer + offset));
 
             buffer[i * 2 /* STEREO */ + 0] = v;
             buffer[i * 2 /* STEREO */ + 1] = v;
@@ -428,9 +428,9 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self,
         }
         else {
             const FLOAT v1 =
-                convert_to_float(dwBits, *(PSHORT)((size_t)pInBuffer + offset + 0));
+                convert_to_float(dwBits, (LPVOID)((size_t)pInBuffer + offset + 0));
             const FLOAT v2 =
-                convert_to_float(dwBits, *(PSHORT)((size_t)pInBuffer + offset + 2));
+                convert_to_float(dwBits, (LPVOID)((size_t)pInBuffer + offset + 2));
 
             buffer[i * 2 /* STEREO */ + 0] = v1;
             buffer[i * 2 /* STEREO */ + 1] = v2;

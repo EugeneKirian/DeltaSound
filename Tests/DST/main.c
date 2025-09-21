@@ -133,8 +133,8 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundBufferSecondaryPlayFrequency);
     //TEST(DirectSoundBufferSecondaryPlayPan);
     //TEST(DirectSoundBufferSecondaryPlayVolume);
-    TEST(DirectSoundBufferSecondaryPlayMono);
-    //TEST(DirectSoundBufferSecondaryPlayStereo);
+    //TEST(DirectSoundBufferSecondaryPlayMono);
+    TEST(DirectSoundBufferSecondaryPlayStereo);
     //TEST(DirectSoundBufferSecondaryStop);
 
     //TEST(DirectSoundBufferSecondaryNotify);
