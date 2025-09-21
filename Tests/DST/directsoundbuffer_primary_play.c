@@ -513,14 +513,14 @@ static BOOL TestDirectSoundBufferPrimaryPlaySynthetic(
         }
     }
 
-    //for (int i = 0; i < PLAY_PRIORITY_COUNT; i++) {
-    //    for (int k = 0; k < BUFFER_PLAY_FLAGS_COUNT; k++) {
-    //        if (!TestDirectSoundBufferStreamWave(dsba, dsbb, wave, wave_length, PlayPriority[i], BufferPlayFlags[k])) {
-    //            result = FALSE;
-    //            goto exit;
-    //        }
-    //    }
-    //}
+    for (int i = 0; i < PLAY_PRIORITY_COUNT; i++) {
+        for (int k = 0; k < BUFFER_PLAY_FLAGS_COUNT; k++) {
+            if (!TestDirectSoundBufferStreamWave(dsba, dsbb, wave, wave_length, PlayPriority[i], BufferPlayFlags[k])) {
+                result = FALSE;
+                goto exit;
+            }
+        }
+    }
 
 exit:
 
