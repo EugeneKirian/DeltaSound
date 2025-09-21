@@ -32,4 +32,4 @@ HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut);
 VOID DELTACALL mixer_release(mixer* pMix);
 
 HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
-    PWAVEFORMATEXTENSIBLE pwfxFormat, DWORD dwFrames, LPVOID* pOutBuffer, LPDWORD pdwOutBufferBytes);
+    PWAVEFORMATEXTENSIBLE pwfxFormat, DWORD dwRequiredFrames, LPVOID* pOutBuffer, LPDWORD pdwOutBufferBytes);
