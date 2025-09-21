@@ -246,7 +246,6 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
             return hr;
         }
 
-        // TODO ???
         if (FAILED(hr = arena_allocate(self->Arena, length, &buffers[i].InData))) {
             return hr;
         }
@@ -277,7 +276,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
             ? ppBuffers[i]->Format->nSamplesPerSec : ppBuffers[i]->Frequency;
 
         if (FAILED(hr = mixer_resample(self,
-            ppBuffers[i]->Format->nChannels, frequency,
+            2 /* STEREO */, frequency,
             buffers[i].WorkData, buffers[i].WorkDataSize,
             pwfxFormat->Format.nSamplesPerSec, &buffers[i].Out, &buffers[i].OutSize))) {
             return hr;
@@ -546,10 +545,20 @@ HRESULT DELTACALL mixer_resample(mixer* self,
     DWORD dwChannels, DWORD dwInFrequency,
     FLOAT* pfInBuffer, DWORD dwInBufferBytes,
     DWORD dwOutFrequency, FLOAT** ppfOutBuffer, LPDWORD pdwOutBufferBytes) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
     if (dwChannels == 0 || dwInFrequency == 0
         || pfInBuffer == NULL || dwInBufferBytes == 0
         || dwOutFrequency == 0 || ppfOutBuffer == NULL || pdwOutBufferBytes == NULL) {
         return E_INVALIDARG;
+    }
+
+    if (dwInFrequency == dwOutFrequency) {
+        *ppfOutBuffer = pfInBuffer;
+        *pdwOutBufferBytes = dwInBufferBytes;
+        return S_OK;
     }
 
     const FLOAT ratio = (FLOAT)dwInFrequency / (FLOAT)dwOutFrequency;
