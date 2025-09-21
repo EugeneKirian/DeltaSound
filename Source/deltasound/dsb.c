@@ -33,6 +33,8 @@ SOFTWARE.
 
 #define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
 
+#define ADVANCEWRITEPOSITION(X, ALIGN) (X + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * ALIGN)
+
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -608,8 +610,10 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
     DWORD read = 0, write = 0;
 
     if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
-        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, read,
-            write + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * self->Format->nBlockAlign, DSBCB_SETPOSITION_LOOPING))) {
+        const DWORD advance = min(self->Caps.dwBufferBytes,
+            ADVANCEWRITEPOSITION(write, self->Format->nBlockAlign));
+
+        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, read, advance, DSBCB_SETPOSITION_NONE))) {
 
             self->Play = dwFlags;
             self->Priority = dwPriority;
@@ -648,9 +652,13 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return E_INVALIDARG;
     }
 
+    const DWORD write =
+        (self->Status & DSBSTATUS_PLAYING)
+        ? min(self->Caps.dwBufferBytes, ADVANCEWRITEPOSITION(dwNewPosition, self->Format->nBlockAlign))
+        : dwNewPosition;
+
     return dsbcb_set_current_position(self->Buffer,
-        BLOCKALIGN(dwNewPosition, self->Format->nBlockAlign),
-        BLOCKALIGN(dwNewPosition, self->Format->nBlockAlign), DSBCB_SETPOSITION_NONE);
+        BLOCKALIGN(dwNewPosition, self->Format->nBlockAlign), write, DSBCB_SETPOSITION_NONE);
 }
 
 HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {

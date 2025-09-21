@@ -29,6 +29,8 @@ SOFTWARE.
 
 #include <math.h>
 
+#define BUFFERFREQUENCY(FREQUENCY, OVERRIDE) (OVERRIDE == DSBFREQUENCY_ORIGINAL ? FREQUENCY : OVERRIDE)
+
 struct mixer {
     allocator*  Allocator;
     arena*      Arena;
@@ -40,7 +42,7 @@ HRESULT DELTACALL mixer_convert_to_float(mixer* pMix,
 
 HRESULT DELTACALL mixer_convert_to_ieee(mixer* self,
     DWORD dwBits, DWORD dwChannels, DWORD dwFrames,
-    LPVOID pInBuffer, DWORD dwInBufferBytes, FLOAT** ppOutBuffer, LPDWORD pOutBufferBytes);
+    LPVOID pInBuffer, FLOAT** ppOutBuffer, LPDWORD pOutBufferBytes);
 HRESULT DELTACALL mixer_resample(mixer* pMix,
     DWORD dwChannels, DWORD dwInFrequency, FLOAT* pfInBuffer,
     DWORD dwInBufferBytes, DWORD dwOutFrequency, FLOAT** ppfOutBuffer, LPDWORD pdwOutBufferBytes);
@@ -179,7 +181,7 @@ HRESULT DELTACALL mixer_play_buffer(mixer* self, DWORD dwBufferCount, dsb* pBuff
 */
 
 typedef struct mix_buffer {
-    dsb*    Instance;
+    dsb*    Instance; // TODO is this needed?
 
     LPVOID  InData;
     DWORD   InDataSize;
@@ -192,16 +194,13 @@ typedef struct mix_buffer {
 } mix_buffer; // TODO better names
 
 // TODO
-HRESULT DELTACALL mixer_get_buffer_length(LPCWAVEFORMATEX pwfxIn,
-    DWORD dwFrequency, LPCWAVEFORMATEX pwfxOut, DWORD dwFrames, LPDWORD pdwBytes) {
+HRESULT DELTACALL mixer_get_buffer_length(DWORD dwFrames,
+    DWORD dwInFrequency, DWORD dwInBlockAlign, DWORD dwRequiredFrequency, LPDWORD pdwBytes) {
     // TODO validations
 
-    const DWORD frequency = dwFrequency == DSBFREQUENCY_ORIGINAL
-        ? pwfxIn->nSamplesPerSec : dwFrequency;
+    const FLOAT ratio = (FLOAT)dwInFrequency / (FLOAT)dwRequiredFrequency;
 
-    const FLOAT ratio = (FLOAT)frequency / (FLOAT)pwfxOut->nSamplesPerSec;
-
-    *pdwBytes = (DWORD)roundf(ratio * dwFrames) * pwfxIn->nBlockAlign;
+    *pdwBytes = (DWORD)roundf(ratio * dwFrames) * dwInBlockAlign;
 
     return S_OK;
 }
@@ -239,16 +238,22 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     for (DWORD i = 0; i < dwBuffers; i++) {
         buffers[i].Instance = ppBuffers[i];
 
+        const DWORD frequency =
+            BUFFERFREQUENCY(ppBuffers[i]->Format->nSamplesPerSec, ppBuffers[i]->Frequency);
+
         DWORD length = 0;
 
-        if (FAILED(hr = mixer_get_buffer_length(ppBuffers[i]->Format,
-            ppBuffers[i]->Frequency, &pwfxFormat->Format, dwFrames, &length))) {
+        if (FAILED(hr = mixer_get_buffer_length(dwFrames, frequency,
+            ppBuffers[i]->Format->nBlockAlign, pwfxFormat->Format.nSamplesPerSec, &length))) {
             return hr;
         }
 
         if (FAILED(hr = arena_allocate(self->Arena, length, &buffers[i].InData))) {
             return hr;
         }
+
+        // TODO need indication if buffer was read to the end
+        // for non-looping buffers
 
         if (FAILED(hr = dsbcb_read(ppBuffers[i]->Buffer,
             length, buffers[i].InData, &buffers[i].InDataSize,
@@ -259,11 +264,11 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
     // TODO. Assumption is that inputs are non-IEEE PCM.
 
-    // Convert to IEEE, upmix/downmix audio to stereo, and fill missing frames with silence.
+    // Convert to IEEE, upmix/downmix audio to stereo.
     for (DWORD i = 0; i < dwBuffers; i++) {
         if (FAILED(hr = mixer_convert_to_ieee(self,
             ppBuffers[i]->Format->wBitsPerSample, ppBuffers[i]->Format->nChannels,
-            dwFrames, buffers[i].InData, buffers[i].InDataSize,
+            buffers[i].InDataSize / ppBuffers[i]->Format->nBlockAlign, buffers[i].InData,
             &buffers[i].WorkData, &buffers[i].WorkDataSize))) {
             return hr;
         }
@@ -272,8 +277,8 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     // At this point all audio data is IEEE and stereo.
     // Resample the audio to the requested audio frequency.
     for (DWORD i = 0; i < dwBuffers; i++) {
-        const DWORD frequency = ppBuffers[i]->Frequency == DSBFREQUENCY_ORIGINAL
-            ? ppBuffers[i]->Format->nSamplesPerSec : ppBuffers[i]->Frequency;
+        const DWORD frequency =
+            BUFFERFREQUENCY(ppBuffers[i]->Format->nSamplesPerSec, ppBuffers[i]->Frequency);
 
         if (FAILED(hr = mixer_resample(self,
             2 /* STEREO */, frequency,
@@ -293,11 +298,13 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
     // Mix all sound buffers together.
     FLOAT* result = NULL;
-    const DWORD result_length = buffers[0].OutSize;
+    const DWORD result_length = dwFrames * sizeof(FLOAT);
 
     if (FAILED(hr = arena_allocate(self->Arena, result_length, &result))) {
         return hr;
     }
+
+    ZeroMemory(result, result_length);
 
     for (DWORD i = 0; i < dwFrames; i++) {
         FLOAT l = 0.0f;
@@ -396,16 +403,14 @@ inline FLOAT DELTACALL convert_to_float(DWORD dwBits, LPVOID pValue) {
     return 0.0f;
 }
 
-HRESULT DELTACALL mixer_convert_to_ieee(mixer* self,
-    DWORD dwBits, DWORD dwChannels, DWORD dwFrames,
-    LPVOID pInBuffer, DWORD dwInBufferBytes, FLOAT** ppOutBuffer, LPDWORD pOutBufferBytes) {
+HRESULT DELTACALL mixer_convert_to_ieee(mixer* self, DWORD dwBits, DWORD dwChannels,
+    DWORD dwFrames, LPVOID pInBuffer, FLOAT** ppOutBuffer, LPDWORD pOutBufferBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
 
     if (dwBits == 0 || dwChannels == 0 || dwFrames == 0
-        || pInBuffer == NULL || dwInBufferBytes == 0
-        || ppOutBuffer == NULL || pOutBufferBytes == NULL) {
+        || pInBuffer == NULL || ppOutBuffer == NULL || pOutBufferBytes == NULL) {
         return E_INVALIDARG;
     }
 
@@ -450,12 +455,6 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self,
             buffer[i * 2 /* STEREO */ + 1] = v2;
 
             offset += bytes * dwChannels;
-        }
-
-        if (dwInBufferBytes <= offset) {
-            // Input buffer has fewer frames than required.
-            // Stop processing and leave the rest as silence (zeros).
-            break;
         }
     }
 

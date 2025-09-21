@@ -382,16 +382,13 @@ DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx) {
             break;
         }
         else if (result == DSDEVICE_AUDIO_EVENT_INDEX) {
-            DWORD count = 0;
             dsb** buffers = NULL;
+            DWORD count = 0;
 
             if (SUCCEEDED(hr = dsdevice_get_active_buffers(device, &count, &buffers))) {
-                if (count == 0) {
-                    Sleep(1);
-                    continue;
+                if (count != 0) {
+                    hr = dsdevice_render(device, count, buffers);
                 }
-
-                hr = dsdevice_render(device, count, buffers);
             }
         }
     }
