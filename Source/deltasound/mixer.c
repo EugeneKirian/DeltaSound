@@ -444,7 +444,7 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self,
             const FLOAT v1 =
                 convert_to_float(dwBits, (LPVOID)((size_t)pInBuffer + offset + 0));
             const FLOAT v2 =
-                convert_to_float(dwBits, (LPVOID)((size_t)pInBuffer + offset + 2));
+                convert_to_float(dwBits, (LPVOID)((size_t)pInBuffer + offset + bytes));
 
             buffer[i * 2 /* STEREO */ + 0] = v1;
             buffer[i * 2 /* STEREO */ + 1] = v2;
