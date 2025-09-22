@@ -152,6 +152,10 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
     // TODO multi-threaded mixing
 
+    if (dwBuffers > 1) {
+        int k = 1;
+    }
+
     // Read the data from the user-defined buffers.
     for (DWORD i = 0; i < dwBuffers; i++) {
         if (FAILED(hr = mix_buffer_initialize(&buffers[i],
@@ -225,17 +229,70 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
         return hr;
     }
 
-    for (DWORD i = 0; i < frames; i++) {
-        FLOAT l = 0.0f;
-        FLOAT r = 0.0f;
+    if (dwBuffers == 1) {
+        // TODO have special case for 1 buffer generally ????
+        CopyMemory(result, buffers[0].Out,
+            max(frames, dwRequiredFrames) * 2 /* STEREO */ * sizeof(FLOAT));
+    }
+    else {
+        FLOAT amp = 0.0f;
 
-        for (DWORD k = 0; k < dwBuffers; k++) {
-            l += buffers[k].Out[i * 2 /* STEREO */ + 0];
-            r += buffers[k].Out[i * 2 /* STEREO */ + 1];
+        for (DWORD i = 0; i < frames; i++) {
+
+            DWORD count = 0;
+
+            for (DWORD k = 0; k < dwBuffers; k++) {
+                // Accumulate data only from buffers that have it.
+                if (i < buffers[k].OutFrames) {
+                    count++;
+
+                    const FLOAT l = fabsf(buffers[k].Out[i * 2 /* STEREO */ + 0]);
+                    const FLOAT r = fabsf(buffers[k].Out[i * 2 /* STEREO */ + 1]);
+
+                    amp = max(amp, max(l, r));
+                }
+            }
         }
 
-        result[i * 2 /* STEREO */ + 0] = l / (FLOAT)dwBuffers;
-        result[i * 2 /* STEREO */ + 1] = r / (FLOAT)dwBuffers;
+        for (DWORD i = 0; i < frames; i++) {
+            DWORD count = 0;
+
+            for (DWORD k = 0; k < dwBuffers; k++) {
+                if (i < buffers[k].OutFrames) {
+                    count++;
+                }
+            }
+
+            const FLOAT gain = amp == 0.0f
+                ? 1.0f : (1.0f / ((FLOAT)count * amp));
+
+            for (DWORD k = 0; k < dwBuffers; k++) {
+                FLOAT l = 0.0f, r = 0.0f;
+
+                // Accumulate data only from buffers that have it.
+                if (i < buffers[k].OutFrames) {
+                    l += buffers[k].Out[i * 2 /* STEREO */ + 0] * gain;
+                    r += buffers[k].Out[i * 2 /* STEREO */ + 1] * gain;
+                }
+
+                result[i * 2 /* STEREO */ + 0] = l;
+                result[i * 2 /* STEREO */ + 1] = r;
+            }
+
+            //if (count != 0) {
+            //    result[i * 2 /* STEREO */ + 0] = l / sqrtf((FLOAT)count);
+            //    result[i * 2 /* STEREO */ + 1] = r / sqrtf((FLOAT)count);
+            //
+            //    if (result[i * 2 /* STEREO */ + 0] < -1.0f || 1.0f < result[i * 2 /* STEREO */ + 0]
+            //        || result[i * 2 /* STEREO */ + 1] < -1.0f || 1.0f < result[i * 2 /* STEREO */ + 1])
+            //    {
+            //        int kkk = 1;
+            //    }
+            //}
+
+            //result[i * 2 /* STEREO */ + 0] = max(min(l, 1.0f), -1.0f);
+            //result[i * 2 /* STEREO */ + 1] = max(min(r, 1.0f), -1.0f);
+        }
     }
 
     // Convert audio data to requested wave format.

@@ -157,7 +157,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferSecondaryPlaySingleStereo(
+static BOOL TestDirectSoundBufferSecondaryPlaySingleMultiple(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
@@ -338,7 +338,7 @@ BOOL TestDirectSoundBufferSecondaryPlayStereo(HMODULE a, HMODULE b) {
         goto exit;
     }
 
-    if (!TestDirectSoundBufferSecondaryPlaySingleStereo(dsca, wa, dscb, wb)) {
+    if (!TestDirectSoundBufferSecondaryPlaySingleMultiple(dsca, wa, dscb, wb)) {
         result = FALSE;
         goto exit;
     }

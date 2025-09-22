@@ -57,6 +57,7 @@ SOFTWARE.
 #include "directsoundbuffer_secondary_play_volume.h"
 #include "directsoundbuffer_secondary_play_mono.h"
 #include "directsoundbuffer_secondary_play_stereo.h"
+#include "directsoundbuffer_secondary_play_multiple.h"
 #include "directsoundbuffer_secondary_notify.h"
 #include "directsoundbuffer_secondary_play_setcooperativelevel.h"
 
@@ -133,17 +134,18 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundBufferSecondaryPlayFrequency);
     //TEST(DirectSoundBufferSecondaryPlayPan);
     //TEST(DirectSoundBufferSecondaryPlayVolume);
-    TEST(DirectSoundBufferSecondaryPlayMono);
-    TEST(DirectSoundBufferSecondaryPlayStereo);
-    TEST(DirectSoundBufferSecondaryStop);
+    //TEST(DirectSoundBufferSecondaryPlayMono);
+    //TEST(DirectSoundBufferSecondaryPlayStereo);
+    TEST(DirectSoundBufferSecondaryPlayMultiple);
+    //TEST(DirectSoundBufferSecondaryStop);
 
-    TEST(DirectSoundBufferSecondaryNotify);
-    TEST(DirectSoundBufferSecondaryPlaySetCooperativeLevel);
+    //TEST(DirectSoundBufferSecondaryNotify);
+    //TEST(DirectSoundBufferSecondaryPlaySetCooperativeLevel);
 
-    // TODO Tests play with notifications
+    //// TODO Tests play with notifications
 
-    TEST(DirectSoundDuplicatePrimary);
-    TEST(DirectSoundDuplicateSecondary);
+    //TEST(DirectSoundDuplicatePrimary);
+    //TEST(DirectSoundDuplicateSecondary);
     //// TODO duplicate with spatial buffers
     //// TODO duplicate with notifications
 

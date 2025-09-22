@@ -159,6 +159,7 @@
     <ClCompile Include="directsoundbuffer_secondary_play.c" />
     <ClCompile Include="directsoundbuffer_secondary_play_frequency.c" />
     <ClCompile Include="directsoundbuffer_secondary_play_mono.c" />
+    <ClCompile Include="directsoundbuffer_secondary_play_multiple.c" />
     <ClCompile Include="directsoundbuffer_secondary_play_pan.c" />
     <ClCompile Include="directsoundbuffer_secondary_play_setcooperativelevel.c" />
     <ClCompile Include="directsoundbuffer_secondary_play_stereo.c" />
@@ -203,6 +204,7 @@
     <ClInclude Include="directsoundbuffer_secondary_play.h" />
     <ClInclude Include="directsoundbuffer_secondary_play_frequency.h" />
     <ClInclude Include="directsoundbuffer_secondary_play_mono.h" />
+    <ClInclude Include="directsoundbuffer_secondary_play_multiple.h" />
     <ClInclude Include="directsoundbuffer_secondary_play_pan.h" />
     <ClInclude Include="directsoundbuffer_secondary_play_setcooperativelevel.h" />
     <ClInclude Include="directsoundbuffer_secondary_play_stereo.h" />
