@@ -262,20 +262,17 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
                     }
                     else {
                         if (buffers[i].Status & MBSTATUS_COMPLETE) {
-                            hr = dsbcb_set_current_position(ppBuffers[i]->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
-
                             ppBuffers[i]->Play = DSBPLAY_NONE;
                             ppBuffers[i]->Status = DSBSTATUS_NONE;
+
+                            hr = dsbcb_set_current_position(ppBuffers[i]->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
                         }
                         else {
                             const DWORD length = ppBuffers[i]->Caps.dwBufferBytes;
-                            const DWORD next_read =
-                                buffers[i].Status ? 0 : min(read + advancement, length);
-                            const DWORD next_write =
-                                buffers[i].Status ? 0 : min(write + advancement, length);
 
                             hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
-                                next_read, next_write, DSBCB_SETPOSITION_NONE);
+                                min(read + advancement, length),
+                                min(write + advancement, length), DSBCB_SETPOSITION_NONE);
                         }
                     }
                 }
@@ -321,8 +318,8 @@ HRESULT DELTACALL mixer_attenuate(mixer* self, mix_buffer* pBuffer, FLOAT fVolum
     const FLOAT r = fVolume * (fPan < 0.0f ? (1.0f + fPan) : 1.0f);
 
     for (DWORD i = 0; i < pBuffer->OutFrames; i++) {
-        pBuffer->Intermediate[i * 2 /* STEREO */ + 0] *= l;
-        pBuffer->Intermediate[i * 2 /* STEREO */ + 1] *= r;
+        pBuffer->Out[i * 2 /* STEREO */ + 0] *= l;
+        pBuffer->Out[i * 2 /* STEREO */ + 1] *= r;
     }
 
     return S_OK;
