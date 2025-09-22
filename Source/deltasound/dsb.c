@@ -913,7 +913,7 @@ HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwPosition, DWORD d
                     SetEvent(notes[i].hEventNotify);
                 }
 
-                if (dwPosition + dwAdvance <= notes[i].dwOffset) {
+                if (dwPosition + dwAdvance < notes[i].dwOffset) {
                     break;
                 }
             }
