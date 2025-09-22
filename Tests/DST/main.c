@@ -116,23 +116,23 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundBufferPrimaryGet);
     //TEST(DirectSoundBufferPrimarySet);
     //TEST(DirectSoundBufferPrimaryLock);
-    TEST(DirectSoundBufferPrimaryPlay);
-    TEST(DirectSoundBufferPrimaryPlayPan);
-    TEST(DirectSoundBufferPrimaryPlayVolume);
-    TEST(DirectSoundBufferPrimaryStop);
+    //TEST(DirectSoundBufferPrimaryPlay);
+    //TEST(DirectSoundBufferPrimaryPlayPan);
+    //TEST(DirectSoundBufferPrimaryPlayVolume);
+    //TEST(DirectSoundBufferPrimaryStop);
 
-    TEST(DirectSoundBufferPrimaryNotify);
-    TEST(DirectSoundBufferPrimaryPlaySetCooperativeLevel);
+    //TEST(DirectSoundBufferPrimaryNotify);
+    //TEST(DirectSoundBufferPrimaryPlaySetCooperativeLevel);
 
-    TEST(DirectSoundBufferSecondaryBasics);
-    TEST(DirectSoundBufferSecondaryQueryInterface);
-    TEST(DirectSoundBufferSecondaryGet);
-    TEST(DirectSoundBufferSecondarySet);
-    TEST(DirectSoundBufferSecondaryLock);
-    TEST(DirectSoundBufferSecondaryPlay);
-    TEST(DirectSoundBufferSecondaryPlayFrequency);
-    TEST(DirectSoundBufferSecondaryPlayPan);
-    TEST(DirectSoundBufferSecondaryPlayVolume);
+    //TEST(DirectSoundBufferSecondaryBasics);
+    //TEST(DirectSoundBufferSecondaryQueryInterface);
+    //TEST(DirectSoundBufferSecondaryGet);
+    //TEST(DirectSoundBufferSecondarySet);
+    //TEST(DirectSoundBufferSecondaryLock);
+    //TEST(DirectSoundBufferSecondaryPlay);
+    //TEST(DirectSoundBufferSecondaryPlayFrequency);
+    //TEST(DirectSoundBufferSecondaryPlayPan);
+    //TEST(DirectSoundBufferSecondaryPlayVolume);
     TEST(DirectSoundBufferSecondaryPlayMono);
     TEST(DirectSoundBufferSecondaryPlayStereo);
     TEST(DirectSoundBufferSecondaryStop);

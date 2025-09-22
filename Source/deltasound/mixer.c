@@ -450,7 +450,7 @@ HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequ
     }
 
     if (pBuffer->Frequency == dwFrequency) {
-        return S_OK;
+        // TODO better way of handling stuff. Just return won't do.
     }
 
     HRESULT hr = S_OK;
