@@ -29,6 +29,8 @@ SOFTWARE.
 
 #include <math.h>
 
+#define STEREO              2
+
 #define MBSTATUS_PLAYING    0
 #define MBSTATUS_FINISHED   1
 
@@ -223,7 +225,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     // Mix all sound buffers together.
     FLOAT* result = NULL;
 
-    if (FAILED(hr = arena_allocate(self->Arena, frames * 2 /* STEREO */ * sizeof(FLOAT), &result))) {
+    if (FAILED(hr = arena_allocate(self->Arena, frames * STEREO * sizeof(FLOAT), &result))) {
         return hr;
     }
 
@@ -231,15 +233,14 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
         FLOAT l = 0.0f, r = 0.0f;
 
         for (DWORD k = 0; k < dwBuffers; k++) {
-            // Accumulate data only from buffers that have it.
             if (i < buffers[k].OutFrames) {
-                l += buffers[k].Out[i * 2 /* STEREO */ + 0];// *gain;
-                r += buffers[k].Out[i * 2 /* STEREO */ + 1];// *gain;
+                l += buffers[k].Out[i * STEREO + 0];
+                r += buffers[k].Out[i * STEREO + 1];
             }
         }
 
-        result[i * 2 /* STEREO */ + 0] = l;
-        result[i * 2 /* STEREO */ + 1] = r;
+        result[i * STEREO + 0] = l;
+        result[i * STEREO + 1] = r;
     }
 
     // TODO I think we need to scale values to be within [-1, 1] range.
@@ -326,8 +327,8 @@ HRESULT DELTACALL mixer_attenuate(mixer* self, mix_buffer* pBuffer, FLOAT fVolum
     const FLOAT r = fVolume * (fPan < 0.0f ? (1.0f + fPan) : 1.0f);
 
     for (DWORD i = 0; i < pBuffer->OutFrames; i++) {
-        pBuffer->Out[i * 2 /* STEREO */ + 0] *= l;
-        pBuffer->Out[i * 2 /* STEREO */ + 1] *= r;
+        pBuffer->Out[i * STEREO + 0] *= l;
+        pBuffer->Out[i * STEREO + 1] *= r;
     }
 
     return S_OK;
@@ -369,7 +370,7 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self, mix_buffer* pBuffer) {
     }
 
     HRESULT hr = S_OK;
-    const DWORD length = pBuffer->InActualFrames * 2 /* STEREO */ * sizeof(FLOAT);
+    const DWORD length = pBuffer->InActualFrames * STEREO * sizeof(FLOAT);
 
     if (FAILED(hr = arena_allocate(self->Arena, length, &pBuffer->Intermediate))) {
         return hr;
@@ -385,8 +386,8 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self, mix_buffer* pBuffer) {
             const FLOAT v =
                 convert_to_float(bits, (LPVOID)((size_t)pBuffer->Input + offset));
 
-            pBuffer->Intermediate[i * 2 /* STEREO */ + 0] = v;
-            pBuffer->Intermediate[i * 2 /* STEREO */ + 1] = v;
+            pBuffer->Intermediate[i * STEREO + 0] = v;
+            pBuffer->Intermediate[i * STEREO + 1] = v;
 
             offset += bytes;
         }
@@ -396,8 +397,8 @@ HRESULT DELTACALL mixer_convert_to_ieee(mixer* self, mix_buffer* pBuffer) {
             const FLOAT v2 =
                 convert_to_float(bits, (LPVOID)((size_t)pBuffer->Input + offset + bytes));
 
-            pBuffer->Intermediate[i * 2 /* STEREO */ + 0] = v1;
-            pBuffer->Intermediate[i * 2 /* STEREO */ + 1] = v2;
+            pBuffer->Intermediate[i * STEREO + 0] = v1;
+            pBuffer->Intermediate[i * STEREO + 1] = v2;
 
             offset += bytes * channels;
         }
@@ -462,15 +463,15 @@ HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequ
     }
 
     HRESULT hr = S_OK;
-    const DWORD samples = pBuffer->InActualFrames * 2 /* STEREO */; // TODO refactor this variable out.
+    const DWORD samples = pBuffer->InActualFrames * STEREO; // TODO refactor this variable out.
 
     if (FAILED(hr = arena_allocate(self->Arena,
-        pBuffer->OutFrames * 2 /* STEREO */ * sizeof(FLOAT), &pBuffer->Out))) {
+        pBuffer->OutFrames * STEREO * sizeof(FLOAT), &pBuffer->Out))) {
         return hr;
     }
 
     for (DWORD i = 0; i < pBuffer->OutFrames; i++) {
-        for (DWORD j = 0; j < 2 /* STEREO */; j++) {
+        for (DWORD j = 0; j < STEREO; j++) {
             // Find the floating-point position
             // in the input buffer for the current output sample.
             const FLOAT t = i * pBuffer->Ratio;
@@ -479,16 +480,16 @@ HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequ
             DWORD index1 = index0 + 1;
 
             // Handle edge case for the last sample.
-            if (index1 >= samples / 2 /* STEREO */) {
-                index1 = samples / 2 /* STEREO */ - 1;
+            if (index1 >= samples / STEREO) {
+                index1 = samples / STEREO - 1;
                 index0 = index1 - 1;
             }
 
             // Perform linear interpolation.
-            const FLOAT y0 = pBuffer->Intermediate[index0 * 2 /* STEREO */ + j];
-            const FLOAT y1 = pBuffer->Intermediate[index1 * 2 /* STEREO */ + j];
+            const FLOAT y0 = pBuffer->Intermediate[index0 * STEREO + j];
+            const FLOAT y1 = pBuffer->Intermediate[index1 * STEREO + j];
 
-            pBuffer->Out[i * 2 /* STEREO */ + j] = linear_interpolate(y0, y1, t - index0);
+            pBuffer->Out[i * STEREO + j] = linear_interpolate(y0, y1, t - index0);
         }
     }
 
