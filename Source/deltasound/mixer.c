@@ -29,10 +29,11 @@ SOFTWARE.
 
 #include <math.h>
 
-#define MBSTATUS_NONE       0
-#define MBSTATUS_COMPLETE   1
+#define MBSTATUS_PLAYING    0
+#define MBSTATUS_FINISHED   1
 
-#define BUFFERFREQUENCY(FREQUENCY, OVERRIDE) (OVERRIDE == DSBFREQUENCY_ORIGINAL ? FREQUENCY : OVERRIDE)
+#define BUFFERFREQUENCY(FREQUENCY, OVERRIDE) \
+    (OVERRIDE == DSBFREQUENCY_ORIGINAL ? FREQUENCY : OVERRIDE)
 
 struct mixer {
     allocator*  Allocator;
@@ -177,7 +178,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
         const DWORD frames = read / alignment;
 
         if (frames < buffers[i].InActualFrames) {
-            buffers[i].Status = MBSTATUS_COMPLETE;
+            buffers[i].Status = MBSTATUS_FINISHED;
             buffers[i].InActualFrames = frames;
             buffers[i].OutFrames = (DWORD)truncf(buffers[i].InActualFrames / buffers[i].Ratio);
         }
@@ -219,7 +220,8 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     // Mix all sound buffers together.
     FLOAT* result = NULL;
 
-    if (FAILED(hr = arena_allocate(self->Arena, frames * 2 /* STEREO */ * sizeof(FLOAT), &result))) {
+    if (FAILED(hr = arena_allocate(self->Arena,
+        max(frames, dwRequiredFrames) * 2 /* STEREO */ * sizeof(FLOAT), &result))) {
         return hr;
     }
 
@@ -261,7 +263,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
                             read + advancement, write + advancement, DSBCB_SETPOSITION_LOOPING);
                     }
                     else {
-                        if (buffers[i].Status & MBSTATUS_COMPLETE) {
+                        if (buffers[i].Status & MBSTATUS_FINISHED) {
                             ppBuffers[i]->Play = DSBPLAY_NONE;
                             ppBuffers[i]->Status = DSBSTATUS_NONE;
 
@@ -457,7 +459,7 @@ HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequ
     const DWORD samples = pBuffer->InActualFrames * 2 /* STEREO */;
 
     if (FAILED(hr = arena_allocate(self->Arena,
-        pBuffer->OutFrames * 2 /* STEREO */ * sizeof(FLOAT), &pBuffer->Out))) {
+        max(pBuffer->OutFrames, pBuffer->MaxFrames) * 2 /* STEREO */ * sizeof(FLOAT), &pBuffer->Out))) {
         return hr;
     }
 
