@@ -832,3 +832,63 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
 
     return S_OK;
 }
+
+HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwReadPosition, DWORD dwAdvancement, DWORD dwFlags) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (self->Caps.dwBufferBytes < dwReadPosition || dwAdvancement == 0) {
+        return E_INVALIDARG;
+    }
+
+    if(!(self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    if (self->Notifications != NULL) {
+        DWORD count = 0;
+        LPDSBPOSITIONNOTIFY notes = NULL;
+
+        if (SUCCEEDED(hr = dsn_get_notification_positions(self->Notifications, &count, &notes))) {
+            if (count != 0) {
+                const DWORD max = max(dwReadPosition + dwAdvancement, self->Caps.dwBufferBytes);
+
+                for (DWORD i = 0; i < count; i++) {
+                    if (dwReadPosition < notes[i].dwOffset) {
+                        if (max < notes[i].dwOffset) {
+                            break;
+                        }
+
+                        SetEvent(notes[i].hEventNotify);
+                    }
+                }
+
+                if (self->Status & DSBSTATUS_LOOPING) {
+                    if (self->Caps.dwBufferBytes < dwReadPosition + dwAdvancement) {
+                        const DWORD overage = dwReadPosition + dwAdvancement - self->Caps.dwBufferBytes;
+
+                        for (DWORD i = 0; i < count; i++) {
+                            if (notes[i].dwOffset <= overage) {
+                                SetEvent(notes[i].hEventNotify);
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (dwFlags & DSB_NOTIFY_STOP) {
+                    if (notes[count - 1].dwOffset == DSBPN_OFFSETSTOP) {
+                        SetEvent(notes[count - 1].hEventNotify);
+                    }
+                }
+            }
+        }
+    }
+
+    return hr;
+}

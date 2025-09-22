@@ -136,6 +136,7 @@ HRESULT DELTACALL dsbcb_get_current_position(dsbcb* self,
 
 HRESULT DELTACALL dsbcb_set_current_position(dsbcb* self,
     DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags) {
+    // TODO refactor. Move this to DSB???
     if (self == NULL) {
         return E_POINTER;
     }

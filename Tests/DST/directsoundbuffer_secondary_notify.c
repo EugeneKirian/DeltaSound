@@ -646,6 +646,16 @@ static BOOL TestDirectSoundBufferSecondaryNotifySet(LPDIRECTSOUNDBUFFER a, LPDIR
                 return FALSE;
             }
         }
+
+        // Max Notifications
+        {
+            ra = IDirectSoundNotify_SetNotificationPositions(na, DSBNOTIFICATIONS_MAX + 1, notifications);
+            rb = IDirectSoundNotify_SetNotificationPositions(nb, DSBNOTIFICATIONS_MAX + 1, notifications);
+
+            if (ra != rb) {
+                return FALSE;
+            }
+        }
     }
 
     IDirectSoundNotify_Release(na);

@@ -169,8 +169,6 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
             return hr;
         }
 
-        // TODO need indication if buffer was read to the end for non-looping buffers
-
         DWORD read = 0;
 
         if (FAILED(hr = dsbcb_read(ppBuffers[i]->Buffer, length, buffers[i].Input, &read,
@@ -266,8 +264,12 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
                 if (SUCCEEDED(hr = dsbcb_get_current_position(ppBuffers[i]->Buffer, &read, &write))) {
                     if (status & DSBSTATUS_LOOPING) {
-                        hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
-                            read + advancement, write + advancement, DSBCB_SETPOSITION_LOOPING);
+                        if (SUCCEEDED(hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
+                            read + advancement, write + advancement, DSBCB_SETPOSITION_LOOPING))) {
+                            if (ppBuffers[i]->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                                hr = dsb_trigger_notifications(ppBuffers[i], read, advancement, DSB_NOTIFY_NONE);
+                            }
+                        }
                     }
                     else {
                         if (buffers[i].Status & MBSTATUS_FINISHED) {
@@ -275,21 +277,28 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
                             ppBuffers[i]->Status = DSBSTATUS_NONE;
 
                             hr = dsbcb_set_current_position(ppBuffers[i]->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
+
+                            if (ppBuffers[i]->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                                hr = dsb_trigger_notifications(ppBuffers[i], read, advancement, DSB_NOTIFY_STOP);
+                            }
                         }
                         else {
                             const DWORD length = ppBuffers[i]->Caps.dwBufferBytes;
+                            const DWORD rm = min(read + advancement, length);
+                            const DWORD wm = min(write + advancement, length);
 
-                            hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
-                                min(read + advancement, length),
-                                min(write + advancement, length), DSBCB_SETPOSITION_NONE);
+                            if (SUCCEEDED(hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
+                                rm, wm, DSBCB_SETPOSITION_NONE))) {
+                                if (ppBuffers[i]->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                                    hr = dsb_trigger_notifications(ppBuffers[i], read, rm, DSB_NOTIFY_NONE);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
-
-    // TODO  Trigger appropriate notifications.
 
     *pOutBuffer = result;
     *pdwOutFrames = min(frames, dwRequiredFrames);
