@@ -120,6 +120,7 @@ HRESULT DELTACALL mix_buffer_initialize(mix_buffer* self,
     self->Ratio = (FLOAT)self->Frequency / (FLOAT)dwRequiredFrequency;
 
     self->InFrames = (DWORD)truncf(self->Ratio * dwRequiredFrames);
+    self->InActualFrames = self->InFrames;
     self->InActualFrames = (DWORD)roundf(self->Ratio * dwRequiredFrames);
     self->OutFrames = (DWORD)truncf(self->InActualFrames / self->Ratio);
     self->MaxFrames = dwRequiredFrames;
@@ -151,10 +152,6 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     }
 
     // TODO multi-threaded mixing
-
-    if (dwBuffers > 1) {
-        int k = 1;
-    }
 
     // Read the data from the user-defined buffers.
     for (DWORD i = 0; i < dwBuffers; i++) {
@@ -206,6 +203,8 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     }
 
     // Apply attenuation (volume and pan modifiers).
+
+    // TODO temporary commented out
     for (DWORD i = 0; i < dwBuffers; i++) {
         if (FAILED(hr = mixer_attenuate(self, &buffers[i], ppBuffers[i]->Volume, ppBuffers[i]->Pan))) {
             return hr;
@@ -224,76 +223,26 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     // Mix all sound buffers together.
     FLOAT* result = NULL;
 
-    if (FAILED(hr = arena_allocate(self->Arena,
-        max(frames, dwRequiredFrames) * 2 /* STEREO */ * sizeof(FLOAT), &result))) {
+    if (FAILED(hr = arena_allocate(self->Arena, frames * 2 /* STEREO */ * sizeof(FLOAT), &result))) {
         return hr;
     }
 
-    if (dwBuffers == 1) {
-        // TODO have special case for 1 buffer generally ????
-        CopyMemory(result, buffers[0].Out,
-            max(frames, dwRequiredFrames) * 2 /* STEREO */ * sizeof(FLOAT));
-    }
-    else {
-        FLOAT amp = 0.0f;
+    for (DWORD i = 0; i < frames; i++) {
+        FLOAT l = 0.0f, r = 0.0f;
 
-        for (DWORD i = 0; i < frames; i++) {
-
-            DWORD count = 0;
-
-            for (DWORD k = 0; k < dwBuffers; k++) {
-                // Accumulate data only from buffers that have it.
-                if (i < buffers[k].OutFrames) {
-                    count++;
-
-                    const FLOAT l = fabsf(buffers[k].Out[i * 2 /* STEREO */ + 0]);
-                    const FLOAT r = fabsf(buffers[k].Out[i * 2 /* STEREO */ + 1]);
-
-                    amp = max(amp, max(l, r));
-                }
+        for (DWORD k = 0; k < dwBuffers; k++) {
+            // Accumulate data only from buffers that have it.
+            if (i < buffers[k].OutFrames) {
+                l += buffers[k].Out[i * 2 /* STEREO */ + 0];// *gain;
+                r += buffers[k].Out[i * 2 /* STEREO */ + 1];// *gain;
             }
         }
 
-        for (DWORD i = 0; i < frames; i++) {
-            DWORD count = 0;
-
-            for (DWORD k = 0; k < dwBuffers; k++) {
-                if (i < buffers[k].OutFrames) {
-                    count++;
-                }
-            }
-
-            const FLOAT gain = amp == 0.0f
-                ? 1.0f : (1.0f / ((FLOAT)count * amp));
-
-            for (DWORD k = 0; k < dwBuffers; k++) {
-                FLOAT l = 0.0f, r = 0.0f;
-
-                // Accumulate data only from buffers that have it.
-                if (i < buffers[k].OutFrames) {
-                    l += buffers[k].Out[i * 2 /* STEREO */ + 0] * gain;
-                    r += buffers[k].Out[i * 2 /* STEREO */ + 1] * gain;
-                }
-
-                result[i * 2 /* STEREO */ + 0] = l;
-                result[i * 2 /* STEREO */ + 1] = r;
-            }
-
-            //if (count != 0) {
-            //    result[i * 2 /* STEREO */ + 0] = l / sqrtf((FLOAT)count);
-            //    result[i * 2 /* STEREO */ + 1] = r / sqrtf((FLOAT)count);
-            //
-            //    if (result[i * 2 /* STEREO */ + 0] < -1.0f || 1.0f < result[i * 2 /* STEREO */ + 0]
-            //        || result[i * 2 /* STEREO */ + 1] < -1.0f || 1.0f < result[i * 2 /* STEREO */ + 1])
-            //    {
-            //        int kkk = 1;
-            //    }
-            //}
-
-            //result[i * 2 /* STEREO */ + 0] = max(min(l, 1.0f), -1.0f);
-            //result[i * 2 /* STEREO */ + 1] = max(min(r, 1.0f), -1.0f);
-        }
+        result[i * 2 /* STEREO */ + 0] = l;
+        result[i * 2 /* STEREO */ + 1] = r;
     }
+
+    // TODO I think we need to scale values to be within [-1, 1] range.
 
     // Convert audio data to requested wave format.
     if (pwfxFormat->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE
@@ -513,10 +462,10 @@ HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequ
     }
 
     HRESULT hr = S_OK;
-    const DWORD samples = pBuffer->InActualFrames * 2 /* STEREO */;
+    const DWORD samples = pBuffer->InActualFrames * 2 /* STEREO */; // TODO refactor this variable out.
 
     if (FAILED(hr = arena_allocate(self->Arena,
-        max(pBuffer->OutFrames, pBuffer->MaxFrames) * 2 /* STEREO */ * sizeof(FLOAT), &pBuffer->Out))) {
+        pBuffer->OutFrames * 2 /* STEREO */ * sizeof(FLOAT), &pBuffer->Out))) {
         return hr;
     }
 
