@@ -35,6 +35,8 @@ SOFTWARE.
 
 #define ADVANCEWRITEPOSITION(X, ALIGN) (X + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * ALIGN)
 
+HRESULT DELTACALL dsb_trigger_notifications(dsb* pDSB, DWORD dwPosition, DWORD dwAdvance);
+
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -652,8 +654,7 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
         return E_INVALIDARG;
     }
 
-    const DWORD write =
-        (self->Status & DSBSTATUS_PLAYING)
+    const DWORD write = (self->Status & DSBSTATUS_PLAYING)
         ? min(self->Caps.dwBufferBytes, ADVANCEWRITEPOSITION(dwNewPosition, self->Format->nBlockAlign))
         : dwNewPosition;
 
@@ -774,13 +775,19 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
     self->Play = DSBPLAY_NONE;
     self->Status = DSBSTATUS_NONE;
 
+    HRESULT hr = S_OK;
+
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
+            if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE))) {
+                if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                    hr = dsb_trigger_notifications(self, self->Caps.dwBufferBytes, 0);
+                }
+            }
         }
     }
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT DELTACALL dsb_unlock(dsb* self,
@@ -828,63 +835,106 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
 
     self->Status = DSBSTATUS_NONE;
 
-    dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
-
-    return S_OK;
+    return dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
 }
 
-HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwReadPosition, DWORD dwAdvancement, DWORD dwFlags) {
+HRESULT DELTACALL dsb_update_current_position(dsb* self, DWORD dwAdvance) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (self->Caps.dwBufferBytes < dwReadPosition || dwAdvancement == 0) {
+    HRESULT hr = S_OK;
+    DWORD read = 0, write = 0;
+
+    if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
+        if (self->Status & DSBSTATUS_LOOPING) {
+            if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
+                read + dwAdvance, write + dwAdvance, DSBCB_SETPOSITION_LOOPING))) {
+                if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                    hr = dsb_trigger_notifications(self, read, dwAdvance);
+                }
+            }
+        }
+        else {
+            if (self->Caps.dwBufferBytes < read + dwAdvance) {
+                self->Play = DSBPLAY_NONE;
+                self->Status = DSBSTATUS_NONE;
+
+                if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE))) {
+                    if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                        hr = dsb_trigger_notifications(self, read, dwAdvance);
+                    }
+                }
+            }
+            else {
+                const DWORD rad = min(read + dwAdvance, self->Caps.dwBufferBytes);
+                const DWORD wad = min(write + dwAdvance, self->Caps.dwBufferBytes);
+
+                if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
+                    rad, wad, DSBCB_SETPOSITION_NONE))) {
+                    if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+                        hr = dsb_trigger_notifications(self, read, dwAdvance);
+                    }
+                }
+            }
+        }
+    }
+
+    return hr;
+}
+
+/* ---------------------------------------------------------------------- */
+
+HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwPosition, DWORD dwAdvance) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (self->Caps.dwBufferBytes < dwPosition) {
         return E_INVALIDARG;
     }
 
-    if(!(self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)) {
+    if (!(self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)) {
         return E_INVALIDARG;
+    }
+
+    if (self->Notifications == NULL) {
+        return S_OK;
     }
 
     HRESULT hr = S_OK;
+    DWORD count = 0;
+    LPDSBPOSITIONNOTIFY notes = NULL;
 
-    if (self->Notifications != NULL) {
-        DWORD count = 0;
-        LPDSBPOSITIONNOTIFY notes = NULL;
+    if (SUCCEEDED(hr = dsn_get_notification_positions(self->Notifications, &count, &notes))) {
+        if (count != 0) {
+            for (DWORD i = 0; i < count; i++) {
+                if (dwPosition < notes[i].dwOffset && notes[i].dwOffset <= dwPosition + dwAdvance) {
+                    SetEvent(notes[i].hEventNotify);
+                }
 
-        if (SUCCEEDED(hr = dsn_get_notification_positions(self->Notifications, &count, &notes))) {
-            if (count != 0) {
-                const DWORD max = max(dwReadPosition + dwAdvancement, self->Caps.dwBufferBytes);
+                if (dwPosition + dwAdvance <= notes[i].dwOffset) {
+                    break;
+                }
+            }
+
+            if ((self->Status & DSBSTATUS_LOOPING)
+                && self->Caps.dwBufferBytes < dwPosition + dwAdvance) {
+                const DWORD overage = dwPosition + dwAdvance - self->Caps.dwBufferBytes;
 
                 for (DWORD i = 0; i < count; i++) {
-                    if (dwReadPosition < notes[i].dwOffset) {
-                        if (max < notes[i].dwOffset) {
-                            break;
-                        }
-
+                    if (notes[i].dwOffset <= overage) {
                         SetEvent(notes[i].hEventNotify);
                     }
-                }
 
-                if (self->Status & DSBSTATUS_LOOPING) {
-                    if (self->Caps.dwBufferBytes < dwReadPosition + dwAdvancement) {
-                        const DWORD overage = dwReadPosition + dwAdvancement - self->Caps.dwBufferBytes;
-
-                        for (DWORD i = 0; i < count; i++) {
-                            if (notes[i].dwOffset <= overage) {
-                                SetEvent(notes[i].hEventNotify);
-                            }
-                            else {
-                                break;
-                            }
-                        }
+                    if (overage < notes[i].dwOffset) {
+                        break;
                     }
                 }
-
-                if (dwFlags & DSB_NOTIFY_STOP) {
-                    if (notes[count - 1].dwOffset == DSBPN_OFFSETSTOP) {
-                        SetEvent(notes[count - 1].hEventNotify);
-                    }
+            }
+            else if (self->Caps.dwBufferBytes <= dwPosition + dwAdvance) {
+                if (notes[count - 1].dwOffset == DSBPN_OFFSETSTOP) {
+                    SetEvent(notes[count - 1].hEventNotify);
                 }
             }
         }

@@ -31,9 +31,6 @@ SOFTWARE.
 
 #define STEREO              2
 
-#define MBSTATUS_PLAYING    0
-#define MBSTATUS_FINISHED   1
-
 #define BUFFERFREQUENCY(FREQUENCY, OVERRIDE) \
     (OVERRIDE == DSBFREQUENCY_ORIGINAL ? FREQUENCY : OVERRIDE)
 
@@ -47,8 +44,6 @@ typedef struct mix_buffer {
 
     LPWAVEFORMATEX  Format;
     DWORD           Frequency;
-
-    DWORD           Status;
 
     DWORD           InFrames;
     DWORD           InActualFrames;
@@ -179,7 +174,6 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
         const DWORD frames = read / alignment;
 
         if (frames < buffers[i].InActualFrames) {
-            buffers[i].Status = MBSTATUS_FINISHED;
             buffers[i].InActualFrames = frames;
             buffers[i].OutFrames = (DWORD)truncf(buffers[i].InActualFrames / buffers[i].Ratio);
         }
@@ -203,8 +197,6 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     }
 
     // Apply attenuation (volume and pan modifiers).
-
-    // TODO temporary commented out
     for (DWORD i = 0; i < dwBuffers; i++) {
         if (FAILED(hr = mixer_attenuate(self, &buffers[i], ppBuffers[i]->Volume, ppBuffers[i]->Pan))) {
             return hr;
@@ -250,52 +242,13 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
         return E_NOTIMPL;
     }
 
-    // TODO updating of statuses and triggering notifications should NOT be inside mixer
-
     for (DWORD i = 0; i < dwBuffers; i++) {
         DWORD status = DSBSTATUS_NONE;
 
         if (SUCCEEDED(hr = dsb_get_status(ppBuffers[i], &status))) {
             if (status & DSBSTATUS_PLAYING) {
-                DWORD read = 0, write = 0;
-
-                const DWORD advancement =
-                    buffers[i].InFrames * buffers[i].Instance->Format->nBlockAlign;
-
-                if (SUCCEEDED(hr = dsbcb_get_current_position(ppBuffers[i]->Buffer, &read, &write))) {
-                    if (status & DSBSTATUS_LOOPING) {
-                        if (SUCCEEDED(hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
-                            read + advancement, write + advancement, DSBCB_SETPOSITION_LOOPING))) {
-                            if (ppBuffers[i]->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                                hr = dsb_trigger_notifications(ppBuffers[i], read, advancement, DSB_NOTIFY_NONE);
-                            }
-                        }
-                    }
-                    else {
-                        if (buffers[i].Status & MBSTATUS_FINISHED) {
-                            ppBuffers[i]->Play = DSBPLAY_NONE;
-                            ppBuffers[i]->Status = DSBSTATUS_NONE;
-
-                            hr = dsbcb_set_current_position(ppBuffers[i]->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
-
-                            if (ppBuffers[i]->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                                hr = dsb_trigger_notifications(ppBuffers[i], read, advancement, DSB_NOTIFY_STOP);
-                            }
-                        }
-                        else {
-                            const DWORD length = ppBuffers[i]->Caps.dwBufferBytes;
-                            const DWORD rm = min(read + advancement, length);
-                            const DWORD wm = min(write + advancement, length);
-
-                            if (SUCCEEDED(hr = dsbcb_set_current_position(ppBuffers[i]->Buffer,
-                                rm, wm, DSBCB_SETPOSITION_NONE))) {
-                                if (ppBuffers[i]->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                                    hr = dsb_trigger_notifications(ppBuffers[i], read, rm, DSB_NOTIFY_NONE);
-                                }
-                            }
-                        }
-                    }
-                }
+                dsb_update_current_position(ppBuffers[i],
+                    buffers[i].InFrames * ppBuffers[i]->Format->nBlockAlign);
             }
         }
     }

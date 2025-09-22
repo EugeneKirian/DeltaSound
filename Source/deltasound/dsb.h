@@ -40,9 +40,6 @@ SOFTWARE.
 
 #define DSB_DEFAULT_PRIMARY_BUFFER_SIZE     32768
 
-#define DSB_NOTIFY_NONE 0
-#define DSB_NOTIFY_STOP 1
-
 typedef struct ds ds;
 typedef struct ksp ksp;
 typedef struct dsn dsn;
@@ -109,4 +106,4 @@ HRESULT DELTACALL dsb_stop(dsb* pDSB);
 HRESULT DELTACALL dsb_unlock(dsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL dsb_restore(dsb* pDSB);
 
-HRESULT DELTACALL dsb_trigger_notifications(dsb* pDSB, DWORD dwReadPosition, DWORD dwAdvancement, DWORD dwFlags);
+HRESULT DELTACALL dsb_update_current_position(dsb* pDSB, DWORD dwAdvance);
