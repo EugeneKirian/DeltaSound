@@ -34,13 +34,8 @@ SOFTWARE.
 #define BUFFERFREQUENCY(FREQUENCY, OVERRIDE) \
     (OVERRIDE == DSBFREQUENCY_ORIGINAL ? FREQUENCY : OVERRIDE)
 
-struct mixer {
-    allocator*  Allocator;
-    arena*      Arena;
-};
-
-typedef struct mix_buffer {
-    dsb*            Instance;
+typedef struct mb {
+    dsb* Instance;
 
     LPWAVEFORMATEX  Format;
     DWORD           Frequency;
@@ -53,17 +48,20 @@ typedef struct mix_buffer {
     FLOAT           Ratio;
 
     LPVOID          Input;
-    FLOAT*          Intermediate;
-    FLOAT*          Out;
-} mix_buffer;
+    FLOAT* Intermediate;
+    FLOAT* Out;
+} mb;
 
-HRESULT DELTACALL mixer_convert_to_ieee(mixer* self, mix_buffer* pBuffer);
-HRESULT DELTACALL mixer_resample(mixer* pMix, mix_buffer* pBuffer, DWORD dwFrequency);
-HRESULT DELTACALL mixer_attenuate(mixer* pMix, mix_buffer* pBuffer, FLOAT fVolume, FLOAT fPan);
+struct mixer {
+    allocator*  Allocator;
+    arena*      Arena;
+};
 
-inline FLOAT linear_interpolate(FLOAT v1, FLOAT v2, FLOAT t) {
-    return v1 * (1.0f - t) + v2 * t;
-}
+HRESULT DELTACALL mb_initialize(mb* pBuffer, dsb* pDSB, DWORD dwRequiredFrames, DWORD dwRequiredFrequency);
+
+HRESULT DELTACALL mixer_attenuate(mixer* pMix, mb* pBuffer, FLOAT fVolume, FLOAT fPan);
+HRESULT DELTACALL mixer_convert(mixer* self, mb* pBuffer);
+HRESULT DELTACALL mixer_resample(mixer* pMix, mb* pBuffer, DWORD dwFrequency);
 
 HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
@@ -97,34 +95,6 @@ VOID DELTACALL mixer_release(mixer* self) {
     allocator_free(self->Allocator, self);
 }
 
-// TODO
-HRESULT DELTACALL mix_buffer_initialize(mix_buffer* self,
-    dsb* pDSB, DWORD dwRequiredFrames, DWORD dwRequiredFrequency) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (pDSB == NULL || dwRequiredFrames == 0 || dwRequiredFrequency == 0) {
-        return E_INVALIDARG;
-    }
-
-    self->Instance = pDSB;
-    self->Format = pDSB->Format;
-
-    self->Frequency =
-        BUFFERFREQUENCY(self->Format->nSamplesPerSec, self->Instance->Frequency);
-
-    self->Ratio = (FLOAT)self->Frequency / (FLOAT)dwRequiredFrequency;
-
-    self->InFrames = (DWORD)truncf(self->Ratio * dwRequiredFrames);
-    self->InActualFrames = self->InFrames;
-    self->InActualFrames = (DWORD)roundf(self->Ratio * dwRequiredFrames);
-    self->OutFrames = (DWORD)truncf(self->InActualFrames / self->Ratio);
-    self->MaxFrames = dwRequiredFrames;
-
-    return S_OK;
-}
-
 HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     PWAVEFORMATEXTENSIBLE pwfxFormat, DWORD dwRequiredFrames, LPVOID* pOutBuffer, LPDWORD pdwOutFrames) {
     if (self == NULL) {
@@ -138,13 +108,13 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     }
 
     HRESULT hr = S_OK;
-    mix_buffer* buffers = NULL;
+    mb* buffers = NULL;
 
     if (FAILED(hr = arena_clear(self->Arena))) {
         return hr;
     }
 
-    if (FAILED(hr = arena_allocate(self->Arena, dwBuffers * sizeof(mix_buffer), &buffers))) {
+    if (FAILED(hr = arena_allocate(self->Arena, dwBuffers * sizeof(mb), &buffers))) {
         return hr;
     }
 
@@ -152,7 +122,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
     // Read the data from the user-defined buffers.
     for (DWORD i = 0; i < dwBuffers; i++) {
-        if (FAILED(hr = mix_buffer_initialize(&buffers[i],
+        if (FAILED(hr = mb_initialize(&buffers[i],
             ppBuffers[i], dwRequiredFrames, pwfxFormat->Format.nSamplesPerSec))) {
             return hr;
         }
@@ -183,7 +153,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
     // Convert to IEEE, upmix/downmix audio to stereo.
     for (DWORD i = 0; i < dwBuffers; i++) {
-        if (FAILED(hr = mixer_convert_to_ieee(self, &buffers[i]))) {
+        if (FAILED(hr = mixer_convert(self, &buffers[i]))) {
             return hr;
         }
     }
@@ -261,45 +231,11 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL mixer_attenuate(mixer* self, mix_buffer* pBuffer, FLOAT fVolume, FLOAT fPan) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (pBuffer == NULL) {
-        return E_INVALIDARG;
-    }
-
-    if (_isnan(fVolume) || fVolume < 0.0f || fVolume > 1.0f) {
-        return E_INVALIDARG;
-    }
-
-    if (_isnan(fPan) || fPan < -1.0f || fPan > 1.0f) {
-        return E_INVALIDARG;
-    }
-
-    if (fVolume == 1.0f && fPan == 0.0f) {
-        return S_OK;
-    }
-
-    // Positive pan = attenuation of left channel.
-    const FLOAT l = fVolume * (fPan > 0.0f ? (1.0f - fPan) : 1.0f);
-
-    // Negative pan = attenuation of right channel.
-    const FLOAT r = fVolume * (fPan < 0.0f ? (1.0f + fPan) : 1.0f);
-
-    for (DWORD i = 0; i < pBuffer->OutFrames; i++) {
-        pBuffer->Out[i * STEREO + 0] *= l;
-        pBuffer->Out[i * STEREO + 1] *= r;
-    }
-
-    return S_OK;
+FLOAT linear_interpolate(FLOAT v1, FLOAT v2, FLOAT t) {
+    return v1 * (1.0f - t) + v2 * t;
 }
 
-// TODO name
-// TODO forward declare
-// TODO signature
-inline FLOAT DELTACALL convert_to_float(DWORD dwBits, LPVOID pValue) {
+FLOAT DELTACALL convert_to_float(DWORD dwBits, LPVOID pValue) {
     if (dwBits == 8) {
         return ((FLOAT)(*(PBYTE)pValue) - 128.0f) / 128.0f;
     }
@@ -310,7 +246,61 @@ inline FLOAT DELTACALL convert_to_float(DWORD dwBits, LPVOID pValue) {
     return 0.0f;
 }
 
-HRESULT DELTACALL mixer_convert_to_ieee(mixer* self, mix_buffer* pBuffer) {
+HRESULT DELTACALL mb_initialize(mb* self,
+    dsb* pDSB, DWORD dwRequiredFrames, DWORD dwRequiredFrequency) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pDSB == NULL || dwRequiredFrames == 0 || dwRequiredFrequency == 0) {
+        return E_INVALIDARG;
+    }
+
+    self->Instance = pDSB;
+    self->Format = pDSB->Format;
+
+    self->Frequency =
+        BUFFERFREQUENCY(self->Format->nSamplesPerSec, self->Instance->Frequency);
+
+    self->Ratio = (FLOAT)self->Frequency / (FLOAT)dwRequiredFrequency;
+
+    self->InFrames = (DWORD)truncf(self->Ratio * dwRequiredFrames);
+    self->InActualFrames = self->InFrames;
+    self->InActualFrames = (DWORD)roundf(self->Ratio * dwRequiredFrames);
+    self->OutFrames = (DWORD)truncf(self->InActualFrames / self->Ratio);
+    self->MaxFrames = dwRequiredFrames;
+
+    return S_OK;
+}
+
+HRESULT DELTACALL mixer_attenuate(mixer* self, mb* pBuffer, FLOAT fVolume, FLOAT fPan) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pBuffer == NULL
+        || _isnan(fVolume) || fVolume < 0.0f || fVolume > 1.0f
+        || _isnan(fPan) || fPan < -1.0f || fPan > 1.0f) {
+        return E_INVALIDARG;
+    }
+
+    if (fVolume != 1.0f && fPan != 0.0f) {
+        // Positive pan = attenuation of left channel.
+        const FLOAT l = fVolume * (fPan > 0.0f ? (1.0f - fPan) : 1.0f);
+
+        // Negative pan = attenuation of right channel.
+        const FLOAT r = fVolume * (fPan < 0.0f ? (1.0f + fPan) : 1.0f);
+
+        for (DWORD i = 0; i < pBuffer->OutFrames; i++) {
+            pBuffer->Out[i * STEREO + 0] *= l;
+            pBuffer->Out[i * STEREO + 1] *= r;
+        }
+    }
+
+    return S_OK;
+}
+
+HRESULT DELTACALL mixer_convert(mixer* self, mb* pBuffer) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -411,7 +401,7 @@ Algorithm Steps (General Outline):
     Convert the processed floating-point samples back to the desired PCM integer format and bit depth.
 */
 
-HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequency) {
+HRESULT DELTACALL mixer_resample(mixer* self, mb* pBuffer, DWORD dwFrequency) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -425,7 +415,6 @@ HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequ
     }
 
     HRESULT hr = S_OK;
-    const DWORD samples = pBuffer->InActualFrames * STEREO; // TODO refactor this variable out.
 
     if (FAILED(hr = arena_allocate(self->Arena,
         pBuffer->OutFrames * STEREO * sizeof(FLOAT), &pBuffer->Out))) {
@@ -434,16 +423,14 @@ HRESULT DELTACALL mixer_resample(mixer* self, mix_buffer* pBuffer, DWORD dwFrequ
 
     for (DWORD i = 0; i < pBuffer->OutFrames; i++) {
         for (DWORD j = 0; j < STEREO; j++) {
-            // Find the floating-point position
-            // in the input buffer for the current output sample.
             const FLOAT t = i * pBuffer->Ratio;
 
             DWORD index0 = (DWORD)t;
             DWORD index1 = index0 + 1;
 
             // Handle edge case for the last sample.
-            if (index1 >= samples / STEREO) {
-                index1 = samples / STEREO - 1;
+            if (index1 >= pBuffer->OutFrames) {
+                index1 = pBuffer->OutFrames - 1;
                 index0 = index1 - 1;
             }
 
