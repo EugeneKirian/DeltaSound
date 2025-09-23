@@ -204,9 +204,6 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         }
     }
 
-    // TODO Additional guid3DAlgorithm value checks
-    // TODO guid3DAlgorithm is used in 3d buffer in secondary buffers.
-
     if (pUnkOuter != NULL) {
         return DSERR_NOAGGREGATION;
     }

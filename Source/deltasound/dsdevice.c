@@ -47,7 +47,8 @@ HRESULT DELTACALL dsdevice_allocate(allocator* pAlloc, dsdevice** ppOut);
 HRESULT DELTACALL dsdevice_initialize(dsdevice* pDev);
 HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* pDev, LPWAVEFORMATEX* ppFormat);
 
-HRESULT DELTACALL dsdevice_render(dsdevice* pDev, DWORD dwBuffers, dsb** ppBuffers); // TODO
+HRESULT DELTACALL dsdevice_render(dsdevice* pDev, DWORD dwBuffers, dsb** ppBuffers);
+HRESULT DELTACALL dsdevice_get_active_buffers(dsdevice* self, LPDWORD pdwCount, dsb*** ppBuffers);
 
 HRESULT DELTACALL dsdevice_create(
     allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut) {
@@ -262,7 +263,6 @@ HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppForm
     return IAudioClient_GetMixFormat(self->AudioClient, ppFormat);
 }
 
-// TODO forward declare
 HRESULT DELTACALL dsdevice_render(dsdevice* self, DWORD dwBuffers, dsb** ppBuffers) {
     if (self->Instance == NULL) {
         return E_FAIL;
@@ -298,7 +298,6 @@ HRESULT DELTACALL dsdevice_render(dsdevice* self, DWORD dwBuffers, dsb** ppBuffe
     return hr;
 }
 
-// TODO forward declare
 HRESULT DELTACALL dsdevice_get_active_buffers(dsdevice* self, LPDWORD pdwCount, dsb*** ppBuffers) {
     if (self == NULL) {
         return E_POINTER;

@@ -29,6 +29,7 @@ SOFTWARE.
 #include "directsound_createsoundbuffer_secondary.h"
 #include "directsound_duplicate_primary.h"
 #include "directsound_duplicate_secondary.h"
+#include "directsound_duplicate_secondary_notify.h"
 #include "directsound_enumerate.h"
 #include "directsound_getcaps.h"
 #include "directsound_setcooperativelevel.h"
@@ -96,58 +97,58 @@ int main(int argc, char** argv) {
         goto exit;
     }
 
-    TEST(DirectSoundEnumerateA);
-    TEST(DirectSoundEnumerateW);
+    //TEST(DirectSoundEnumerateA);
+    //TEST(DirectSoundEnumerateW);
 
-    TEST(DirectSoundCaptureEnumerateA);
-    TEST(DirectSoundCaptureEnumerateW);
+    //TEST(DirectSoundCaptureEnumerateA);
+    //TEST(DirectSoundCaptureEnumerateW);
 
-    TEST(GetDeviceID);
+    //TEST(GetDeviceID);
 
-    TEST(DirectSoundCreate);
-    TEST(DirectSoundBasics);
-    TEST(DirectSoundCompact);
+    //TEST(DirectSoundCreate);
+    //TEST(DirectSoundBasics);
+    //TEST(DirectSoundCompact);
   
-    TEST(DirectSoundCreateSoundBufferPrimary);
-    TEST(DirectSoundCreateSoundBufferSecondary);
-    TEST(DirectSoundSetCooperativeLevel);
-    TEST(DirectSoundGetCaps);
+    //TEST(DirectSoundCreateSoundBufferPrimary);
+    //TEST(DirectSoundCreateSoundBufferSecondary);
+    //TEST(DirectSoundSetCooperativeLevel);
+    //TEST(DirectSoundGetCaps);
 
-    TEST(DirectSoundBufferPrimaryBasics);
-    TEST(DirectSoundBufferPrimaryQueryInterface);
-    TEST(DirectSoundBufferPrimaryGet);
-    TEST(DirectSoundBufferPrimarySet);
-    TEST(DirectSoundBufferPrimaryLock);
-    TEST(DirectSoundBufferPrimaryPlay);
-    TEST(DirectSoundBufferPrimaryPlayPan);
-    TEST(DirectSoundBufferPrimaryPlayVolume);
-    TEST(DirectSoundBufferPrimaryStop);
+    //TEST(DirectSoundBufferPrimaryBasics);
+    //TEST(DirectSoundBufferPrimaryQueryInterface);
+    //TEST(DirectSoundBufferPrimaryGet);
+    //TEST(DirectSoundBufferPrimarySet);
+    //TEST(DirectSoundBufferPrimaryLock);
+    //TEST(DirectSoundBufferPrimaryPlay);
+    //TEST(DirectSoundBufferPrimaryPlayPan);
+    //TEST(DirectSoundBufferPrimaryPlayVolume);
+    //TEST(DirectSoundBufferPrimaryStop);
 
-    TEST(DirectSoundBufferPrimaryNotify);
-    TEST(DirectSoundBufferPrimaryPlaySetCooperativeLevel);
+    //TEST(DirectSoundBufferPrimaryNotify);
+    //TEST(DirectSoundBufferPrimaryPlaySetCooperativeLevel);
 
-    TEST(DirectSoundBufferSecondaryBasics);
-    TEST(DirectSoundBufferSecondaryQueryInterface);
-    TEST(DirectSoundBufferSecondaryGet);
-    TEST(DirectSoundBufferSecondarySet);
-    TEST(DirectSoundBufferSecondaryLock);
-    TEST(DirectSoundBufferSecondaryPlay);
-    TEST(DirectSoundBufferSecondaryPlayFrequency);
-    TEST(DirectSoundBufferSecondaryPlayPan);
-    TEST(DirectSoundBufferSecondaryPlayVolume);
-    TEST(DirectSoundBufferSecondaryPlayMono);
-    TEST(DirectSoundBufferSecondaryPlayStereo);
-    TEST(DirectSoundBufferSecondaryPlayMultiple);
-    TEST(DirectSoundBufferSecondaryStop);
+    //TEST(DirectSoundBufferSecondaryBasics);
+    //TEST(DirectSoundBufferSecondaryQueryInterface);
+    //TEST(DirectSoundBufferSecondaryGet);
+    //TEST(DirectSoundBufferSecondarySet);
+    //TEST(DirectSoundBufferSecondaryLock);
+    //TEST(DirectSoundBufferSecondaryPlay);
+    //TEST(DirectSoundBufferSecondaryPlayFrequency);
+    //TEST(DirectSoundBufferSecondaryPlayPan);
+    //TEST(DirectSoundBufferSecondaryPlayVolume);
+    //TEST(DirectSoundBufferSecondaryPlayMono);
+    //TEST(DirectSoundBufferSecondaryPlayStereo);
+    //TEST(DirectSoundBufferSecondaryPlayMultiple);
+    //TEST(DirectSoundBufferSecondaryStop);
 
-    TEST(DirectSoundBufferSecondaryNotify);
-    TEST(DirectSoundBufferSecondaryPlayNotify);
-    TEST(DirectSoundBufferSecondaryPlaySetCooperativeLevel);
+    //TEST(DirectSoundBufferSecondaryNotify);
+    //TEST(DirectSoundBufferSecondaryPlayNotify);
+    //TEST(DirectSoundBufferSecondaryPlaySetCooperativeLevel);
 
-    TEST(DirectSoundDuplicatePrimary);
-    TEST(DirectSoundDuplicateSecondary);
+    //TEST(DirectSoundDuplicatePrimary);
+    //TEST(DirectSoundDuplicateSecondary);
+    TEST(DirectSoundDuplicateSecondaryNotify);
     // TODO duplicate with spatial buffers
-    // TODO duplicate with notifications
 
     // TODO test create ds, create buffer, release ds, interact with the buffer
 

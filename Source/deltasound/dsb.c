@@ -134,7 +134,6 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
 
                     // TODO PropertySet ?
                     // TODO SpatialBuffer ?
-                    // TODO Notifications ?
 
                     CopyMemory(&instance->Caps, &self->Caps, sizeof(DSBCAPS));
                     CopyMemory(instance->Format, self->Format, SIZEOFFORMATEX(self->Format));
