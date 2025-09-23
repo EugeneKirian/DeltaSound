@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "wave_format.h"
+#include "wave.h"
 
 HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat, BOOL bRigid) {
     if (pcfxFormat == NULL) {

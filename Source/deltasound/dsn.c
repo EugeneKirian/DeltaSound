@@ -128,12 +128,7 @@ HRESULT DELTACALL dsn_add_ref(dsn* self, idsn* pIDSN) {
 }
 
 HRESULT DELTACALL dsn_remove_ref(dsn* self, idsn* pIDSN) {
-    intfc_remove_item(self->Interfaces, &pIDSN->ID);
-
-    // TODO NOT IMPLEMENTED
-    // what to do when the notifications are released? Remove the notifications?
-
-    return S_OK;
+    return intfc_remove_item(self->Interfaces, &pIDSN->ID);
 }
 
 HRESULT DELTACALL dsn_get_notification_positions(dsn* self, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies) {

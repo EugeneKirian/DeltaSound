@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "dsb.h"
 #include "idsb.h"
-#include "wave_format.h"
+#include "wave.h"
 
 typedef struct ds ds;
 

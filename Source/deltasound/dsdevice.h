@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
+#include "arena.h"
 #include "device_info.h"
 #include "mixer.h"
 
@@ -38,6 +38,7 @@ typedef struct ds ds;
 typedef struct dsdevice {
     allocator*              Allocator;
     ds*                     Instance;
+    arena*                  Arena;
     mixer*                  Mixer;
 
     device_info             Info;

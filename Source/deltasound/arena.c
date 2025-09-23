@@ -114,7 +114,11 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
             if (dwBytes < region->Capacity - region->Size) {
                 region->Size += dwBytes;
 
-                *ppMem = (LPVOID)((size_t)region->Block + region->Size);
+                LPVOID mem = (LPVOID)((size_t)region->Block + region->Size);
+
+                ZeroMemory(mem, dwBytes);
+
+                *ppMem = mem;
 
                 goto exit;
             }
@@ -125,7 +129,10 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
         region->Size = dwBytes;
 
         if (SUCCEEDED(hr = arr_add_item(self->Blocks, region))) {
+            ZeroMemory(region->Block, dwBytes);
+
             *ppMem = region->Block;
+
             goto exit;
         }
 

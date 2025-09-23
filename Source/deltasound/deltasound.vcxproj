@@ -44,7 +44,7 @@
     <ClInclude Include="mixer.h" />
     <ClInclude Include="rcm.h" />
     <ClInclude Include="uuid.h" />
-    <ClInclude Include="wave_format.h" />
+    <ClInclude Include="wave.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocator.c" />
@@ -71,7 +71,7 @@
     <ClCompile Include="mixer.c" />
     <ClCompile Include="rcm.c" />
     <ClCompile Include="uuid.c" />
-    <ClCompile Include="wave_format.c" />
+    <ClCompile Include="wave.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

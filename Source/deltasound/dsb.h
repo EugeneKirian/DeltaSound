@@ -105,3 +105,5 @@ HRESULT DELTACALL dsb_set_frequency(dsb* pDSB, DWORD dwFrequency);
 HRESULT DELTACALL dsb_stop(dsb* pDSB);
 HRESULT DELTACALL dsb_unlock(dsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL dsb_restore(dsb* pDSB);
+
+HRESULT DELTACALL dsb_update_current_position(dsb* pDSB, DWORD dwAdvance);

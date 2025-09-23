@@ -118,5 +118,9 @@ HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNo
         return E_POINTER;
     }
 
+    if (DSBNOTIFICATIONS_MAX < dwPositionNotifies) {
+        return E_INVALIDARG;
+    }
+
     return dsn_set_notification_positions(self->Instance, dwPositionNotifies, pcPositionNotifies);
 }

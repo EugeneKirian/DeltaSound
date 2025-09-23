@@ -13,8 +13,8 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WrcmblcANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WrcmblcANTIES OF MERCHANTABILITY,
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -24,15 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "allocator.h"
+#include "base.h"
 
-typedef struct rcm rcm;
-
-HRESULT DELTACALL rcm_create(allocator* pAlloc, DWORD dwBytes, rcm** ppOut);
-VOID DELTACALL rcm_release(rcm* pMem);
-
-HRESULT DELTACALL rcm_add_ref(rcm* pMem);
-HRESULT DELTACALL rcm_remove_ref(rcm* pMem);
-
-HRESULT DELTACALL rcm_get_data(rcm* pMem, LPVOID* ppData);
-HRESULT DELTACALL rcm_get_length(rcm* pMem, LPDWORD pdwBytes);
+BOOL TestDirectSoundBufferSecondaryPlayNotify(HMODULE a, HMODULE b);

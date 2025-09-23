@@ -107,7 +107,7 @@ HRESULT DELTACALL rcm_get_data(rcm* self, LPVOID* ppData) {
     return S_OK;
 }
 
-HRESULT DELTACALL rcm_get_size(rcm* self, LPDWORD pdwBytes) {
+HRESULT DELTACALL rcm_get_length(rcm* self, LPDWORD pdwBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
