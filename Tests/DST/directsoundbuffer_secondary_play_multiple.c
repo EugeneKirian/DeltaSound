@@ -239,7 +239,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a1, LPDIRECTSOUN
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferSecondaryPlaySingleMultiple(
+static BOOL TestDirectSoundBufferSecondaryPlayNotify(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         DebugBreak(); return FALSE;
@@ -450,7 +450,7 @@ BOOL TestDirectSoundBufferSecondaryPlayMultiple(HMODULE a, HMODULE b) {
         DebugBreak(); goto exit;
     }
 
-    if (!TestDirectSoundBufferSecondaryPlaySingleMultiple(dsca, wa, dscb, wb)) {
+    if (!TestDirectSoundBufferSecondaryPlayNotify(dsca, wa, dscb, wb)) {
         result = FALSE;
         DebugBreak(); goto exit;
     }

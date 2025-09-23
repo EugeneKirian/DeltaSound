@@ -772,18 +772,20 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
         return DSERR_BUFFERLOST;
     }
 
-    self->Play = DSBPLAY_NONE;
-    self->Status = DSBSTATUS_NONE;
-
     HRESULT hr = S_OK;
 
-    if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-            if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE))) {
-                if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                    hr = dsb_trigger_notifications(self, self->Caps.dwBufferBytes, 0);
-                }
+    if (self->Status & DSBSTATUS_PLAYING) {
+
+        self->Play = DSBPLAY_NONE;
+        self->Status = DSBSTATUS_NONE;
+
+        if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+            if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
+                hr = dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
             }
+        }
+        else if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
+            hr = dsb_trigger_notifications(self, self->Caps.dwBufferBytes, 0);
         }
     }
 
@@ -907,7 +909,7 @@ HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwPosition, DWORD d
         if (SUCCEEDED(hr = dsn_get_notification_positions(self->Notifications, &count, &notes))) {
             if (count != 0) {
                 for (DWORD i = 0; i < count; i++) {
-                    if (dwPosition < notes[i].dwOffset && notes[i].dwOffset <= dwPosition + dwAdvance) {
+                    if (dwPosition <= notes[i].dwOffset && notes[i].dwOffset < dwPosition + dwAdvance) {
                         SetEvent(notes[i].hEventNotify);
                     }
 
