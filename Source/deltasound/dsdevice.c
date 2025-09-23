@@ -26,7 +26,7 @@ SOFTWARE.
 #include "dsb.h"
 #include "dsdevice.h"
 #include "uuid.h"
-#include "wave_format.h"
+#include "wave.h"
 
 #define REFTIMES_PER_SEC                    10000000
 #define TARGET_BUFFER_PADDING_IN_SECONDS    (1.0f / 60.0f)

@@ -25,7 +25,7 @@ SOFTWARE.
 #include "arena.h"
 #include "ds.h"
 #include "mixer.h"
-#include "wave_format.h"
+#include "wave.h"
 
 #include <math.h>
 

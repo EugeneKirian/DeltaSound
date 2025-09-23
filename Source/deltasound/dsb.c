@@ -29,7 +29,7 @@ SOFTWARE.
 #include "dssl.h"
 #include "ids.h"
 #include "ksp.h"
-#include "wave_format.h"
+#include "wave.h"
 
 #define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
 
