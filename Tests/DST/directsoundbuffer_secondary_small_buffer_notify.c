@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_duplicate_secondary_notify.h"
+#include "directsoundbuffer_secondary_play_notify.h"
 #include "synth.h"
 #include "wnd.h"
 
-#define WINDOW_NAME "DirectSound Duplicate Secondary Buffer Play Notify"
+#define WINDOW_NAME "DirectSound Secondary Buffer Play Notify"
 
 #define TEST_EVENT_COUNT 7
 
@@ -192,9 +192,7 @@ static BOOL TestDirectSoundBufferPlayNotify(
     LPDIRECTSOUNDBUFFER dsba = NULL;
     LPDIRECTSOUNDBUFFER dsbb = NULL;
 
-    LPDIRECTSOUNDBUFFER copya = NULL, copyb = NULL;
-
-    const DWORD length = 144000;
+    const DWORD length = 3200;
 
     WAVEFORMATEX format;
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
@@ -376,21 +374,10 @@ static BOOL TestDirectSoundBufferPlayNotify(
         }
     }
 
-    // Duplicate
-    {
-        ra = IDirectSound_DuplicateSoundBuffer(dsa, dsba, &copya);
-        rb = IDirectSound_DuplicateSoundBuffer(dsb, dsbb, &copyb);
-
-        if (ra != rb) {
-            result = FALSE;
-            goto exit;
-        }
-    }
-
     HANDLE ha = CreateThread(NULL, 0, NotifyThread, &ctxa, 0, NULL);
     HANDLE hb = CreateThread(NULL, 0, NotifyThread, &ctxb, 0, NULL);
 
-    if (!TestDirectSoundBufferSingleWave(copya, wa, copyb, wb, 4, wave, wave_length, dwFlags)) {
+    if (!TestDirectSoundBufferSingleWave(dsba, wa, dsbb, wb, 4, wave, wave_length, dwFlags)) {
         result = FALSE;
         goto exit;
     }
@@ -405,6 +392,8 @@ static BOOL TestDirectSoundBufferPlayNotify(
         IDirectSoundBuffer_GetCurrentPosition(dsba, &cpa, NULL);
         IDirectSoundBuffer_GetCurrentPosition(dsbb, &cpb, NULL);
 
+        // TODO better validation. The number of events doesn't match!
+
         goto exit;
     }
 
@@ -417,14 +406,6 @@ exit:
 
     if (wave != NULL) {
         free(wave);
-    }
-
-    if (copya != NULL) {
-        IDirectSoundBuffer_Release(copya);
-    }
-
-    if (copyb != NULL) {
-        IDirectSoundBuffer_Release(copyb);
     }
 
     if (dsba != NULL) {
@@ -446,7 +427,7 @@ exit:
     return result;
 }
 
-BOOL TestDirectSoundDuplicateSecondaryNotify(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundBufferSecondarySmallBufferNotify(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }

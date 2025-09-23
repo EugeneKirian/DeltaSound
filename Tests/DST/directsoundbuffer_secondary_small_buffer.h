@@ -26,10 +26,4 @@ SOFTWARE.
 
 #include "base.h"
 
-#define SIZEOFFORMAT(pwfx)      ((pwfx->wFormatTag == WAVE_FORMAT_PCM) ? (sizeof(PCMWAVEFORMAT)) : (sizeof(WAVEFORMATEX) + pwfx->cbSize))
-
-#define SIZEOFFORMATEX(pwfx)    (sizeof(WAVEFORMATEX) + ((pwfx->wFormatTag == WAVE_FORMAT_PCM) ? 0 : pwfx->cbSize))
-
-#define BLOCKALIGN(cb, b)       ((DWORD)((DWORD)((DWORD)((cb) + (b) - 1) / (b)) * (b)))
-
-HRESULT DELTACALL wave_format_is_valid(LPCWAVEFORMATEX pcfxFormat, BOOL bRigid);
+BOOL TestDirectSoundBufferSecondarySmallBuffer(HMODULE a, HMODULE b);
