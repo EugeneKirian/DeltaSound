@@ -332,11 +332,7 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
     }
 
     if (!(dwFlags & DSBCB_READ_LOOPING)) {
-        const DWORD available = length - self->ReadPosition;
-
-        if (available < dwBytes) {
-            dwBytes = available;
-        }
+        dwBytes = min(dwBytes, length - self->ReadPosition);
     }
 
     LPVOID buffer = NULL;
@@ -345,20 +341,20 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
 
     if (SUCCEEDED(hr = rcm_get_data(self->Buffer, &buffer))) {
         if (pData != NULL) {
-            DWORD chunk = min(dwBytes, length - self->ReadPosition);
+            DWORD bytes = min(dwBytes, length - self->ReadPosition);
 
-            CopyMemory(pData, (LPVOID)((size_t)buffer + self->ReadPosition), chunk);
+            CopyMemory(pData, (LPVOID)((size_t)buffer + self->ReadPosition), bytes);
 
-            DWORD offset = chunk;
-            DWORD pending = dwBytes - chunk;
+            DWORD offset = bytes;
+            DWORD pending = dwBytes - bytes;
 
             while (pending != 0) {
-                chunk = min(pending, length);
+                bytes = min(pending, length);
 
-                CopyMemory((LPVOID)((size_t)pData + offset), buffer, chunk);
+                CopyMemory((LPVOID)((size_t)pData + offset), buffer, bytes);
 
-                pending -= chunk;
-                offset += chunk;
+                pending -= bytes;
+                offset += bytes;
             }
         }
 

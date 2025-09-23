@@ -907,36 +907,52 @@ HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwPosition, DWORD d
 
         if (SUCCEEDED(hr = dsn_get_notification_positions(self->Notifications, &count, &notes))) {
             if (count != 0) {
-                for (DWORD i = 0; i < count; i++) {
-                    if (dwPosition <= notes[i].dwOffset && notes[i].dwOffset < dwPosition + dwAdvance) {
+                if (self->Status & DSBSTATUS_LOOPING) {
+                    DWORD length = self->Caps.dwBufferBytes < dwPosition + dwAdvance
+                        ? self->Caps.dwBufferBytes - dwPosition : dwAdvance;
+                    DWORD pending = dwAdvance - length;
+                    DWORD position = dwPosition;
+
+                loop:
+
+                    for (DWORD i = 0; i < count; i++) {
+                        if (notes[i].dwOffset < position) {
+                            continue;
+                        }
+
+                        if (position + length < notes[i].dwOffset) {
+                            break;
+                        }
+
                         SetEvent(notes[i].hEventNotify);
                     }
 
-                    if (dwPosition + dwAdvance < notes[i].dwOffset) {
-                        break;
+                    if (pending != 0) {
+                        position = 0;
+                        length = self->Caps.dwBufferBytes < pending
+                            ? self->Caps.dwBufferBytes : pending;
+                        pending -= length;
+
+                        goto loop;
                     }
                 }
-
-                if ((self->Status & DSBSTATUS_LOOPING)
-                    && self->Caps.dwBufferBytes < dwPosition + dwAdvance) {
-
-                    // TODO. Add looping for a very short buffer, which might lead to multiple iterationsall over the buffer length
-
-                    const DWORD overage = dwPosition + dwAdvance - self->Caps.dwBufferBytes;
-
+                else {
                     for (DWORD i = 0; i < count; i++) {
-                        if (notes[i].dwOffset <= overage) {
-                            SetEvent(notes[i].hEventNotify);
+                        if (notes[i].dwOffset < dwPosition) {
+                            continue;
                         }
 
-                        if (overage < notes[i].dwOffset) {
+                        if (dwPosition + dwAdvance < notes[i].dwOffset) {
                             break;
                         }
+
+                        SetEvent(notes[i].hEventNotify);
                     }
-                }
-                else if (self->Caps.dwBufferBytes <= dwPosition + dwAdvance) {
-                    if (notes[count - 1].dwOffset == DSBPN_OFFSETSTOP) {
-                        SetEvent(notes[count - 1].hEventNotify);
+
+                    if (self->Caps.dwBufferBytes <= dwPosition + dwAdvance) {
+                        if (notes[count - 1].dwOffset == DSBPN_OFFSETSTOP) {
+                            SetEvent(notes[count - 1].hEventNotify);
+                        }
                     }
                 }
             }

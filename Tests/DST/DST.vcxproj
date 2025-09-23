@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="directsoundbuffer_secondary_small_buffer.c" />
+    <ClCompile Include="directsoundbuffer_secondary_small_buffer_notify.c" />
     <ClCompile Include="directsound_basics.c" />
     <ClCompile Include="directsound_compact.c" />
     <ClCompile Include="directsound_create.c" />
@@ -192,6 +193,7 @@
   <ItemGroup>
     <ClInclude Include="base.h" />
     <ClInclude Include="directsoundbuffer_secondary_small_buffer.h" />
+    <ClInclude Include="directsoundbuffer_secondary_small_buffer_notify.h" />
     <ClInclude Include="directsound_basics.h" />
     <ClInclude Include="directsound_compact.h" />
     <ClInclude Include="directsound_create.h" />

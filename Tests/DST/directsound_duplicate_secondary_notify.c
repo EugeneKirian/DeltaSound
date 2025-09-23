@@ -240,6 +240,17 @@ static BOOL TestDirectSoundBufferPlayNotify(
     ZeroMemory(&capsb, sizeof(DSBCAPS));
     capsb.dwSize = sizeof(DSBCAPS);
 
+    HANDLE eventsa[TEST_EVENT_COUNT], eventsb[TEST_EVENT_COUNT];
+    BOOL signala[TEST_EVENT_COUNT], signalb[TEST_EVENT_COUNT];
+
+    thread_context ctxa, ctxb;
+
+    ctxa.Count = TEST_EVENT_COUNT;
+    ctxb.Count = TEST_EVENT_COUNT;
+
+    ctxa.Run = TRUE;
+    ctxb.Run = TRUE;
+
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
 
@@ -310,17 +321,6 @@ static BOOL TestDirectSoundBufferPlayNotify(
     }
 
     // Create Notifications
-    HANDLE eventsa[TEST_EVENT_COUNT], eventsb[TEST_EVENT_COUNT];
-    BOOL signala[TEST_EVENT_COUNT], signalb[TEST_EVENT_COUNT];
-
-    thread_context ctxa, ctxb;
-
-    ctxa.Count = TEST_EVENT_COUNT;
-    ctxb.Count = TEST_EVENT_COUNT;
-
-    ctxa.Run = TRUE;
-    ctxb.Run = TRUE;
-
     for (int i = 0; i < TEST_EVENT_COUNT; i++) {
         eventsa[i] = CreateEventA(NULL, FALSE, FALSE, NULL);
         signala[i] = 0;
@@ -409,6 +409,11 @@ static BOOL TestDirectSoundBufferPlayNotify(
     }
 
 exit:
+
+    for (int i = 0; i < TEST_EVENT_COUNT; i++) {
+        CloseHandle(eventsa[i]);
+        CloseHandle(eventsb[i]);
+    }
 
     if (wave != NULL) {
         free(wave);
