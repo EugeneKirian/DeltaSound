@@ -62,6 +62,7 @@ SOFTWARE.
 #include "directsoundbuffer_secondary_notify.h"
 #include "directsoundbuffer_secondary_play_notify.h"
 #include "directsoundbuffer_secondary_play_setcooperativelevel.h"
+#include "directsoundbuffer_secondary_small_buffer.h"
 
 #include "directsoundcapture_enumerate.h"
 
@@ -140,6 +141,7 @@ int main(int argc, char** argv) {
     //TEST(DirectSoundBufferSecondaryPlayStereo);
     //TEST(DirectSoundBufferSecondaryPlayMultiple);
     //TEST(DirectSoundBufferSecondaryStop);
+    TEST(DirectSoundBufferSecondarySmallBuffer);
 
     //TEST(DirectSoundBufferSecondaryNotify);
     //TEST(DirectSoundBufferSecondaryPlayNotify);
@@ -147,10 +149,8 @@ int main(int argc, char** argv) {
 
     //TEST(DirectSoundDuplicatePrimary);
     //TEST(DirectSoundDuplicateSecondary);
-    TEST(DirectSoundDuplicateSecondaryNotify);
-    // TODO duplicate with spatial buffers
-
-    // TODO test create ds, create buffer, release ds, interact with the buffer
+    //TEST(DirectSoundDuplicateSecondaryNotify);
+    //// TODO duplicate with spatial buffers
 
 exit:
 

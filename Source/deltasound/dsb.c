@@ -919,6 +919,9 @@ HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwPosition, DWORD d
 
                 if ((self->Status & DSBSTATUS_LOOPING)
                     && self->Caps.dwBufferBytes < dwPosition + dwAdvance) {
+
+                    // TODO. Add looping for a very short buffer, which might lead to multiple iterationsall over the buffer length
+
                     const DWORD overage = dwPosition + dwAdvance - self->Caps.dwBufferBytes;
 
                     for (DWORD i = 0; i < count; i++) {

@@ -315,38 +315,28 @@ HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPt
     return E_INVALIDARG;
 }
 
-HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes,
-    LPVOID pData, LPDWORD pdwBytesRead, DWORD dwFlags) {
+HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytes, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pData == NULL && pdwBytesRead == NULL) {
+    if (pData == NULL && pdwBytes == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    DWORD length = 0, max = 0;
+    DWORD length = 0;
 
     if (FAILED(hr = rcm_get_length(self->Buffer, &length))) {
         return hr;
     }
 
-    if (dwFlags & DSBCB_READ_LOOPING) {
-        max = self->ReadPosition < self->WritePosition
-            ? self->WritePosition - self->ReadPosition
-            : length + self->WritePosition - self->ReadPosition;
+    if (!(dwFlags & DSBCB_READ_LOOPING)) {
+        const DWORD available = length - self->ReadPosition;
 
-        // TODO. Read many iterations when buffer is very small and it is looping ?
-        // TODO. Tests needed. Should it ignore read and write positions
-        // and just wrap around making copying the data until needed numbers of bytes copied?
-    }
-    else {
-        max = length - self->ReadPosition;
-    }
-
-    if (max < dwBytes) {
-        dwBytes = max;
+        if (available < dwBytes) {
+            dwBytes = available;
+        }
     }
 
     LPVOID buffer = NULL;
@@ -354,18 +344,26 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes,
     EnterCriticalSection(&self->Lock);
 
     if (SUCCEEDED(hr = rcm_get_data(self->Buffer, &buffer))) {
-
         if (pData != NULL) {
-            const DWORD read = min(dwBytes, length - self->ReadPosition);
-            CopyMemory(pData, (LPVOID)((size_t)buffer + self->ReadPosition), read);
+            DWORD chunk = min(dwBytes, length - self->ReadPosition);
 
-            if (read < dwBytes) {
-                CopyMemory((LPVOID)((size_t)pData + read), buffer, dwBytes - read);
+            CopyMemory(pData, (LPVOID)((size_t)buffer + self->ReadPosition), chunk);
+
+            DWORD offset = chunk;
+            DWORD pending = dwBytes - chunk;
+
+            while (pending != 0) {
+                chunk = min(pending, length);
+
+                CopyMemory((LPVOID)((size_t)pData + offset), buffer, chunk);
+
+                pending -= chunk;
+                offset += chunk;
             }
         }
 
-        if (pdwBytesRead != NULL) {
-            *pdwBytesRead = dwBytes;
+        if (pdwBytes != NULL) {
+            *pdwBytes = dwBytes;
         }
     }
 

@@ -50,5 +50,4 @@ HRESULT DELTACALL dsbcb_get_lockable_length(dsbcb* pBuffer, LPDWORD pdwBytes);
 HRESULT DELTACALL dsbcb_lock(dsbcb* pBuffer, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2);
 HRESULT DELTACALL dsbcb_unlock(dsbcb* pBuffer, LPVOID pvAudioPtr1, LPVOID pvAudioPtr2);
-HRESULT DELTACALL dsbcb_read(dsbcb* pBuffer, DWORD dwBytes,
-    LPVOID pData, LPDWORD pdwBytesRead, DWORD dwFlags);
+HRESULT DELTACALL dsbcb_read(dsbcb* pBuffer, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytes, DWORD dwFlags);
