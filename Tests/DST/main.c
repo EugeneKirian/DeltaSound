@@ -38,6 +38,7 @@ SOFTWARE.
 #include "directsoundbuffer_primary_query_interface.h"
 #include "directsoundbuffer_primary_get.h"
 #include "directsoundbuffer_primary_set.h"
+#include "directsoundbuffer_primary_set_format.h"
 #include "directsoundbuffer_primary_stop.h"
 #include "directsoundbuffer_primary_lock.h"
 #include "directsoundbuffer_primary_play.h"
@@ -120,6 +121,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundBufferPrimaryQueryInterface);
     TEST(DirectSoundBufferPrimaryGet);
     TEST(DirectSoundBufferPrimarySet);
+    TEST(DirectSoundBufferPrimarySetFormat);
     TEST(DirectSoundBufferPrimaryLock);
     TEST(DirectSoundBufferPrimaryPlay);
     TEST(DirectSoundBufferPrimaryPlayPan);
