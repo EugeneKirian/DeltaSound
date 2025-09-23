@@ -687,18 +687,9 @@ HRESULT DELTACALL dsb_set_format(dsb* self, LPCWAVEFORMATEX pcfxFormat) {
         }
     }
 
-    if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
-        if (self->Status & DSBSTATUS_PLAYING) {
-            // TODO buffer must be stopped by the user
-        }
+    // TODO support larger structs
 
-        // TODO update format...
-    }
-    else {
-        // TODO stop the buffer, update the format, and resume playback
-    }
-
-    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX)); // TODO support larger structs
+    CopyMemory(self->Format, pcfxFormat, sizeof(WAVEFORMATEX));
 
     self->Format->cbSize = 0;
 
