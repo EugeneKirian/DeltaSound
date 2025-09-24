@@ -112,13 +112,14 @@ HRESULT DELTACALL arena_allocate(arena* self, DWORD dwBytes, LPVOID* ppMem) {
     for (DWORD i = 0; i < count; i++) {
         if (SUCCEEDED(hr = arr_get_item(self->Blocks, i, &region))) {
             if (dwBytes < region->Capacity - region->Size) {
+                LPVOID pointer =
+                    (LPVOID)((size_t)region->Block + region->Size);
+
+                ZeroMemory(pointer, dwBytes);
+
                 region->Size += dwBytes;
 
-                LPVOID mem = (LPVOID)((size_t)region->Block + region->Size);
-
-                ZeroMemory(mem, dwBytes);
-
-                *ppMem = mem;
+                *ppMem = pointer;
 
                 goto exit;
             }

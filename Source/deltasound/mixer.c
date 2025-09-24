@@ -118,7 +118,8 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
         return hr;
     }
 
-    // TODO multi-threaded mixing
+    // TODO multi-threaded mixing ?
+    // TODO SIMD mixing!
 
     // Read the data from the user-defined buffers.
     for (DWORD i = 0; i < dwBuffers; i++) {
@@ -265,9 +266,8 @@ HRESULT DELTACALL mb_initialize(mb* self,
     self->Ratio = (FLOAT)self->Frequency / (FLOAT)dwRequiredFrequency;
 
     self->InFrames = (DWORD)truncf(self->Ratio * dwRequiredFrames);
-    self->InActualFrames = self->InFrames;
     self->InActualFrames = (DWORD)roundf(self->Ratio * dwRequiredFrames);
-    self->OutFrames = (DWORD)truncf(self->InActualFrames / self->Ratio);
+    self->OutFrames = (DWORD)roundf(self->InActualFrames / self->Ratio);
     self->MaxFrames = dwRequiredFrames;
 
     return S_OK;
@@ -315,6 +315,7 @@ HRESULT DELTACALL mixer_convert(mixer* self, mb* pBuffer) {
         return E_NOTIMPL;
     }
 
+    const DWORD bytes = bits >> 3;
     const DWORD channels = pBuffer->Format->nChannels;
 
     if (channels != 1 && channels != 2) {
@@ -330,7 +331,6 @@ HRESULT DELTACALL mixer_convert(mixer* self, mb* pBuffer) {
 
     ZeroMemory(pBuffer->Intermediate, length);
 
-    const DWORD bytes = bits >> 3;
     DWORD offset = 0;
 
     for (DWORD i = 0; i < pBuffer->InActualFrames; i++) {
@@ -415,13 +415,14 @@ HRESULT DELTACALL mixer_resample(mixer* self, mb* pBuffer, DWORD dwFrequency) {
     }
 
     HRESULT hr = S_OK;
+    const DWORD frames = pBuffer->OutFrames;
 
     if (FAILED(hr = arena_allocate(self->Arena,
-        pBuffer->OutFrames * STEREO * sizeof(FLOAT), &pBuffer->Out))) {
+        frames * STEREO * sizeof(FLOAT), &pBuffer->Out))) {
         return hr;
     }
 
-    for (DWORD i = 0; i < pBuffer->OutFrames; i++) {
+    for (DWORD i = 0; i < frames; i++) {
         for (DWORD j = 0; j < STEREO; j++) {
             const FLOAT t = i * pBuffer->Ratio;
 
@@ -429,8 +430,8 @@ HRESULT DELTACALL mixer_resample(mixer* self, mb* pBuffer, DWORD dwFrequency) {
             DWORD index1 = index0 + 1;
 
             // Handle edge case for the last sample.
-            if (index1 >= pBuffer->OutFrames) {
-                index1 = pBuffer->OutFrames - 1;
+            if (index1 >= frames) {
+                index1 = frames - 1;
                 index0 = index1 - 1;
             }
 
