@@ -172,8 +172,7 @@ HRESULT DELTACALL ds_create_sound_buffer(ds* self, REFIID riid, LPCDSBUFFERDESC 
     }
 
     if (pcDesc->dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        self->Main->Caps.dwFlags =
-            (pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)
+        self->Main->Caps.dwFlags = (pcDesc->dwFlags & DSBCAPS_LOCHARDWARE)
             ? (pcDesc->dwFlags & (~DSBCAPS_LOCHARDWARE)) | DSBCAPS_LOCSOFTWARE
             : pcDesc->dwFlags | DSBCAPS_LOCSOFTWARE;
 
@@ -254,7 +253,32 @@ HRESULT DELTACALL ds_duplicate_sound_buffer(ds* self, dsb* pDSBufferOriginal, ds
         return DSERR_UNINITIALIZED;
     }
 
-    return dsb_duplicate(pDSBufferOriginal, ppDSBufferDuplicate);
+    if (self->Main == pDSBufferOriginal) {
+        return DSERR_INVALIDCALL;
+    }
+
+    HRESULT hr = E_INVALIDARG;
+
+    EnterCriticalSection(&self->Lock);
+
+    const DWORD count = arr_get_count(self->Buffers);
+
+    for (DWORD i = 0; i < count; i++) {
+        dsb* instance = NULL;
+
+        if (SUCCEEDED(arr_get_item(self->Buffers, i, &instance))) {
+            if (instance == pDSBufferOriginal) {
+                hr = dsb_duplicate(pDSBufferOriginal, ppDSBufferDuplicate);
+                goto exit;
+            }
+        }
+    }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
