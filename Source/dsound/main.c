@@ -41,13 +41,7 @@ HRESULT DELTACALL enumerate_devices(
 static allocator* alc;
 static deltasound* delta;
 
-BOOL WINAPI DllMain(
-    HINSTANCE hinstDLL,
-    DWORD fdwReason,
-    LPVOID lpvReserved) {
-
-    // TODO NOT IMPLEMENTED
-
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH: {
         DisableThreadLibraryCalls(hinstDLL);
@@ -82,10 +76,7 @@ BOOL WINAPI DllMain(
     return TRUE;
 }
 
-HRESULT WINAPI DirectSoundCreate(
-    LPCGUID pcGuidDevice,
-    LPDIRECTSOUND* ppDS,
-    LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI DirectSoundCreate(LPCGUID pcGuidDevice, LPDIRECTSOUND* ppDS, LPUNKNOWN pUnkOuter) {
     if (ppDS == NULL) {
         return DSERR_INVALIDPARAM;
     }
@@ -94,10 +85,10 @@ HRESULT WINAPI DirectSoundCreate(
         return DSERR_NOAGGREGATION;
     }
 
-    HRESULT hr = DS_OK;
+    HRESULT hr = S_OK;
     LPDIRECTSOUND instance = NULL;
 
-    if (SUCCEEDED(hr = deltasound_create_directsound(delta,
+    if (SUCCEEDED(hr = deltasound_create_direct_sound(delta,
         &IID_IDirectSound, pcGuidDevice, &instance))) {
         *ppDS = instance;
     }
@@ -105,9 +96,7 @@ HRESULT WINAPI DirectSoundCreate(
     return hr;
 }
 
-HRESULT WINAPI DirectSoundEnumerateA(
-    LPDSENUMCALLBACKA pDSEnumCallback,
-    LPVOID pContext) {
+HRESULT WINAPI DirectSoundEnumerateA(LPDSENUMCALLBACKA pDSEnumCallback, LPVOID pContext) {
     if (pDSEnumCallback == NULL) {
         return DSERR_INVALIDPARAM;
     }
@@ -116,13 +105,11 @@ HRESULT WINAPI DirectSoundEnumerateA(
         return E_FAIL;
     }
 
-    return enumerate_devices(DEVICETYPE_AUDIO, DEVICEENUMERATE_ANSI,
+    return enumerate_devices(DEVICETYPE_RENDER, DEVICEENUMERATE_ANSI,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
-HRESULT WINAPI DirectSoundEnumerateW(
-    LPDSENUMCALLBACKW pDSEnumCallback,
-    LPVOID pContext) {
+HRESULT WINAPI DirectSoundEnumerateW(LPDSENUMCALLBACKW pDSEnumCallback, LPVOID pContext) {
     if (pDSEnumCallback == NULL) {
         return DSERR_INVALIDPARAM;
     }
@@ -131,21 +118,16 @@ HRESULT WINAPI DirectSoundEnumerateW(
         return E_FAIL;
     }
 
-    return enumerate_devices(DEVICETYPE_AUDIO, DEVICEENUMERATE_WIDE,
+    return enumerate_devices(DEVICETYPE_RENDER, DEVICEENUMERATE_WIDE,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
-HRESULT WINAPI DirectSoundCaptureCreate(
-    LPCGUID lpcGUID,
-    LPDIRECTSOUNDCAPTURE* ppDSC,
-    LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI DirectSoundCaptureCreate(LPCGUID lpcGUID, LPDIRECTSOUNDCAPTURE* ppDSC, LPUNKNOWN pUnkOuter) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI DirectSoundCaptureEnumerateA(
-    LPDSENUMCALLBACKA pDSEnumCallback,
-    LPVOID pContext) {
+HRESULT WINAPI DirectSoundCaptureEnumerateA(LPDSENUMCALLBACKA pDSEnumCallback, LPVOID pContext) {
     if (pDSEnumCallback == NULL) {
         return DSERR_INVALIDPARAM;
     }
@@ -158,9 +140,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateA(
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
-HRESULT WINAPI DirectSoundCaptureEnumerateW(
-    LPDSENUMCALLBACKW pDSEnumCallback,
-    LPVOID pContext) {
+HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW pDSEnumCallback, LPVOID pContext) {
     if (pDSEnumCallback == NULL) {
         return DSERR_INVALIDPARAM;
     }
@@ -173,18 +153,12 @@ HRESULT WINAPI DirectSoundCaptureEnumerateW(
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
-HRESULT WINAPI DirectSoundCreate8(
-    LPCGUID pcGuidDevice,
-    LPDIRECTSOUND8* ppDS8,
-    LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI DirectSoundCreate8(LPCGUID pcGuidDevice, LPDIRECTSOUND8* ppDS8, LPUNKNOWN pUnkOuter) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI DirectSoundCaptureCreate8(
-    LPCGUID pcGuidDevice,
-    LPDIRECTSOUNDCAPTURE8* ppDSC8,
-    LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI DirectSoundCaptureCreate8(LPCGUID pcGuidDevice, LPDIRECTSOUNDCAPTURE8* ppDSC8, LPUNKNOWN pUnkOuter) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
 }
@@ -204,23 +178,21 @@ HRESULT WINAPI DirectSoundFullDuplexCreate(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI GetDeviceID(
-    LPCGUID pGuidSrc,
-    LPGUID pGuidDest) {
+HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest) {
     if (pGuidSrc == NULL || pGuidDest == NULL) {
         return E_INVALIDARG;
     }
 
-    HRESULT hr = DS_OK;
+    HRESULT hr = S_OK;
     DWORD type = DEVICETYPE_INVALID;
     DWORD kind = DEVICEKIND_INVALID;
 
     if (IsEqualGUID(&DSDEVID_DefaultPlayback, pGuidSrc)) {
-        type = DEVICETYPE_AUDIO;
+        type = DEVICETYPE_RENDER;
         kind = DEVICEKIND_MULTIMEDIA;
     }
     else if (IsEqualGUID(&DSDEVID_DefaultVoicePlayback, pGuidSrc)) {
-        type = DEVICETYPE_AUDIO;
+        type = DEVICETYPE_RENDER;
         kind = DEVICEKIND_COMMUNICATION;
     }
     else if (IsEqualGUID(&DSDEVID_DefaultCapture, pGuidSrc)) {
@@ -245,7 +217,7 @@ HRESULT WINAPI GetDeviceID(
 
         CopyMemory(pGuidDest, &info.ID, sizeof(GUID));
 
-        return DS_OK;
+        return S_OK;
     }
 
     // Iterate through available devices to find a match...
@@ -261,7 +233,7 @@ HRESULT WINAPI GetDeviceID(
                     if (IsEqualGUID(pGuidSrc, &dev->ID)) {
                         CopyMemory(pGuidDest, &dev->ID, sizeof(GUID));
                         allocator_free(alc, devices);
-                        return DS_OK;
+                        return S_OK;
                     }
                 }
 
@@ -284,12 +256,19 @@ HRESULT WINAPI DllCanUnloadNow() {
     return SUCCEEDED(deltasound_can_unload(delta)) ? S_OK : S_FALSE;
 }
 
-HRESULT DllGetClassObject(
-    REFCLSID rclsid,
-    REFIID riid,
-    LPVOID* ppv) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+HRESULT DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppOut) {
+    if (rclsid == NULL || riid == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    LPVOID instance = NULL;
+
+    if (SUCCEEDED(hr = deltasound_create_class_factory(delta, rclsid, riid, &instance))) {
+        *ppOut = instance;
+    }
+
+    return hr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -312,18 +291,14 @@ const static LPCVOID AudioDriverNames[2][2] =
     { (LPCVOID)"Primary Sound Capture Driver", (LPCVOID)L"Primary Sound Capture Driver" }
 };
 
-HRESULT DELTACALL enumerate_devices(
-    DWORD dwType,
-    DWORD dwWide,
-    LPDEVICEENUMERATECALLBACK pCallback,
-    LPVOID pContext) {
+HRESULT DELTACALL enumerate_devices(DWORD dwType, DWORD dwWide, LPDEVICEENUMERATECALLBACK pCallback, LPVOID pContext) {
     UINT count = 0;
-    HRESULT hr = DS_OK;
+    HRESULT hr = S_OK;
 
-    // Always report primary device, even when there is no audio devices...
+    // Always report primary device, even when there are no audio devices...
     if (!pCallback(NULL, AudioDriverNames[dwType][dwWide],
         dwWide == DEVICEENUMERATE_ANSI ? (LPCVOID)"" : (LPCVOID)L"", pContext)) {
-        return DS_OK;
+        return S_OK;
     }
 
     // Iterate through the rest of the system devices...

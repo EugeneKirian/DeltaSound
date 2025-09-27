@@ -23,6 +23,7 @@
     <ClInclude Include="arena.h" />
     <ClInclude Include="arr.h" />
     <ClInclude Include="base.h" />
+    <ClInclude Include="cf.h" />
     <ClInclude Include="deltasound.h" />
     <ClInclude Include="dsdevice.h" />
     <ClInclude Include="device_info.h" />
@@ -33,6 +34,7 @@
     <ClInclude Include="dsn.h" />
     <ClInclude Include="dssb.h" />
     <ClInclude Include="dssl.h" />
+    <ClInclude Include="icf.h" />
     <ClInclude Include="ids.h" />
     <ClInclude Include="idsb.h" />
     <ClInclude Include="idsn.h" />
@@ -50,6 +52,7 @@
     <ClCompile Include="allocator.c" />
     <ClCompile Include="arena.c" />
     <ClCompile Include="arr.c" />
+    <ClCompile Include="cf.c" />
     <ClCompile Include="deltasound.c" />
     <ClCompile Include="dsdevice.c" />
     <ClCompile Include="device_info.c" />
@@ -60,6 +63,7 @@
     <ClCompile Include="dsn.c" />
     <ClCompile Include="dssb.c" />
     <ClCompile Include="dssl.c" />
+    <ClCompile Include="icf.c" />
     <ClCompile Include="ids.c" />
     <ClCompile Include="idsb.c" />
     <ClCompile Include="idsn.c" />

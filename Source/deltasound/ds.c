@@ -109,7 +109,7 @@ VOID DELTACALL ds_release(ds* self) {
     dsb_release(self->Main);
 
     if (self->Instance != NULL) {
-        deltasound_remove_ds(self->Instance, self);
+        deltasound_remove_direct_sound(self->Instance, self);
     }
 
     allocator_free(self->Allocator, self);
@@ -305,11 +305,11 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
         const DWORD kind = IsEqualGUID(&DSDEVID_DefaultPlayback, pcGuidDevice)
             ? DEVICEKIND_MULTIMEDIA : DEVICEKIND_COMMUNICATION;
 
-        if (FAILED(hr = device_info_get_default_device(DEVICETYPE_AUDIO, kind, &info))) {
+        if (FAILED(hr = device_info_get_default_device(DEVICETYPE_RENDER, kind, &info))) {
             return DSERR_NODRIVER;
         }
     }
-    else if (FAILED(hr = device_info_get_device(DEVICETYPE_AUDIO, pcGuidDevice, &info))) {
+    else if (FAILED(hr = device_info_get_device(DEVICETYPE_RENDER, pcGuidDevice, &info))) {
         return DSERR_NODRIVER;
     }
 
