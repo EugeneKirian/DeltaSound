@@ -64,7 +64,11 @@ VOID DELTACALL allocator_release(allocator* self) {
 }
 
 HRESULT DELTACALL allocator_allocate(allocator* self, DWORD dwBytes, LPVOID* ppMem) {
-    if (self == NULL || ppMem == NULL) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (ppMem == NULL) {
         return E_INVALIDARG;
     }
 
@@ -84,7 +88,11 @@ HRESULT DELTACALL allocator_allocate(allocator* self, DWORD dwBytes, LPVOID* ppM
 }
 
 HRESULT DELTACALL allocator_reallocate(allocator* self, LPVOID pMem, DWORD dwBytes, LPVOID* ppMem) {
-    if (self == NULL || pMem == NULL || ppMem == NULL) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pMem == NULL || ppMem == NULL) {
         return E_INVALIDARG;
     }
 
@@ -103,6 +111,10 @@ HRESULT DELTACALL allocator_reallocate(allocator* self, LPVOID pMem, DWORD dwByt
 
 HRESULT DELTACALL allocator_free(allocator* self, LPVOID pMem) {
     if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pMem == NULL) {
         return E_INVALIDARG;
     }
 

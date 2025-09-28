@@ -37,11 +37,15 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Items))) {
-            InitializeCriticalSection(&instance->Lock);
+            if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Factories))) {
+                InitializeCriticalSection(&instance->Lock);
 
-            *ppOut = instance;
+                *ppOut = instance;
 
-            return S_OK;
+                return S_OK;
+            }
+
+            arr_release(instance->Items);
         }
 
         allocator_free(pAlloc, instance);

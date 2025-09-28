@@ -32,11 +32,7 @@ typedef BOOL(CALLBACK* LPDEVICEENUMERATECALLBACK)(LPGUID, LPCVOID, LPCVOID, LPVO
 
 VOID DELTACALL cleanup();
 
-HRESULT DELTACALL enumerate_devices(
-    DWORD dwType,
-    DWORD dwWide,
-    LPDEVICEENUMERATECALLBACK pCallback,
-    LPVOID pContext);
+HRESULT DELTACALL enumerate_devices(DWORD dwType, DWORD dwWide, LPDEVICEENUMERATECALLBACK pCallback, LPVOID pContext);
 
 static allocator* alc;
 static deltasound* delta;
@@ -231,13 +227,17 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest) {
                     device_info* dev = &devices[i];
 
                     if (IsEqualGUID(pGuidSrc, &dev->ID)) {
+
                         CopyMemory(pGuidDest, &dev->ID, sizeof(GUID));
+
                         allocator_free(alc, devices);
+
                         return S_OK;
                     }
                 }
 
                 allocator_free(alc, devices);
+
                 return DSERR_NODRIVER;
             }
 
