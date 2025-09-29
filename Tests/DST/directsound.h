@@ -26,4 +26,15 @@ SOFTWARE.
 
 #include "base.h"
 
-BOOL TestDirectSoundBufferSecondaryPlayMultiple(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBasics(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCompact(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCreate(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCreateSoundBufferPrimary(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b);
+BOOL TestDirectSoundDuplicatePrimary(HMODULE a, HMODULE b);
+BOOL TestDirectSoundDuplicateSecondary(HMODULE a, HMODULE b);
+BOOL TestDirectSoundDuplicateSecondaryNotify(HMODULE a, HMODULE b);
+BOOL TestDirectSoundEnumerateA(HMODULE a, HMODULE b);
+BOOL TestDirectSoundEnumerateW(HMODULE a, HMODULE b);
+BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b);
+BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b);

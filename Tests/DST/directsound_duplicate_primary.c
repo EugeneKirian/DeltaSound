@@ -22,15 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_duplicate_primary.h"
+#include "directsound.h"
 
 static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b) {
-    BOOL result = TRUE;
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
 
-    LPDIRECTSOUNDBUFFER dsbac = NULL;
-    LPDIRECTSOUNDBUFFER dsbbc = NULL;
+    BOOL result = TRUE;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsbac = NULL, dsbbc = NULL;
 
     DSBUFFERDESC desca;
     ZeroMemory(&desca, sizeof(DSBUFFERDESC));
@@ -91,13 +92,8 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
 
 exit:
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
 
     return result;
 }
@@ -107,8 +103,8 @@ BOOL TestDirectSoundDuplicatePrimary(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
@@ -116,11 +112,10 @@ BOOL TestDirectSoundDuplicatePrimary(HMODULE a, HMODULE b) {
 
     BOOL result = TRUE;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
-    HRESULT ra = dsca(NULL, &dsa, NULL);
-    HRESULT rb = dscb(NULL, &dsb, NULL);
+    const HRESULT ra = dsca(NULL, &dsa, NULL);
+    const HRESULT rb = dscb(NULL, &dsb, NULL);
 
     if (ra != rb) {
         return FALSE;
@@ -137,8 +132,8 @@ BOOL TestDirectSoundDuplicatePrimary(HMODULE a, HMODULE b) {
 
 exit:
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

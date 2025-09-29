@@ -22,18 +22,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_compact.h"
+#include "directsound.h"
 #include "wnd.h"
 
 #define WINDOW_NAME "DirectSound Compact"
 
-static BOOL TestDirectSoundCompactResult(LPDIRECTSOUND a, HWND wa, LPDIRECTSOUND b, HWND wb, DWORD level) {
+static BOOL TestDirectSoundCompactResult(LPDIRECTSOUND a, HWND wa,
+    LPDIRECTSOUND b, HWND wb, DWORD dwLevel) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
 
-    HRESULT ra = IDirectSound_SetCooperativeLevel(a, wa, level);
-    HRESULT rb = IDirectSound_SetCooperativeLevel(b, wb, level);
+    HRESULT ra = IDirectSound_SetCooperativeLevel(a, wa, dwLevel);
+    HRESULT rb = IDirectSound_SetCooperativeLevel(b, wb, dwLevel);
 
     if (ra != rb) {
         return FALSE;
@@ -58,15 +59,14 @@ BOOL TestDirectSoundCompact(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     const HRESULT ra = dsca(NULL, &dsa, NULL);
     const HRESULT rb = dscb(NULL, &dsb, NULL);
@@ -107,8 +107,8 @@ exit:
 
     UnregisterClassA(WINDOW_NAME, GetModuleHandleA(NULL));
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

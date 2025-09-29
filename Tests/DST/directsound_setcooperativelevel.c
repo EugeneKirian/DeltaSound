@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_setcooperativelevel.h"
+#include "directsound.h"
 #include "wnd.h"
 
 #define WINDOW_NAME "Set Cooperative Level"
@@ -33,8 +33,7 @@ static BOOL TestDirectSoundSetCooperativeLevelInvalidParams(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -101,8 +100,8 @@ static BOOL TestDirectSoundSetCooperativeLevelInvalidParams(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -113,8 +112,7 @@ static BOOL TestDirectSoundSetCooperativeLevelValue(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -136,8 +134,8 @@ static BOOL TestDirectSoundSetCooperativeLevelValue(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -173,8 +171,7 @@ static BOOL TestDirectSoundSetCooperativeLevelAlreadySet(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -217,8 +214,8 @@ static BOOL TestDirectSoundSetCooperativeLevelAlreadySet(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -229,8 +226,7 @@ static BOOL TestDirectSoundSetCooperativeLevelChangeWindow(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -273,8 +269,8 @@ static BOOL TestDirectSoundSetCooperativeLevelChangeWindow(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -285,8 +281,7 @@ static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa1 = NULL;
-    LPDIRECTSOUND dsb1 = NULL;
+    LPDIRECTSOUND dsa1 = NULL, dsb1 = NULL;
 
     HRESULT ra = a(NULL, &dsa1, NULL);
     HRESULT rb = b(NULL, &dsb1, NULL);
@@ -299,8 +294,7 @@ static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa2 = NULL;
-    LPDIRECTSOUND dsb2 = NULL;
+    LPDIRECTSOUND dsa2 = NULL, dsb2 = NULL;
 
     ra = a(NULL, &dsa2, NULL);
     rb = b(NULL, &dsb2, NULL);
@@ -329,10 +323,10 @@ static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
         }
     }
 
-    IDirectSound_Release(dsa1);
-    IDirectSound_Release(dsb1);
-    IDirectSound_Release(dsa2);
-    IDirectSound_Release(dsb2);
+    RELEASE(dsa1);
+    RELEASE(dsb1);
+    RELEASE(dsa2);
+    RELEASE(dsb2);
 
     return TRUE;
 }
@@ -346,8 +340,8 @@ BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;

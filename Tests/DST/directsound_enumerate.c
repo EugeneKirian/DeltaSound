@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_enumerate.h"
+#include "directsound.h"
 
 #define MAX_DIRECTSOUND_DEVICE_NAME_LENGTH  32
 

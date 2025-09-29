@@ -76,17 +76,13 @@ static BOOL TestDirectSoundClassFactory(LPFNGETCLASSOBJECT a, LPFNGETCLASSOBJECT
             goto exit1;
         }
 
-        IDirectSound_Release(dsa);
-        IDirectSound_Release(dsb);
+        RELEASE(dsa);
+        RELEASE(dsb);
 
     exit1:
-        if (cfa != NULL) {
-            IClassFactory_Release(cfa);
-        }
 
-        if (cfb != NULL) {
-            IClassFactory_Release(cfb);
-        }
+        RELEASE(cfa);
+        RELEASE(cfb);
 
         if (!result) {
             return result;
@@ -115,13 +111,8 @@ static BOOL TestDirectSoundClassFactory(LPFNGETCLASSOBJECT a, LPFNGETCLASSOBJECT
         }
 
     exit2:
-        if (ua != NULL) {
-            IUnknown_Release(ua);
-        }
-
-        if (ub != NULL) {
-            IUnknown_Release(ub);
-        }
+        RELEASE(ua);
+        RELEASE(ub);
 
         if (!result) {
             return result;

@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_secondary_get.h"
+#include "directsoundbuffer_secondary.h"
 #include "wnd.h"
 
 #define WINDOW_NAME "DirectSound Secondary Buffer Get Properties"
@@ -56,25 +56,8 @@ static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
     }
 
     // GetCaps
-    {
-        DSBCAPS capsa;
-        ZeroMemory(&capsa, sizeof(DSBCAPS));
-        capsa.dwSize = sizeof(DSBCAPS);
-
-        DSBCAPS capsb;
-        ZeroMemory(&capsb, sizeof(DSBCAPS));
-        capsb.dwSize = sizeof(DSBCAPS);
-
-        HRESULT ra = IDirectSoundBuffer_GetCaps(a, &capsa);
-        HRESULT rb = IDirectSoundBuffer_GetCaps(b, &capsb);
-
-        if (ra != rb) {
-            return FALSE;
-        }
-
-        if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
-            return FALSE;
-        }
+    if (FAILED(CompareDirectSoundBufferCaps(a, b))) {
+        return FALSE;
     }
 
     // GetCurrentPosition
@@ -270,36 +253,13 @@ static BOOL TestDirectSoundBufferSecondaryGetDetails(
     BOOL result = TRUE;
 
     WAVEFORMATEX format;
-    ZeroMemory(&format, sizeof(WAVEFORMATEX));
+    InitializeWaveFormat(&format, 1, 22050, 8);
 
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 1;
-    format.nSamplesPerSec = 22050;
-    format.nAvgBytesPerSec = 22050;
-    format.nBlockAlign = 1;
-    format.wBitsPerSample = 8;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
-
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
-
-    DSBUFFERDESC desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
-
-    desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = flags;
-    desca.dwBufferBytes = 176400;
-    desca.lpwfxFormat = &format;
-
-    DSBUFFERDESC descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-    descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = flags;
-    descb.dwBufferBytes = 176400;
-    descb.lpwfxFormat = &format;
+    DSBUFFERDESC desc;
+    InitializeDirectSoundBufferDesc(&desc, flags, 176400, &format);
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -320,8 +280,8 @@ static BOOL TestDirectSoundBufferSecondaryGetDetails(
         goto exit;
     }
 
-    ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
-    rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
+    ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
+    rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
 
     if (ra != rb && !(flags & DSBCAPS_LOCHARDWARE)) {
         result = FALSE;
@@ -344,21 +304,10 @@ static BOOL TestDirectSoundBufferSecondaryGetDetails(
 
 exit:
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
-
-    if (dsa != NULL) {
-        IDirectSound_Release(dsa);
-    }
-
-    if (dsb != NULL) {
-        IDirectSound_Release(dsb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }
@@ -372,8 +321,8 @@ BOOL TestDirectSoundBufferSecondaryGet(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;

@@ -29,13 +29,34 @@ SOFTWARE.
 #include <dsound.h>
 #include <mmreg.h>
 
+#define RELEASE(X)  if((X) != NULL) { IUnknown_Release((X)); (X) = NULL;}
+
 typedef HRESULT(WINAPI* LPDIRECTSOUNDCREATE)(LPCGUID, LPDIRECTSOUND*, LPUNKNOWN);
+
+typedef BOOL(CALLBACK* LPDSENUMCALLBACKA)(LPGUID, LPCSTR, LPCSTR, LPVOID);
+typedef HRESULT(WINAPI* LPDIRECTSOUNDENUMERATEA)(LPDSENUMCALLBACKA, LPVOID);
 
 #define COOPERATIVE_LEVEL_COUNT 5
 
 const extern DWORD CooperativeLevels[COOPERATIVE_LEVEL_COUNT];
 
-
 #define BUFFER_PLAY_FLAGS_COUNT    39
 
 const extern DWORD BufferPlayFlags[BUFFER_PLAY_FLAGS_COUNT];
+
+const extern GUID IID_IDirectSoundPrivate;
+const extern GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+
+typedef IReferenceClock* LPREFERENCECLOCK;
+
+LPDIRECTSOUNDCREATE GetDirectSoundCreate(HMODULE module);
+
+HRESULT InitializeWaveFormat(LPWAVEFORMATEX pwfxFormat, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits);
+
+HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC pDSBD,
+    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat);
+
+HRESULT InitializeDirectSoundBufferCaps(LPDSBCAPS pDSBC, DWORD dwFlags, DWORD dwBufferBytes);
+
+HRESULT CompareDirectSoundBufferFormat(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUFFER pDSBB);
+HRESULT CompareDirectSoundBufferCaps(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUFFER pDSBB);

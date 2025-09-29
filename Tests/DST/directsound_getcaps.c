@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_getcaps.h"
+#include "directsound.h"
 
 static BOOL TestDirectSoundGetCapsInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) {
     if (a == NULL || b == NULL) {
@@ -32,8 +32,8 @@ static BOOL TestDirectSoundGetCapsInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b
     BOOL result = TRUE;
 
     {
-        HRESULT ra = IDirectSound_GetCaps(a, NULL);
-        HRESULT rb = IDirectSound_GetCaps(b, NULL);
+        const HRESULT ra = IDirectSound_GetCaps(a, NULL);
+        const HRESULT rb = IDirectSound_GetCaps(b, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -41,10 +41,8 @@ static BOOL TestDirectSoundGetCapsInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b
     }
 
     {
-        DSCAPS ca;
+        DSCAPS ca, cb;
         ZeroMemory(&ca, sizeof(DSCAPS));
-
-        DSCAPS cb;
         ZeroMemory(&cb, sizeof(DSCAPS));
 
         HRESULT ra = IDirectSound_GetCaps(a, &ca);
@@ -66,8 +64,8 @@ static BOOL TestDirectSoundGetCapsInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b
 
         cb.dwSize = UINT_MAX;
 
-        HRESULT ra = IDirectSound_GetCaps(a, &ca);
-        HRESULT rb = IDirectSound_GetCaps(b, &cb);
+        const HRESULT ra = IDirectSound_GetCaps(a, &ca);
+        const HRESULT rb = IDirectSound_GetCaps(b, &cb);
 
         if (ra != rb) {
             return FALSE;
@@ -92,8 +90,8 @@ static BOOL TestDirectSoundGetCapsValidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) 
 
     cb.dwSize = sizeof(DSCAPS);
 
-    HRESULT ra = IDirectSound_GetCaps(a, &ca);
-    HRESULT rb = IDirectSound_GetCaps(b, &cb);
+    const HRESULT ra = IDirectSound_GetCaps(a, &ca);
+    const HRESULT rb = IDirectSound_GetCaps(b, &cb);
 
     if (ra != rb) {
         return FALSE;
@@ -107,8 +105,8 @@ BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
@@ -116,11 +114,10 @@ BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b) {
 
     BOOL result = TRUE;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
-    HRESULT ra = dsca(NULL, &dsa, NULL);
-    HRESULT rb = dscb(NULL, &dsb, NULL);
+    const HRESULT ra = dsca(NULL, &dsa, NULL);
+    const HRESULT rb = dscb(NULL, &dsb, NULL);
 
     if (ra != rb) {
         return FALSE;
@@ -142,8 +139,8 @@ BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b) {
 
 exit:
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

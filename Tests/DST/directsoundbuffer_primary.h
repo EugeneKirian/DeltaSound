@@ -26,4 +26,15 @@ SOFTWARE.
 
 #include "base.h"
 
+BOOL TestDirectSoundBufferPrimaryGet(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryBasics(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryLock(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryNotify(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryPlay(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryPlayPan(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryPlaySetCooperativeLevel(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryPlayVolume(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryQueryInterface(HMODULE a, HMODULE b);
 BOOL TestDirectSoundBufferPrimarySet(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimarySetFormat(HMODULE a, HMODULE b);
+BOOL TestDirectSoundBufferPrimaryStop(HMODULE a, HMODULE b);
