@@ -33,8 +33,7 @@ static BOOL TestDirectSoundSetCooperativeLevelInvalidParams(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -113,8 +112,7 @@ static BOOL TestDirectSoundSetCooperativeLevelValue(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -173,8 +171,7 @@ static BOOL TestDirectSoundSetCooperativeLevelAlreadySet(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -229,8 +226,7 @@ static BOOL TestDirectSoundSetCooperativeLevelChangeWindow(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -285,8 +281,7 @@ static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa1 = NULL;
-    LPDIRECTSOUND dsb1 = NULL;
+    LPDIRECTSOUND dsa1 = NULL, dsb1 = NULL;
 
     HRESULT ra = a(NULL, &dsa1, NULL);
     HRESULT rb = b(NULL, &dsb1, NULL);
@@ -299,8 +294,7 @@ static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa2 = NULL;
-    LPDIRECTSOUND dsb2 = NULL;
+    LPDIRECTSOUND dsa2 = NULL, dsb2 = NULL;
 
     ra = a(NULL, &dsa2, NULL);
     rb = b(NULL, &dsb2, NULL);
