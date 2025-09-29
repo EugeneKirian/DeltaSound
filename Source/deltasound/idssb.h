@@ -63,6 +63,6 @@ typedef HRESULT(DELTACALL* LPIDSSBSETVELOCITY)(idssb*, D3DVALUE x, D3DVALUE y, D
 HRESULT DELTACALL idssb_create(allocator* pAlloc, REFIID riid, idssb** ppOut);
 VOID DELTACALL idssb_release(idssb* pIDSSB);
 
-HRESULT DELTACALL idssb_query_interface(idssb* pIDSSB, REFIID riid, LPVOID* ppvObject);
+HRESULT DELTACALL idssb_query_interface(idssb* pIDSSB, REFIID riid, LPVOID* ppOut);
 ULONG DELTACALL idssb_add_ref(idssb* pIDSSB);
 ULONG DELTACALL idssb_remove_ref(idssb* pIDSSB);

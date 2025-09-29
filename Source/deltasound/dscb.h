@@ -24,33 +24,29 @@ SOFTWARE.
 
 #pragma once
 
-#include "arr.h"
+#include "idscb.h"
+#include "intfc.h"
 
-typedef struct cf cf;
-typedef struct ds ds;
 typedef struct dsc dsc;
 
-typedef struct deltasound {
+typedef struct dscb {
     allocator*          Allocator;
+    GUID                ID;
+    dsc*                Instance;
+    intfc*              Interfaces;
+
     CRITICAL_SECTION    Lock;
-    arr*                Renderers;
-    arr*                Capturers;
-    arr*                Factories;
-} deltasound;
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pD);
+    DSCBCAPS            Caps;
 
-HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* pD, ds* pDS);
+    LPWAVEFORMATEX      Format;
 
-HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* pD, dsc* pDSC);
+    // TODO
+} dscb;
 
-HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,
-    REFCLSID rclsid, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pcF);
+HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut);
+VOID DELTACALL dscb_release(dscb* pDSB);
 
-HRESULT DELTACALL deltasound_can_unload(deltasound* pD);
+HRESULT DELTACALL dscb_query_interface(dscb* pDSB, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL dscb_add_ref(dscb* pDSB, idscb* pIDSCB);
+HRESULT DELTACALL dscb_remove_ref(dscb* pDSB, idscb* pIDSCB);

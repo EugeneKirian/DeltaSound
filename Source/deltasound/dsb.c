@@ -91,7 +91,7 @@ VOID DELTACALL dsb_release(dsb* self) {
     intfc_release(self->Interfaces);
 
     if (self->Instance != NULL) {
-        ds_remove_dsb(self->Instance, self);
+        ds_remove_sound_buffer(self->Instance, self);
     }
 
     if (self->PropertySet != NULL) {

@@ -22,31 +22,55 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "deltasound.h"
+#include "device_info.h"
+#include "dsc.h"
+#include "dscb.h"
+// TODO #include "dscdevice.h"
+#include "idsc.h"
 
-#include "allocator.h"
+HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut) {
+    // TODO
+    return E_NOTIMPL;
+}
 
-typedef struct dsn dsn;
-typedef struct idsn_vft idsn_vft;
+VOID DELTACALL dsc_release(dsc* pDSC) {
+    // TODO
+}
 
-typedef struct idsn {
-    const idsn_vft*     Self;
-    allocator*          Allocator;
-    GUID                ID;
-    LONG                RefCount;
-    dsn*                Instance;
-} idsn;
 
-typedef HRESULT(DELTACALL* LPIDSNQUERYINTERFACE)(idsn*, REFIID, LPVOID*);
-typedef ULONG(DELTACALL* LPIDSNADDREF)(idsn*);
-typedef ULONG(DELTACALL* LPIDSNRELEASE)(idsn*);
+HRESULT DELTACALL dsc_query_interface(dsc* pDSC, REFIID riid, LPVOID* ppOut) {
+    // TODO
+    return E_NOTIMPL;
+}
 
-typedef HRESULT(DELTACALL* LPIDSNSETNOTIFICATIONPOSITIONS)(idsn*,
-    DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
+HRESULT DELTACALL dsc_add_ref(dsc* pDSC, idsc* pIDSC) {
+    // TODO
+    return E_NOTIMPL;
+}
 
-HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut);
-VOID DELTACALL idsn_release(idsn* pIDSN);
+HRESULT DELTACALL dsc_remove_ref(dsc* pDSC, idsc* pIDSC) {
+    // TODO
+    return E_NOTIMPL;
+}
 
-HRESULT DELTACALL idsn_query_interface(idsn* pIDSN, REFIID riid, LPVOID* ppOut);
-ULONG DELTACALL idsn_add_ref(idsn* pIDSN);
-ULONG DELTACALL idsn_remove_ref(idsn* pIDSN);
+
+HRESULT DELTACALL dsc_create_capture_buffer(dsc* pDSC, REFIID riid, LPCDSCBUFFERDESC pcDSCBufferDesc, dscb** ppOut) {
+    // TODO
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dsc_remove_capture_buffer(dsc* pDSC, dscb* pDSCB) {
+    // TODO
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dsc_get_caps(dsc* pDSC, LPDSCCAPS pDSCCaps) {
+    // TODO
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dsc_initialize(dsc* pDSC, LPCGUID pcGuidDevice) {
+    // TODO
+    return E_NOTIMPL;
+}

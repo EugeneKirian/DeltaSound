@@ -186,7 +186,7 @@ HRESULT DELTACALL ds_create_sound_buffer(ds* self, REFIID riid, LPCDSBUFFERDESC 
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dsb_create(self->Allocator, riid, &instance))) {
+    if (SUCCEEDED(hr = dsb_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
         if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
             if (SUCCEEDED(hr = arr_add_item(self->Buffers, instance))) {
 
@@ -206,7 +206,7 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL ds_remove_dsb(ds* self, dsb* pDSB) {
+HRESULT DELTACALL ds_remove_sound_buffer(ds* self, dsb* pDSB) {
     HRESULT hr = S_OK;
     const DWORD count = arr_get_count(self->Buffers);
 

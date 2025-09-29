@@ -39,7 +39,6 @@ SOFTWARE.
 
 #define DSBLOCK_NONE                    0
 
-typedef struct deltasound deltasound;
 typedef struct ds ds;
 typedef struct dsb dsb;
 typedef struct idsb_vft idsb_vft;
@@ -97,6 +96,6 @@ typedef struct dsb_desc_max {
 HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut);
 VOID DELTACALL idsb_release(idsb* pIDSB);
 
-HRESULT DELTACALL idsb_query_interface(idsb* pIDSB, REFIID riid, LPVOID* ppvObject);
+HRESULT DELTACALL idsb_query_interface(idsb* pIDSB, REFIID riid, LPVOID* ppOut);
 ULONG DELTACALL idsb_add_ref(idsb* pIDSB);
 ULONG DELTACALL idsb_remove_ref(idsb* pIDSB);

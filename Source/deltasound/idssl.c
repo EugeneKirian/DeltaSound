@@ -111,16 +111,16 @@ VOID DELTACALL idssl_release(idssl* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL idssl_query_interface(idssl* self, REFIID riid, LPVOID* ppvObject) {
+HRESULT DELTACALL idssl_query_interface(idssl* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppvObject == NULL) {
+    if (riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    return dssl_query_interface(self->Instance, riid, ppvObject);
+    return dssl_query_interface(self->Instance, riid, ppOut);
 }
 
 ULONG DELTACALL idssl_add_ref(idssl* self) {

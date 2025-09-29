@@ -22,35 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "dscb.h"
+#include "idscb.h"
 
-#include "arr.h"
-
-typedef struct cf cf;
-typedef struct ds ds;
 typedef struct dsc dsc;
 
-typedef struct deltasound {
-    allocator*          Allocator;
-    CRITICAL_SECTION    Lock;
-    arr*                Renderers;
-    arr*                Capturers;
-    arr*                Factories;
-} deltasound;
-
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pD);
-
-HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* pD, ds* pDS);
-
-HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* pD, dsc* pDSC);
-
-HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,
-    REFCLSID rclsid, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pcF);
-
-HRESULT DELTACALL deltasound_can_unload(deltasound* pD);
+HRESULT DELTACALL idscb_get_caps(idscb* self, LPDSCBCAPS pDSCBCaps);
+HRESULT DELTACALL idscb_get_current_position(idscb* self, LPDWORD pdwCapturePosition, LPDWORD pdwReadPosition);
+HRESULT DELTACALL idscb_get_format(idscb* self, LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten);
+HRESULT DELTACALL idscb_get_status(idscb* self, LPDWORD pdwStatus);
+HRESULT DELTACALL idscb_initialize(idscb* self, dsc* pDirectSoundCapture, LPCDSCBUFFERDESC pcDSCBufferDesc);
+HRESULT DELTACALL idscb_lock(idscb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
+HRESULT DELTACALL idscb_start(idscb* self, DWORD dwFlags);
+HRESULT DELTACALL idscb_stop(idscb* self);
+HRESULT DELTACALL idscb_unlock(idscb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);

@@ -53,6 +53,6 @@ typedef HRESULT(DELTACALL* LPIKSPQUERYSUPPORT)(iksp*, REFGUID rguidPropSet, ULON
 HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut);
 VOID DELTACALL iksp_release(iksp* pIKSP);
 
-HRESULT DELTACALL iksp_query_interface(iksp* pIKSP, REFIID riid, LPVOID* ppvObject);
+HRESULT DELTACALL iksp_query_interface(iksp* pIKSP, REFIID riid, LPVOID* ppOut);
 ULONG DELTACALL iksp_add_ref(iksp* pIKSP);
 ULONG DELTACALL iksp_remove_ref(iksp* pIKSP);

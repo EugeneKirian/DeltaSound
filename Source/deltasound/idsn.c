@@ -69,16 +69,16 @@ VOID DELTACALL idsn_release(idsn* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL idsn_query_interface(idsn* self, REFIID riid, LPVOID* ppvObject) {
+HRESULT DELTACALL idsn_query_interface(idsn* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppvObject == NULL) {
+    if (riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    return dsn_query_interface(self->Instance, riid, ppvObject);
+    return dsn_query_interface(self->Instance, riid, ppOut);
 }
 
 ULONG DELTACALL idsn_add_ref(idsn* self) {
