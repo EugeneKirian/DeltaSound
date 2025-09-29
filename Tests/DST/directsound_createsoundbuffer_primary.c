@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_createsoundbuffer_primary.h"
+#include "directsound.h"
 
 #define MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT   9
 

@@ -23,14 +23,6 @@ SOFTWARE.
 */
 
 #include "directsound.h"
-#include "directsound_createsoundbuffer_primary.h"
-#include "directsound_createsoundbuffer_secondary.h"
-#include "directsound_duplicate_primary.h"
-#include "directsound_duplicate_secondary.h"
-#include "directsound_duplicate_secondary_notify.h"
-#include "directsound_enumerate.h"
-#include "directsound_setcooperativelevel.h"
-
 #include "directsoundbuffer_primary.h"
 
 #include "directsoundbuffer_secondary_basics.h"

@@ -22,15 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_duplicate_primary.h"
+#include "directsound.h"
 
 static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b) {
-    BOOL result = TRUE;
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
 
-    LPDIRECTSOUNDBUFFER dsbac = NULL;
-    LPDIRECTSOUNDBUFFER dsbbc = NULL;
+    BOOL result = TRUE;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsbac = NULL, dsbbc = NULL;
 
     DSBUFFERDESC desca;
     ZeroMemory(&desca, sizeof(DSBUFFERDESC));

@@ -198,13 +198,6 @@
     <ClInclude Include="directsound.h" />
     <ClInclude Include="directsoundbuffer_secondary_small_buffer.h" />
     <ClInclude Include="directsoundbuffer_secondary_small_buffer_notify.h" />
-    <ClInclude Include="directsound_createsoundbuffer_primary.h" />
-    <ClInclude Include="directsound_createsoundbuffer_secondary.h" />
-    <ClInclude Include="directsound_duplicate_primary.h" />
-    <ClInclude Include="directsound_duplicate_secondary.h" />
-    <ClInclude Include="directsound_duplicate_secondary_notify.h" />
-    <ClInclude Include="directsound_enumerate.h" />
-    <ClInclude Include="directsound_setcooperativelevel.h" />
     <ClInclude Include="directsoundbuffer_primary.h" />
     <ClInclude Include="directsoundbuffer_secondary_basics.h" />
     <ClInclude Include="directsoundbuffer_secondary_get.h" />

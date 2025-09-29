@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_setcooperativelevel.h"
+#include "directsound.h"
 #include "wnd.h"
 
 #define WINDOW_NAME "Set Cooperative Level"

@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_duplicate_secondary_notify.h"
+#include "directsound.h"
 #include "synth.h"
 #include "wnd.h"
 

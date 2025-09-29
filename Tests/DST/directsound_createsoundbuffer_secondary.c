@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_createsoundbuffer_secondary.h"
+#include "directsound.h"
 
 #define MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT 17
 
