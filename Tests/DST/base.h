@@ -51,8 +51,10 @@ typedef IReferenceClock* LPREFERENCECLOCK;
 
 LPDIRECTSOUNDCREATE GetDirectSoundCreate(HMODULE module);
 
+HRESULT InitializeWaveFormat(LPWAVEFORMATEX pwfxFormat, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits);
+
 HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC pDSBD,
-    DWORD dwFlags, LPWAVEFORMATEX pwfxFormat);
+    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat);
 
 HRESULT InitializeDirectSoundBufferCaps(LPDSBCAPS pDSBC, DWORD dwFlags, DWORD dwBufferBytes);
 

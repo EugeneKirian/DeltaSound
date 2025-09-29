@@ -51,38 +51,19 @@ const static DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
 };
 
 static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b, DWORD flags) {
-    BOOL result = TRUE;
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
 
-    LPDIRECTSOUNDBUFFER dsbac = NULL;
-    LPDIRECTSOUNDBUFFER dsbbc = NULL;
+    BOOL result = TRUE;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsbac = NULL, dsbbc = NULL;
 
     WAVEFORMATEX format;
-    ZeroMemory(&format, sizeof(WAVEFORMATEX));
+    InitializeWaveFormat(&format, 2, 22050, 8);
 
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 2;
-    format.nSamplesPerSec = 22050;
-    format.nAvgBytesPerSec = 44100;
-    format.nBlockAlign = 2;
-    format.wBitsPerSample = 8;
-
-    DSBUFFERDESC desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
-
-    desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = flags;
-    desca.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    desca.lpwfxFormat = &format;
-
-    DSBUFFERDESC descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-    descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = flags;
-    descb.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    descb.lpwfxFormat = &format;
+    DSBUFFERDESC desc;
+    InitializeDirectSoundBufferDesc(&desc, flags, 4 * format.nAvgBytesPerSec, &format);
 
     DSBCAPS capsa;
     ZeroMemory(&capsa, sizeof(DSBCAPS));
@@ -98,8 +79,8 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
     DWORD va = 0, vb = 0;
     DWORD pa = 0, pb = 0;
 
-    HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-    HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+    HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+    HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
     if (dsba == NULL || dsbb == NULL) {
         if (flags & DSBCAPS_LOCHARDWARE) {

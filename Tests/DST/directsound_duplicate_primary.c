@@ -117,11 +117,10 @@ BOOL TestDirectSoundDuplicatePrimary(HMODULE a, HMODULE b) {
 
     BOOL result = TRUE;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
-    HRESULT ra = dsca(NULL, &dsa, NULL);
-    HRESULT rb = dscb(NULL, &dsb, NULL);
+    const HRESULT ra = dsca(NULL, &dsa, NULL);
+    const HRESULT rb = dscb(NULL, &dsb, NULL);
 
     if (ra != rb) {
         return FALSE;

@@ -40,8 +40,25 @@ LPDIRECTSOUNDCREATE GetDirectSoundCreate(HMODULE module) {
     return (LPDIRECTSOUNDCREATE)GetProcAddress(module, "DirectSoundCreate");
 }
 
+HRESULT InitializeWaveFormat(LPWAVEFORMATEX self, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    ZeroMemory(self, sizeof(WAVEFORMATEX));
+
+    self->wFormatTag = WAVE_FORMAT_PCM;
+    self->nChannels = (WORD)dwChannels;
+    self->nSamplesPerSec = dwFrequency;
+    self->nAvgBytesPerSec = dwFrequency * dwChannels * (dwBits >> 3);
+    self->nBlockAlign = (WORD)(dwChannels * (dwBits >> 3));
+    self->wBitsPerSample = (WORD)dwBits;
+
+    return S_OK;
+}
+
 HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC self,
-    DWORD dwFlags, LPWAVEFORMATEX pwfxFormat) {
+    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -50,6 +67,7 @@ HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC self,
 
     self->dwSize = sizeof(DSBUFFERDESC);
     self->dwFlags = dwFlags;
+    self->dwBufferBytes = dwBufferSize;
     self->lpwfxFormat = pwfxFormat;
 
     return S_OK;

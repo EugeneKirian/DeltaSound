@@ -65,8 +65,8 @@ static BOOL TestDirectSoundCreateBufferInvalidInputs(LPDIRECTSOUND a, LPDIRECTSO
     LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     {
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, NULL, NULL, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, NULL, NULL, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, NULL, NULL, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, NULL, NULL, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -74,18 +74,13 @@ static BOOL TestDirectSoundCreateBufferInvalidInputs(LPDIRECTSOUND a, LPDIRECTSO
     }
 
     {
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwSize = sizeof(DSBUFFERDESC);
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, NULL, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, NULL, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, NULL, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, NULL, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -93,18 +88,13 @@ static BOOL TestDirectSoundCreateBufferInvalidInputs(LPDIRECTSOUND a, LPDIRECTSO
     }
 
     {
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwSize = sizeof(DSBUFFERDESC);
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, (LPUNKNOWN)&desca);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, (LPUNKNOWN)&descb);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, (LPUNKNOWN)&desc);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, (LPUNKNOWN)&desc);
 
         if (ra != rb) {
             return FALSE;
@@ -128,14 +118,11 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     // dwSize
 
     {
-        DSBUFFERDESC1 desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+        DSBUFFERDESC1 desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-        DSBUFFERDESC1 descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -145,18 +132,13 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     // dwFlags
 
     {
-        DSBUFFERDESC1 desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+        DSBUFFERDESC1 desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-        desca.dwSize = sizeof(DSBUFFERDESC1);
+        desc.dwSize = sizeof(DSBUFFERDESC1);
 
-        DSBUFFERDESC1 descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-        descb.dwSize = sizeof(DSBUFFERDESC1);
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -164,18 +146,13 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     }
 
     {
-        DSBUFFERDESC1 desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+        DSBUFFERDESC1 desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-        desca.dwSize = sizeof(DSBUFFERDESC1) - 1;
+        desc.dwSize = sizeof(DSBUFFERDESC1) - 1;
 
-        DSBUFFERDESC1 descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-        descb.dwSize = sizeof(DSBUFFERDESC1) - 1;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -185,20 +162,14 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     // dwBufferBytes
 
     {
-        DSBUFFERDESC1 desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+        DSBUFFERDESC1 desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-        desca.dwSize = sizeof(DSBUFFERDESC1);
-        desca.dwBufferBytes = 1;
+        desc.dwSize = sizeof(DSBUFFERDESC1);
+        desc.dwBufferBytes = 1;
 
-        DSBUFFERDESC1 descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-        descb.dwSize = sizeof(DSBUFFERDESC1);
-        descb.dwBufferBytes = 1;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -206,20 +177,14 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     }
 
     {
-        DSBUFFERDESC1 desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+        DSBUFFERDESC1 desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-        desca.dwSize = sizeof(DSBUFFERDESC1);
-        desca.dwBufferBytes = DSBSIZE_MAX + 1;
+        desc.dwSize = sizeof(DSBUFFERDESC1);
+        desc.dwBufferBytes = DSBSIZE_MAX + 1;
 
-        DSBUFFERDESC1 descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-        descb.dwSize = sizeof(DSBUFFERDESC1);
-        descb.dwBufferBytes = DSBSIZE_MAX + 1;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -229,20 +194,14 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     // dwReserved
 
     {
-        DSBUFFERDESC1 desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+        DSBUFFERDESC1 desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-        desca.dwSize = sizeof(DSBUFFERDESC1);
-        desca.dwReserved = 1;
+        desc.dwSize = sizeof(DSBUFFERDESC1);
+        desc.dwReserved = 1;
 
-        DSBUFFERDESC1 descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-        descb.dwSize = sizeof(DSBUFFERDESC1);
-        descb.dwReserved = 1;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -255,20 +214,14 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
         WAVEFORMATEX format;
         ZeroMemory(&format, sizeof(WAVEFORMATEX));
 
-        DSBUFFERDESC1 desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+        DSBUFFERDESC1 desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-        desca.dwSize = sizeof(DSBUFFERDESC1);
-        desca.lpwfxFormat = &format;
+        desc.dwSize = sizeof(DSBUFFERDESC1);
+        desc.lpwfxFormat = &format;
 
-        DSBUFFERDESC1 descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-        descb.dwSize = sizeof(DSBUFFERDESC1);
-        descb.lpwfxFormat = &format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -277,20 +230,14 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
 
     // guid3DAlgorithm
     {
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.guid3DAlgorithm = DS3DALG_NO_VIRTUALIZATION;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.guid3DAlgorithm = DS3DALG_NO_VIRTUALIZATION;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.guid3DAlgorithm = DS3DALG_NO_VIRTUALIZATION;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -298,22 +245,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     }
 
     {
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwFlags = DSBCAPS_CTRL3D;
-        desca.guid3DAlgorithm = DS3DALG_NO_VIRTUALIZATION;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwFlags = DSBCAPS_CTRL3D;
+        desc.guid3DAlgorithm = DS3DALG_NO_VIRTUALIZATION;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwFlags = DSBCAPS_CTRL3D;
-        descb.guid3DAlgorithm = DS3DALG_NO_VIRTUALIZATION;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -321,22 +261,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     }
 
     {
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwFlags = DSBCAPS_CTRL3D;
-        desca.guid3DAlgorithm = DS3DALG_HRTF_FULL;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwFlags = DSBCAPS_CTRL3D;
+        desc.guid3DAlgorithm = DS3DALG_HRTF_FULL;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwFlags = DSBCAPS_CTRL3D;
-        descb.guid3DAlgorithm = DS3DALG_HRTF_FULL;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -344,22 +277,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
     }
 
     {
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwFlags = DSBCAPS_CTRL3D;
-        desca.guid3DAlgorithm = DS3DALG_HRTF_LIGHT;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwFlags = DSBCAPS_CTRL3D;
+        desc.guid3DAlgorithm = DS3DALG_HRTF_LIGHT;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwFlags = DSBCAPS_CTRL3D;
-        descb.guid3DAlgorithm = DS3DALG_HRTF_LIGHT;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -377,33 +303,18 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFlags(LPDIRECTSOUND a, LP
     LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
-    ZeroMemory(&format, sizeof(WAVEFORMATEX));
+    InitializeWaveFormat(&format, 2, 22050, 8);
 
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 2;
-    format.nSamplesPerSec = 22050;
-    format.nAvgBytesPerSec = 44100;
-    format.nBlockAlign = 2;
-    format.wBitsPerSample = 8;
+    DSBUFFERDESC1 desc;
+    ZeroMemory(&desc, sizeof(DSBUFFERDESC1));
 
-    DSBUFFERDESC1 desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC1));
+    desc.dwSize = sizeof(DSBUFFERDESC1);
+    desc.dwFlags = dwFlags;
+    desc.dwBufferBytes = 4 * format.nAvgBytesPerSec;
+    desc.lpwfxFormat = &format;
 
-    desca.dwSize = sizeof(DSBUFFERDESC1);
-    desca.dwFlags = dwFlags;
-    desca.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    desca.lpwfxFormat = &format;
-
-    DSBUFFERDESC1 descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC1));
-
-    descb.dwSize = sizeof(DSBUFFERDESC1);
-    descb.dwFlags = dwFlags;
-    descb.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    descb.lpwfxFormat = &format;
-
-    const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-    const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+    const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desc, &dsba, NULL);
+    const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&desc, &dsbb, NULL);
 
     BOOL result = TRUE;
 
@@ -430,22 +341,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
 
         format.wFormatTag = WAVE_FORMAT_PCM;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = &format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = &format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = &format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -458,22 +362,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
 
         format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = &format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = &format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = &format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -491,22 +388,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
         format.nBlockAlign = 1;
         format.wBitsPerSample = 8;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = &format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = &format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = &format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -524,22 +414,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
         format.nBlockAlign = 1;
         format.wBitsPerSample = 7;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = &format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = &format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = &format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -557,22 +440,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
         format.nBlockAlign = 4;
         format.wBitsPerSample = 8;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = &format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = &format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = &format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -590,22 +466,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
         format.nBlockAlign = 4;
         format.wBitsPerSample = 16;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = &format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = &format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = &format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -627,22 +496,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
         format.dwChannelMask = SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_LEFT;
         format.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = (LPWAVEFORMATEX)&format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = (LPWAVEFORMATEX)&format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = (LPWAVEFORMATEX)&format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -671,22 +533,15 @@ static BOOL TestDirectSoundCreateBufferSecondaryValidFormat(LPDIRECTSOUND a, LPD
         format.Format.wBitsPerSample = 8;
         format.Format.cbSize = 22;
 
-        DSBUFFERDESC desca;
-        ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+        DSBUFFERDESC desc;
+        ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-        desca.dwSize = sizeof(DSBUFFERDESC);
-        desca.dwBufferBytes = 65536;
-        desca.lpwfxFormat = (LPWAVEFORMATEX)&format;
+        desc.dwSize = sizeof(DSBUFFERDESC);
+        desc.dwBufferBytes = 65536;
+        desc.lpwfxFormat = (LPWAVEFORMATEX)&format;
 
-        DSBUFFERDESC descb;
-        ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-        descb.dwSize = sizeof(DSBUFFERDESC);
-        descb.dwBufferBytes = 65536;
-        descb.lpwfxFormat = (LPWAVEFORMATEX)&format;
-
-        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+        HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+        HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -729,24 +584,16 @@ static BOOL TestDirectSoundCreateBufferSecondaryFlags(LPDIRECTSOUND a, LPDIRECTS
     format.nBlockAlign = 2;
     format.wBitsPerSample = 8;
 
-    DSBUFFERDESC desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+    DSBUFFERDESC desc;
+    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-    desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = dwFlags;
-    desca.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    desca.lpwfxFormat = &format;
+    desc.dwSize = sizeof(DSBUFFERDESC);
+    desc.dwFlags = dwFlags;
+    desc.dwBufferBytes = 4 * format.nAvgBytesPerSec;
+    desc.lpwfxFormat = &format;
 
-    DSBUFFERDESC descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-    descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = dwFlags;
-    descb.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    descb.lpwfxFormat = &format;
-
-    const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-    const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+    const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desc, &dsba, NULL);
+    const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
     if (ra != rb && !(dwFlags & DSBCAPS_LOCHARDWARE)) {
         goto exit;
@@ -794,24 +641,17 @@ static BOOL TestDirectSoundCreateBufferSecondaryMuliple(LPDIRECTSOUND a, LPDIREC
     format.nBlockAlign = 2;
     format.wBitsPerSample = 8;
 
-    DSBUFFERDESC desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
+    DSBUFFERDESC desc;
+    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 
-    desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    desca.lpwfxFormat = &format;
+    desc.dwSize = sizeof(DSBUFFERDESC);
+    desc.dwBufferBytes = 4 * format.nAvgBytesPerSec;
+    desc.lpwfxFormat = &format;
 
-    DSBUFFERDESC descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-    descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwBufferBytes = 4 * format.nAvgBytesPerSec;
-    descb.lpwfxFormat = &format;
-
-    const HRESULT ra1 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba1, NULL);
-    const HRESULT ra2 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba2, NULL);
-    const HRESULT rb1 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb1, NULL);
-    const HRESULT rb2 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb2, NULL);
+    const HRESULT ra1 = IDirectSound_CreateSoundBuffer(a, &desc, &dsba1, NULL);
+    const HRESULT ra2 = IDirectSound_CreateSoundBuffer(a, &desc, &dsba2, NULL);
+    const HRESULT rb1 = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb1, NULL);
+    const HRESULT rb2 = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb2, NULL);
 
     if ((ra1 != ra2) || (ra1 != rb1) || (rb1 != rb2)) {
         return FALSE;

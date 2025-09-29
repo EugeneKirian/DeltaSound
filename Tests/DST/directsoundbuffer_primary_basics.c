@@ -90,11 +90,10 @@ BOOL TestDirectSoundBufferPrimaryBasics(HMODULE a, HMODULE b) {
     }
 
     BOOL result = TRUE;
-
     LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     DSBUFFERDESC desc;
-    if (FAILED(InitializeDirectSoundBufferDesc(&desc, DSBCAPS_PRIMARYBUFFER, NULL))) {
+    if (FAILED(InitializeDirectSoundBufferDesc(&desc, DSBCAPS_PRIMARYBUFFER, 0, NULL))) {
         result = FALSE;
         goto exit;
     }
