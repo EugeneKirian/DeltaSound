@@ -60,29 +60,14 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     }
 
     // GetCaps
-    DSBCAPS capsa;
-    ZeroMemory(&capsa, sizeof(DSBCAPS));
-    capsa.dwSize = sizeof(DSBCAPS);
-
-    DSBCAPS capsb;
-    ZeroMemory(&capsb, sizeof(DSBCAPS));
-    capsb.dwSize = sizeof(DSBCAPS);
-
-    HRESULT ra = IDirectSoundBuffer_GetCaps(a, &capsa);
-    HRESULT rb = IDirectSoundBuffer_GetCaps(b, &capsb);
-
-    if (ra != rb) {
-        return FALSE;
-    }
-
-    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+    if (FAILED(CompareDirectSoundBufferCaps(a, b))) {
         return FALSE;
     }
 
     DWORD cpa = 0, cpb = 0, cwa = 0, cwb = 0;
 
-    ra = IDirectSoundBuffer_GetCurrentPosition(a, &cpa, &cwa);
-    rb = IDirectSoundBuffer_GetCurrentPosition(b, &cpb, &cwb);
+    HRESULT ra = IDirectSoundBuffer_GetCurrentPosition(a, &cpa, &cwa);
+    HRESULT rb = IDirectSoundBuffer_GetCurrentPosition(b, &cpb, &cwb);
 
     if (ra != rb) {
         return FALSE;
@@ -392,48 +377,26 @@ static BOOL TestDirectSoundBufferStreamWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
 }
 
 static BOOL TestDirectSoundBufferPrimaryPlaySetFormat(
-    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dwFlags, DWORD dwLevel) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
 
     BOOL result = TRUE;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    DSBUFFERDESC desc;
+    InitializeDirectSoundBufferDesc(&desc, dwFlags, 0, NULL);
 
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
-
-    DSBUFFERDESC desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
-
-    desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = flags;
-
-    DSBUFFERDESC descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-    descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = flags;
-
-    WAVEFORMATEX fa;
+    WAVEFORMATEX fa, fb;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
-
-    WAVEFORMATEX fb;
     ZeroMemory(&fb, sizeof(WAVEFORMATEX));
+
     DWORD fas = 0, fbs = 0;
 
     LPVOID wave = NULL;
     DWORD wave_length = 0;
-
-    DSBCAPS capsa;
-    ZeroMemory(&capsa, sizeof(DSBCAPS));
-    capsa.dwSize = sizeof(DSBCAPS);
-
-    DSBCAPS capsb;
-    ZeroMemory(&capsb, sizeof(DSBCAPS));
-    capsb.dwSize = sizeof(DSBCAPS);
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -446,16 +409,16 @@ static BOOL TestDirectSoundBufferPrimaryPlaySetFormat(
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, level);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, level);
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, dwLevel);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, dwLevel);
 
     if (ra != rb) {
         result = FALSE;
         goto exit;
     }
 
-    ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
-    rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
+    ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
+    rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
 
     if (ra != rb) {
         result = FALSE;
@@ -468,16 +431,7 @@ static BOOL TestDirectSoundBufferPrimaryPlaySetFormat(
     }
 
     // GetCaps
-
-    ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
-    rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+    if (FAILED(CompareDirectSoundBufferCaps(dsba, dsbb))) {
         result = FALSE;
         goto exit;
     }
@@ -528,28 +482,20 @@ exit:
         free(wave);
     }
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
-
-    if (dsa != NULL) {
-        RELEASE(dsa);
-    }
-
-    if (dsb != NULL) {
-        RELEASE(dsb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }
 
 static BOOL TestDirectSoundBufferPrimaryLockDuringPlay(LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb) {
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -567,14 +513,10 @@ static BOOL TestDirectSoundBufferPrimaryLockDuringPlay(LPDIRECTSOUNDCREATE a, HW
         return FALSE;
     }
 
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     DSBUFFERDESC desc;
-    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-
-    desc.dwSize = sizeof(DSBUFFERDESC);
-    desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+    InitializeDirectSoundBufferDesc(&desc, DSBCAPS_PRIMARYBUFFER, 0, NULL);
 
     LPVOID wavea = NULL, waveb = NULL;
     DWORD wavea_length = 0, waveb_length = 0;
@@ -693,21 +635,10 @@ exit:
         free(waveb);
     }
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
-
-    if (dsa != NULL) {
-        RELEASE(dsa);
-    }
-
-    if (dsb != NULL) {
-        RELEASE(dsb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

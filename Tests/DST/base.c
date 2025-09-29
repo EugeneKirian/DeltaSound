@@ -99,5 +99,5 @@ HRESULT CompareDirectSoundBufferCaps(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUF
     const HRESULT ra = IDirectSoundBuffer_GetCaps(pDSBA, &capsa);
     const HRESULT rb = IDirectSoundBuffer_GetCaps(pDSBB, &capsb);
 
-    return ra == rb && memcmp(&capsa, &capsb, sizeof(DSBCAPS)) == 0;
+    return (ra == rb && memcmp(&capsa, &capsb, sizeof(DSBCAPS)) == 0) ? S_OK : E_FAIL;
 }

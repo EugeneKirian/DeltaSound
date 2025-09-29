@@ -53,8 +53,7 @@ BOOL TestDirectSoundBufferPrimaryNotify(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = dsca(NULL, &dsa, NULL);
     HRESULT rb = dscb(NULL, &dsb, NULL);
@@ -64,15 +63,10 @@ BOOL TestDirectSoundBufferPrimaryNotify(HMODULE a, HMODULE b) {
     }
 
     BOOL result = TRUE;
-
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     DSBUFFERDESC desc;
-    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-
-    desc.dwSize = sizeof(DSBUFFERDESC);
-    desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+    InitializeDirectSoundBufferDesc(&desc, DSBCAPS_PRIMARYBUFFER, 0, NULL);
 
     ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
@@ -88,8 +82,8 @@ BOOL TestDirectSoundBufferPrimaryNotify(HMODULE a, HMODULE b) {
     }
 
 exit:
-    IDirectSoundBuffer_Release(dsba);
-    IDirectSoundBuffer_Release(dsbb);
+    RELEASE(dsba);
+    RELEASE(dsbb);
     RELEASE(dsa);
     RELEASE(dsb);
 
