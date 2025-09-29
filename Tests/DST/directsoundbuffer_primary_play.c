@@ -529,10 +529,8 @@ static BOOL TestDirectSoundBufferPrimaryLockDuringPlay(LPDIRECTSOUNDCREATE a, HW
         goto exit;
     }
 
-    WAVEFORMATEX fa;
+    WAVEFORMATEX fa, fb;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
-
-    WAVEFORMATEX fb;
     ZeroMemory(&fb, sizeof(WAVEFORMATEX));
 
     DWORD fas = 0, fbs = 0;

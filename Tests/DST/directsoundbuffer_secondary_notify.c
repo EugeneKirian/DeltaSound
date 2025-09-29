@@ -51,10 +51,10 @@ static BOOL TestDirectSoundBufferSecondaryNotifyCreate(LPDIRECTSOUNDBUFFER a, LP
         return FALSE;
     }
 
-    IDirectSoundNotify_Release(na1);
-    IDirectSoundNotify_Release(nb1);
-    IDirectSoundNotify_Release(na2);
-    IDirectSoundNotify_Release(nb2);
+    RELEASE(na1);
+    RELEASE(nb1);
+    RELEASE(na2);
+    RELEASE(nb2);
 
     return TRUE;
 }
@@ -118,10 +118,8 @@ static BOOL TestDirectSoundNotifyQueryInterfaces(LPDIRECTSOUNDNOTIFY a, LPDIRECT
             return FALSE;
         }
 
-        if (ra == S_OK) {
-            IDirectSound3DListener_Release(ds3dla);
-            IDirectSound3DListener_Release(ds3dlb);
-        }
+        RELEASE(ds3dla);
+        RELEASE(ds3dlb);
     }
 
     {
@@ -343,8 +341,8 @@ static BOOL TestDirectSoundNotifyQueryInterfaces(LPDIRECTSOUNDNOTIFY a, LPDIRECT
             return FALSE;
         }
 
-        IDirectSoundNotify_Release(sna);
-        IDirectSoundNotify_Release(snb);
+        RELEASE(sna);
+        RELEASE(snb);
     }
 
     {
@@ -378,10 +376,10 @@ static BOOL TestDirectSoundNotifyQueryInterfaces(LPDIRECTSOUNDNOTIFY a, LPDIRECT
             return FALSE;
         }
 
-        IKsPropertySet_Release(pa1);
-        IKsPropertySet_Release(pb1);
-        IKsPropertySet_Release(pa2);
-        IKsPropertySet_Release(pb2);
+        RELEASE(pa1);
+        RELEASE(pb1);
+        RELEASE(pa2);
+        RELEASE(pb2);
     }
 
     {
@@ -423,12 +421,12 @@ static BOOL TestDirectSoundNotifyQueryInterfaces(LPDIRECTSOUNDNOTIFY a, LPDIRECT
                 return FALSE;
             }
 
-            IDirectSoundBuffer_Release(dsa);
-            IDirectSoundBuffer_Release(dsb);
+            RELEASE(dsa);
+            RELEASE(dsb);
         }
 
-        IUnknown_Release(ua);
-        IUnknown_Release(ub);
+        RELEASE(ua);
+        RELEASE(ub);
     }
 
     return TRUE;
@@ -452,10 +450,10 @@ static BOOL TestDirectSoundBufferSecondaryNotifyQueryInterfaces(LPDIRECTSOUNDBUF
         return FALSE;
     }
 
-    BOOL result = TestDirectSoundNotifyQueryInterfaces(na, nb);
+    const BOOL result = TestDirectSoundNotifyQueryInterfaces(na, nb);
 
-    IDirectSoundNotify_Release(na);
-    IDirectSoundNotify_Release(nb);
+    RELEASE(na);
+    RELEASE(nb);
 
     return result;
 }
@@ -627,8 +625,8 @@ static BOOL TestDirectSoundBufferSecondaryNotifySet(LPDIRECTSOUNDBUFFER a, LPDIR
         }
     }
 
-    IDirectSoundNotify_Release(na);
-    IDirectSoundNotify_Release(nb);
+    RELEASE(na);
+    RELEASE(nb);
 
     return result;
 }

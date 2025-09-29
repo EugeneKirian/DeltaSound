@@ -66,14 +66,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     DWORD fas = 0, fbs = 0;
 
     WAVEFORMATEX nf;
-    ZeroMemory(&nf, sizeof(WAVEFORMATEX));
-
-    nf.wFormatTag = WAVE_FORMAT_PCM;
-    nf.nChannels = 1;
-    nf.nSamplesPerSec = 22050;
-    nf.nAvgBytesPerSec = 44100;
-    nf.nBlockAlign = 2;
-    nf.wBitsPerSample = 16;
+    InitializeWaveFormat(&nf, 1, 22050, 16);
 
     HRESULT sfa = S_OK, sfb = S_OK;
     DWORD statuspa = 0, statuspb = 0;

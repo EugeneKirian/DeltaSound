@@ -87,6 +87,25 @@ HRESULT InitializeDirectSoundBufferCaps(LPDSBCAPS self, DWORD dwFlags, DWORD dwB
     return S_OK;
 }
 
+HRESULT CompareDirectSoundBufferFormat(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUFFER pDSBB) {
+    if (pDSBA == NULL || pDSBB == NULL) {
+        return E_INVALIDARG;
+    }
+
+    BYTE fa[128];
+    ZeroMemory(fa, 128);
+
+    BYTE fb[128];
+    ZeroMemory(fb, 128);
+
+    DWORD fsa = 0, fsb = 0;
+
+    const HRESULT ra = IDirectSoundBuffer_GetFormat(pDSBA, (LPWAVEFORMATEX)fa, 128, &fsa);
+    const HRESULT rb = IDirectSoundBuffer_GetFormat(pDSBB, (LPWAVEFORMATEX)fb, 128, &fsb);
+
+    return (ra == rb && fsa == fsb && memcmp(fa, fb, 128) == 0) ? S_OK : E_FAIL;
+}
+
 HRESULT CompareDirectSoundBufferCaps(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUFFER pDSBB) {
     if (pDSBA == NULL || pDSBB == NULL) {
         return E_INVALIDARG;

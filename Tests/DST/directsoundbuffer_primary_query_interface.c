@@ -103,11 +103,9 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
         if (ra != rb) {
             return FALSE;
         }
-
-        if (ra == S_OK) {
-            IDirectSound3DListener_Release(ds3dla);
-            IDirectSound3DListener_Release(ds3dlb);
-        }
+        
+        RELEASE(ds3dla);
+        RELEASE(ds3dlb);
     }
 
     {
@@ -135,8 +133,8 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
             return FALSE;
         }
 
-        IDirectSoundBuffer_Release(dsba);
-        IDirectSoundBuffer_Release(dsbb);
+        RELEASE(dsba);
+        RELEASE(dsbb);
     }
 
     {
@@ -357,10 +355,10 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
             return FALSE;
         }
 
-        IKsPropertySet_Release(pa1);
-        IKsPropertySet_Release(pb1);
-        IKsPropertySet_Release(pa2);
-        IKsPropertySet_Release(pb2);
+        RELEASE(pa1);
+        RELEASE(pb1);
+        RELEASE(pa2);
+        RELEASE(pb2);
     }
 
     {
