@@ -101,8 +101,8 @@ static BOOL TestDirectSoundSetCooperativeLevelInvalidParams(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -136,8 +136,8 @@ static BOOL TestDirectSoundSetCooperativeLevelValue(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -217,8 +217,8 @@ static BOOL TestDirectSoundSetCooperativeLevelAlreadySet(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -273,8 +273,8 @@ static BOOL TestDirectSoundSetCooperativeLevelChangeWindow(
         }
     }
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return TRUE;
 }
@@ -329,10 +329,10 @@ static BOOL TestDirectSoundSetCooperativeLevelMultipleInstances(
         }
     }
 
-    IDirectSound_Release(dsa1);
-    IDirectSound_Release(dsb1);
-    IDirectSound_Release(dsa2);
-    IDirectSound_Release(dsb2);
+    RELEASE(dsa1);
+    RELEASE(dsb1);
+    RELEASE(dsa2);
+    RELEASE(dsb2);
 
     return TRUE;
 }
@@ -346,8 +346,8 @@ BOOL TestDirectSoundSetCooperativeLevel(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;

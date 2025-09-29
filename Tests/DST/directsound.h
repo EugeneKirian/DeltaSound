@@ -26,4 +26,7 @@ SOFTWARE.
 
 #include "base.h"
 
+BOOL TestDirectSoundBasics(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCompact(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCreate(HMODULE a, HMODULE b);
+BOOL TestDirectSoundGetCaps(HMODULE a, HMODULE b);

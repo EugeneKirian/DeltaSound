@@ -76,8 +76,8 @@ static BOOL TestDirectSoundClassFactory(LPFNGETCLASSOBJECT a, LPFNGETCLASSOBJECT
             goto exit1;
         }
 
-        IDirectSound_Release(dsa);
-        IDirectSound_Release(dsb);
+        RELEASE(dsa);
+        RELEASE(dsb);
 
     exit1:
         if (cfa != NULL) {

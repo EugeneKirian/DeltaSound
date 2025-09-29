@@ -24,10 +24,6 @@ SOFTWARE.
 
 #include "directsound_createsoundbuffer_secondary.h"
 
-const static GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {
-    0x0000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 }
-};
-
 #define MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT 17
 
 const static DWORD CreateSecondaryBufferSuccessFlags[MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT] = {
@@ -62,8 +58,11 @@ static const DWORD CreateSecondaryBufferInvalidFlags[MAX_SECONDARY_BUFFER_INVALI
 };
 
 static BOOL TestDirectSoundCreateBufferInvalidInputs(LPDIRECTSOUND a, LPDIRECTSOUND b) {
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     {
         HRESULT ra = IDirectSound_CreateSoundBuffer(a, NULL, NULL, NULL);
@@ -120,8 +119,11 @@ static BOOL TestDirectSoundCreateBufferInvalidInputs(LPDIRECTSOUND a, LPDIRECTSO
 }
 
 static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPDIRECTSOUND b) {
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     // dwSize
 
@@ -368,8 +370,11 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidDesc(LPDIRECTSOUND a, LPD
 }
 
 static BOOL TestDirectSoundCreateBufferSecondaryInvalidFlags(LPDIRECTSOUND a, LPDIRECTSOUND b, DWORD dwFlags) {
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
@@ -397,8 +402,8 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFlags(LPDIRECTSOUND a, LP
     descb.dwBufferBytes = 4 * format.nAvgBytesPerSec;
     descb.lpwfxFormat = &format;
 
-    HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
-    HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
+    const HRESULT ra = IDirectSound_CreateSoundBuffer(a, (LPDSBUFFERDESC)&desca, &dsba, NULL);
+    const HRESULT rb = IDirectSound_CreateSoundBuffer(b, (LPDSBUFFERDESC)&descb, &dsbb, NULL);
 
     BOOL result = TRUE;
 
@@ -406,20 +411,18 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFlags(LPDIRECTSOUND a, LP
         result = FALSE;
     }
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
 
     return result;
 }
 
 static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, LPDIRECTSOUND b) {
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+    
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     {
         WAVEFORMATEX format;
@@ -650,8 +653,11 @@ static BOOL TestDirectSoundCreateBufferSecondaryInvalidFormat(LPDIRECTSOUND a, L
 }
 
 static BOOL TestDirectSoundCreateBufferSecondaryValidFormat(LPDIRECTSOUND a, LPDIRECTSOUND b) {
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+    
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     {
         WAVEFORMATEXTENSIBLE format;
@@ -697,8 +703,8 @@ static BOOL TestDirectSoundCreateBufferSecondaryValidFormat(LPDIRECTSOUND a, LPD
             ra = IDirectSoundBuffer_GetFormat(dsba, (LPWAVEFORMATEX)&fa, sizeof(WAVEFORMATEXTENSIBLE), &sa);
             rb = IDirectSoundBuffer_GetFormat(dsba, (LPWAVEFORMATEX)&fb, sizeof(WAVEFORMATEXTENSIBLE), &sb);
 
-            IDirectSoundBuffer_Release(dsba);
-            IDirectSoundBuffer_Release(dsbb);
+            RELEASE(dsba);
+            RELEASE(dsbb);
         }
     }
 
@@ -706,9 +712,12 @@ static BOOL TestDirectSoundCreateBufferSecondaryValidFormat(LPDIRECTSOUND a, LPD
 }
 
 static BOOL TestDirectSoundCreateBufferSecondaryFlags(LPDIRECTSOUND a, LPDIRECTSOUND b, DWORD dwFlags) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
     BOOL result = TRUE;
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
@@ -736,18 +745,8 @@ static BOOL TestDirectSoundCreateBufferSecondaryFlags(LPDIRECTSOUND a, LPDIRECTS
     descb.dwBufferBytes = 4 * format.nAvgBytesPerSec;
     descb.lpwfxFormat = &format;
 
-    DSBCAPS capsa;
-    ZeroMemory(&capsa, sizeof(DSBCAPS));
-
-    capsa.dwSize = sizeof(DSBCAPS);
-
-    DSBCAPS capsb;
-    ZeroMemory(&capsb, sizeof(DSBCAPS));
-
-    capsb.dwSize = sizeof(DSBCAPS);
-
-    HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
-    HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
+    const HRESULT ra = IDirectSound_CreateSoundBuffer(a, &desca, &dsba, NULL);
+    const HRESULT rb = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb, NULL);
 
     if (ra != rb && !(dwFlags & DSBCAPS_LOCHARDWARE)) {
         goto exit;
@@ -762,39 +761,28 @@ static BOOL TestDirectSoundCreateBufferSecondaryFlags(LPDIRECTSOUND a, LPDIRECTS
         goto exit;
     }
 
-    ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
-    rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+    if (FAILED(CompareDirectSoundBufferCaps(dsba, dsbb))) {
         result = FALSE;
         goto exit;
     }
 
 exit:
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
 
     return result;
 }
 
 static BOOL TestDirectSoundCreateBufferSecondaryMuliple(LPDIRECTSOUND a, LPDIRECTSOUND b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+    
     BOOL result = TRUE;
 
-    LPDIRECTSOUNDBUFFER dsba1 = NULL;
-    LPDIRECTSOUNDBUFFER dsba2 = NULL;
-    LPDIRECTSOUNDBUFFER dsbb1 = NULL;
-    LPDIRECTSOUNDBUFFER dsbb2 = NULL;
+    LPDIRECTSOUNDBUFFER dsba1 = NULL, dsba2 = NULL;
+    LPDIRECTSOUNDBUFFER dsbb1 = NULL, dsbb2 = NULL;
 
     WAVEFORMATEX format;
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
@@ -820,10 +808,10 @@ static BOOL TestDirectSoundCreateBufferSecondaryMuliple(LPDIRECTSOUND a, LPDIREC
     descb.dwBufferBytes = 4 * format.nAvgBytesPerSec;
     descb.lpwfxFormat = &format;
 
-    HRESULT ra1 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba1, NULL);
-    HRESULT ra2 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba2, NULL);
-    HRESULT rb1 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb1, NULL);
-    HRESULT rb2 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb2, NULL);
+    const HRESULT ra1 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba1, NULL);
+    const HRESULT ra2 = IDirectSound_CreateSoundBuffer(a, &desca, &dsba2, NULL);
+    const HRESULT rb1 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb1, NULL);
+    const HRESULT rb2 = IDirectSound_CreateSoundBuffer(b, &descb, &dsbb2, NULL);
 
     if ((ra1 != ra2) || (ra1 != rb1) || (rb1 != rb2)) {
         return FALSE;
@@ -841,21 +829,10 @@ static BOOL TestDirectSoundCreateBufferSecondaryMuliple(LPDIRECTSOUND a, LPDIREC
 
 exit:
 
-    if (dsba1 != NULL) {
-        IDirectSoundBuffer_Release(dsba1);
-    }
-
-    if (dsba2 != NULL) {
-        IDirectSoundBuffer_Release(dsba2);
-    }
-
-    if (dsbb1 != NULL) {
-        IDirectSoundBuffer_Release(dsbb1);
-    }
-
-    if (dsbb2 != NULL) {
-        IDirectSoundBuffer_Release(dsbb2);
-    }
+    RELEASE(dsba1);
+    RELEASE(dsba2);
+    RELEASE(dsbb1);
+    RELEASE(dsbb2);
 
     return result;
 }
@@ -865,20 +842,18 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
     }
 
     BOOL result = TRUE;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
-
-    HRESULT ra = dsca(NULL, &dsa, NULL);
-    HRESULT rb = dscb(NULL, &dsb, NULL);
+    const HRESULT ra = dsca(NULL, &dsa, NULL);
+    const HRESULT rb = dscb(NULL, &dsb, NULL);
 
     if (ra != rb) {
         return FALSE;
@@ -929,8 +904,8 @@ BOOL TestDirectSoundCreateSoundBufferSecondary(HMODULE a, HMODULE b) {
 
 exit:
 
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

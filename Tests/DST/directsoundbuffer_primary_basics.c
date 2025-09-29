@@ -73,15 +73,14 @@ BOOL TestDirectSoundBufferPrimaryBasics(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = dsca(NULL, &dsa, NULL);
     HRESULT rb = dscb(NULL, &dsb, NULL);
@@ -92,14 +91,13 @@ BOOL TestDirectSoundBufferPrimaryBasics(HMODULE a, HMODULE b) {
 
     BOOL result = TRUE;
 
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     DSBUFFERDESC desc;
-    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-
-    desc.dwSize = sizeof(DSBUFFERDESC);
-    desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+    if (FAILED(InitializeDirectSoundBufferDesc(&desc, DSBCAPS_PRIMARYBUFFER, NULL))) {
+        result = FALSE;
+        goto exit;
+    }
 
     ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
@@ -122,10 +120,10 @@ BOOL TestDirectSoundBufferPrimaryBasics(HMODULE a, HMODULE b) {
     }
 
 exit:
-    IDirectSoundBuffer_Release(dsba);
-    IDirectSoundBuffer_Release(dsbb);
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsba);
+    RELEASE(dsbb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

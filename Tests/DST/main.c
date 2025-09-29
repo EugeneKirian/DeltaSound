@@ -22,16 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound_basics.h"
-#include "directsound_create.h"
-#include "directsound_compact.h"
+#include "directsound.h"
 #include "directsound_createsoundbuffer_primary.h"
 #include "directsound_createsoundbuffer_secondary.h"
 #include "directsound_duplicate_primary.h"
 #include "directsound_duplicate_secondary.h"
 #include "directsound_duplicate_secondary_notify.h"
 #include "directsound_enumerate.h"
-#include "directsound_getcaps.h"
 #include "directsound_setcooperativelevel.h"
 
 #include "directsoundbuffer_primary.h"

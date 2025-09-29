@@ -590,11 +590,11 @@ exit:
     }
 
     if (dsa != NULL) {
-        IDirectSound_Release(dsa);
+        RELEASE(dsa);
     }
 
     if (dsb != NULL) {
-        IDirectSound_Release(dsb);
+        RELEASE(dsb);
     }
 
     return result;
@@ -609,8 +609,8 @@ BOOL TestDirectSoundBufferPrimarySetFormat(HMODULE a, HMODULE b) {
         DebugBreak(); return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         DebugBreak(); return FALSE;

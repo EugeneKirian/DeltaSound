@@ -423,11 +423,10 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
         }
 
         {
-            LPDIRECTSOUNDBUFFER dsa = NULL;
-            LPDIRECTSOUNDBUFFER dsb = NULL;
+            LPDIRECTSOUNDBUFFER dsa = NULL, dsb = NULL;
 
-            HRESULT ria = IUnknown_QueryInterface(ua, &IID_IDirectSoundBuffer, &dsa);
-            HRESULT rib = IUnknown_QueryInterface(ub, &IID_IDirectSoundBuffer, &dsb);
+            const HRESULT ria = IUnknown_QueryInterface(ua, &IID_IDirectSoundBuffer, &dsa);
+            const HRESULT rib = IUnknown_QueryInterface(ub, &IID_IDirectSoundBuffer, &dsb);
 
             if (ria != rib) {
                 return FALSE;
@@ -440,19 +439,19 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
             IDirectSound_AddRef(dsa);
             IDirectSound_AddRef(dsb);
 
-            ULONG rcda = IDirectSound_Release(dsa);
-            ULONG rcdb = IDirectSound_Release(dsb);
+            const ULONG rcda = IDirectSound_Release(dsa);
+            const ULONG rcdb = IDirectSound_Release(dsb);
 
             if (rcda != rcdb) {
                 return FALSE;
             }
 
-            IDirectSoundBuffer_Release(dsa);
-            IDirectSoundBuffer_Release(dsb);
+            RELEASE(dsa);
+            RELEASE(dsb);
         }
 
-        IUnknown_Release(ua);
-        IUnknown_Release(ub);
+        RELEASE(ua);
+        RELEASE(ub);
     }
 
     return TRUE;
@@ -521,11 +520,11 @@ exit:
     }
 
     if (dsa != NULL) {
-        IDirectSound_Release(dsa);
+        RELEASE(dsa);
     }
 
     if (dsb != NULL) {
-        IDirectSound_Release(dsb);
+        RELEASE(dsb);
     }
 
     return result;
@@ -540,8 +539,8 @@ BOOL TestDirectSoundBufferPrimaryQueryInterface(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;

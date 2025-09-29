@@ -448,12 +448,12 @@ static BOOL TestDirectSoundBufferQueryInterface(LPDIRECTSOUNDBUFFER a, LPDIRECTS
                 return FALSE;
             }
 
-            IDirectSoundBuffer_Release(dsa);
-            IDirectSoundBuffer_Release(dsb);
+            RELEASE(dsa);
+            RELEASE(dsb);
         }
 
-        IUnknown_Release(ua);
-        IUnknown_Release(ub);
+        RELEASE(ua);
+        RELEASE(ub);
     }
 
     return TRUE;
@@ -467,8 +467,7 @@ static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(
 
     BOOL result = TRUE;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -477,8 +476,7 @@ static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(
         return FALSE;
     }
 
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
@@ -526,11 +524,11 @@ exit:
     }
 
     if (dsa != NULL) {
-        IDirectSound_Release(dsa);
+        RELEASE(dsa);
     }
 
     if (dsb != NULL) {
-        IDirectSound_Release(dsb);
+        RELEASE(dsb);
     }
 
     return result;
@@ -541,8 +539,8 @@ BOOL TestDirectSoundBufferSecondaryQueryInterface(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;

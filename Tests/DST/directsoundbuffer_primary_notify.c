@@ -46,8 +46,8 @@ BOOL TestDirectSoundBufferPrimaryNotify(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = (LPDIRECTSOUNDCREATE)GetProcAddress(a, "DirectSoundCreate");
-    LPDIRECTSOUNDCREATE dscb = (LPDIRECTSOUNDCREATE)GetProcAddress(b, "DirectSoundCreate");
+    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
+    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
@@ -90,8 +90,8 @@ BOOL TestDirectSoundBufferPrimaryNotify(HMODULE a, HMODULE b) {
 exit:
     IDirectSoundBuffer_Release(dsba);
     IDirectSoundBuffer_Release(dsbb);
-    IDirectSound_Release(dsa);
-    IDirectSound_Release(dsb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }
