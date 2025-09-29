@@ -24,19 +24,29 @@ SOFTWARE.
 
 #pragma once
 
-#include "uuid.h"
+#include "allocator.h"
 
-const CLSID CLSID_DirectSoundPrivate =
-{ 0x11AB3EC0, 0x25EC, 0x11D1, { 0xA4, 0xD8, 0x00, 0xC0, 0x4F, 0xC2, 0x8A, 0xCA } };
-const CLSID CLSID_IMMDeviceEnumerator =
-{ 0xBCDE0395, 0xE52F, 0x467C, { 0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E } };
-const IID IID_IMMDeviceEnumerator =
-{ 0xA95664D2, 0x9614, 0x4F35, { 0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6 } };
-const IID IID_IAudioClient =
-{ 0x1CB9AD4C, 0xDBFA, 0x4C32, { 0xB1, 0x78, 0xC2, 0xF5, 0x68, 0xA7, 0x03, 0xB2 } };
-const IID IID_IAudioRenderClient =
-{ 0xF294ACFC, 0x3146, 0x4483, { 0xA7, 0xBF, 0xAD, 0xDC, 0xA7, 0xC2, 0x60, 0xE2 } };
-const IID IID_IAudioStreamVolume =
-{ 0x93014887, 0x242D, 0x4068, { 0x8A, 0x15, 0xCF, 0x5E, 0x93, 0xB9, 0x0F, 0xE3 } };
-const GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT =
-{ 0x00000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71 } };
+typedef struct cf cf;
+typedef struct icf_vft icf_vft;
+
+typedef struct icf {
+    const icf_vft*  Self;
+    allocator*      Allocator;
+    GUID            ID;
+    LONG            RefCount;
+    cf*             Instance;
+} icf;
+
+typedef HRESULT(DELTACALL* LPICFQUERYINTERFACE)(icf*, REFIID, LPVOID*);
+typedef ULONG(DELTACALL* LPICFADDREF)(icf*);
+typedef ULONG(DELTACALL* LPICFRELEASE)(icf*);
+
+typedef HRESULT(DELTACALL* LPCIFCREATEINSTANCE)(icf*, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID* ppOut);
+typedef HRESULT(DELTACALL* LPICFLOCKSERVER)(icf*, BOOL bLock);
+
+HRESULT DELTACALL icf_create(allocator* pAlloc, REFIID riid, icf** ppOut);
+VOID DELTACALL icf_release(icf* pICF);
+
+HRESULT DELTACALL icf_query_interface(icf* pICF, REFIID riid, LPVOID* ppOut);
+ULONG DELTACALL icf_add_ref(icf* pICF);
+ULONG DELTACALL icf_remove_ref(icf* pICF);

@@ -26,18 +26,25 @@ SOFTWARE.
 
 #include "arr.h"
 
+typedef struct cf cf;
 typedef struct ds ds;
 
 typedef struct deltasound {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
-    arr*                Items;
+    arr*                Items; // TODO name
+    arr*                Factories;
 } deltasound;
 
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
 VOID DELTACALL deltasound_release(deltasound* pD);
 
-HRESULT DELTACALL deltasound_create_directsound(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPDIRECTSOUND* ppOut);
-HRESULT DELTACALL deltasound_remove_ds(deltasound* pD, ds* pDS);
+HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
+    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
+HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* pD, ds* pDS);
+
+HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,
+    REFCLSID rclsid, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pcF);
+
 HRESULT DELTACALL deltasound_can_unload(deltasound* pD);

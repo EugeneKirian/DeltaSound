@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#define COBJMACROS
 #include <windows.h>
 #include <dsound.h>
 #include <mmreg.h>

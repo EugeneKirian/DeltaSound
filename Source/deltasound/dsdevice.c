@@ -56,7 +56,7 @@ HRESULT DELTACALL dsdevice_create(
         return E_INVALIDARG;
     }
 
-    if (dwType != DEVICETYPE_AUDIO && dwType != DEVICETYPE_RECORD) {
+    if (dwType != DEVICETYPE_RENDER && dwType != DEVICETYPE_RECORD) {
         return E_INVALIDARG;
     }
 

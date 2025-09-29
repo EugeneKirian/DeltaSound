@@ -25,6 +25,7 @@ SOFTWARE.
 #include <windows.h>
 
 #include <dsound.h>
+#include <dsconf.h>
 
 #define CINTERFACE
 #define COBJMACROS

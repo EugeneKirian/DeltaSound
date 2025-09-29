@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "cf.h"
 #include "deltasound.h"
 #include "device_info.h"
 #include "ds.h"
@@ -36,11 +37,15 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Items))) {
-            InitializeCriticalSection(&instance->Lock);
+            if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Factories))) {
+                InitializeCriticalSection(&instance->Lock);
 
-            *ppOut = instance;
+                *ppOut = instance;
 
-            return S_OK;
+                return S_OK;
+            }
+
+            arr_release(instance->Items);
         }
 
         allocator_free(pAlloc, instance);
@@ -69,8 +74,8 @@ VOID DELTACALL deltasound_release(deltasound* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
-    REFIID riid, LPCGUID pcGuidDevice, LPDIRECTSOUND* ppOut) {
+HRESULT DELTACALL deltasound_create_direct_sound(deltasound* self,
+    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -93,7 +98,7 @@ HRESULT DELTACALL deltasound_create_directsound(deltasound* self,
             if (SUCCEEDED(hr = ds_query_interface(instance, riid, &intfc))) {
                 if (SUCCEEDED(hr = arr_add_item(self->Items, instance))) {
 
-                    *ppOut = (LPDIRECTSOUND)intfc;
+                    *ppOut = intfc;
 
                     goto exit;
                 }
@@ -110,7 +115,7 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL deltasound_remove_ds(deltasound* self, ds* pDS) {
+HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* self, ds* pDS) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -131,6 +136,86 @@ HRESULT DELTACALL deltasound_remove_ds(deltasound* self, ds* pDS) {
         if (SUCCEEDED(hr = arr_get_item(self->Items, i, &instance))) {
             if (instance == pDS) {
                 hr = arr_remove_item(self->Items, i, NULL);
+                break;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
+}
+
+HRESULT DELTACALL deltasound_create_class_factory(deltasound* self,
+    REFCLSID rclsid, REFIID riid, LPVOID* ppOut) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (rclsid == NULL || riid == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (!IsEqualCLSID(&CLSID_DirectSound, rclsid)
+        && !IsEqualCLSID(&CLSID_DirectSound8, rclsid)
+        && !IsEqualCLSID(&CLSID_DirectSoundCapture, rclsid)
+        && !IsEqualCLSID(&CLSID_DirectSoundCapture8, rclsid)
+        && !IsEqualCLSID(&CLSID_DirectSoundFullDuplex, rclsid)
+        && !IsEqualCLSID(&CLSID_DirectSoundPrivate, rclsid)) {
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
+    HRESULT hr = S_OK;
+    cf* instance = NULL;
+
+    EnterCriticalSection(&self->Lock);
+
+    if (SUCCEEDED(hr = cf_create(self->Allocator, rclsid, &instance))) {
+        instance->Instance = self;
+
+        icf* intfc = NULL;
+
+        if (SUCCEEDED(hr = cf_query_interface(instance, riid, &intfc))) {
+            if (SUCCEEDED(hr = arr_add_item(self->Factories, instance))) {
+
+                *ppOut = intfc;
+
+                goto exit;
+            }
+        }
+
+        cf_release(instance);
+    }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
+}
+
+HRESULT DELTACALL deltasound_remove_class_factory(deltasound* self, cf* pcF) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pcF == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&self->Lock);
+
+    const DWORD count = arr_get_count(self->Factories);
+
+    for (DWORD i = 0; i < count; i++) {
+        cf* instance = NULL;
+
+        if (SUCCEEDED(hr = arr_get_item(self->Factories, i, &instance))) {
+            if (instance == pcF) {
+                hr = arr_remove_item(self->Factories, i, NULL);
+                break;
             }
         }
     }

@@ -70,6 +70,8 @@ SOFTWARE.
 
 #include "getdeviceid.h"
 
+#include "dllgetclassobject.h"
+
 #include <stdio.h>
 
 #define TEST(X)                                         \
@@ -154,7 +156,9 @@ int main(int argc, char** argv) {
     TEST(DirectSoundDuplicatePrimary);
     TEST(DirectSoundDuplicateSecondary);
     TEST(DirectSoundDuplicateSecondaryNotify);
-    // TODO duplicate with spatial buffers
+    //// TODO duplicate with spatial buffers
+
+    TEST(DllGetClassObject);
 
 exit:
 
