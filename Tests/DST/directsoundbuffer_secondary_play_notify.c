@@ -176,7 +176,7 @@ static BOOL TestDirectSoundBufferPlayNotify(
     const DWORD length = 144000;
 
     WAVEFORMATEX format;
-    InitializeWaveFormat(&format, 2, 48000, 2);
+    InitializeWaveFormat(&format, 2, 48000, 8);
 
     DSBUFFERDESC desc;
     InitializeDirectSoundBufferDesc(&desc, DSBCAPS_CTRLPOSITIONNOTIFY, length, &format);
