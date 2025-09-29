@@ -22,9 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_basics.h"
-
-typedef IReferenceClock* LPREFERENCECLOCK;
+#include "directsoundbuffer_primary.h"
 
 static BOOL TestDirectSoundBufferAddRef(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {

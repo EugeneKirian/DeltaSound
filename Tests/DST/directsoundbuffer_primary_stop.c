@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "directsoundbuffer_primary_stop.h"
+#include "directsoundbuffer_primary.h"
 #include "wnd.h"
 
 #define WINDOW_NAME "DirectSound Primary Buffer Stop"

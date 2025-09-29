@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_play_pan.h"
+#include "directsoundbuffer_primary.h"
 #include "synth.h"
 #include "wnd.h"
 
@@ -159,7 +159,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a,
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferPrimaryPlay(LPDIRECTSOUNDCREATE a,
+static BOOL TestDirectSoundBufferPrimaryPlayValue(LPDIRECTSOUNDCREATE a,
     HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, LONG pan) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
@@ -337,7 +337,7 @@ BOOL TestDirectSoundBufferPrimaryPlayPan(HMODULE a, HMODULE b) {
     }
 
     for (int i = 0; i < PLAY_PAN_COUNT; i++) {
-        if (!TestDirectSoundBufferPrimaryPlay(dsca, wa, dscb, wb, PlayPan[i])) {
+        if (!TestDirectSoundBufferPrimaryPlayValue(dsca, wa, dscb, wb, PlayPan[i])) {
             result = FALSE;
             goto exit;
         }

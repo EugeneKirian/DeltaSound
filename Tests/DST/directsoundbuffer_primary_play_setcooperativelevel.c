@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_play_setcooperativelevel.h"
+#include "directsoundbuffer_primary.h"
 #include "synth.h"
 #include "wnd.h"
 

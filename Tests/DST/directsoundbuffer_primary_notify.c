@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_notify.h"
+#include "directsoundbuffer_primary.h"
 
 static BOOL TestDirectSoundBufferPrimaryNotifyCreate(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {

@@ -194,7 +194,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base.h" />
-    <ClInclude Include="directsoundbuffer_primary_set_format.h" />
     <ClInclude Include="directsoundbuffer_secondary_small_buffer.h" />
     <ClInclude Include="directsoundbuffer_secondary_small_buffer_notify.h" />
     <ClInclude Include="directsound_basics.h" />
@@ -208,17 +207,7 @@
     <ClInclude Include="directsound_enumerate.h" />
     <ClInclude Include="directsound_getcaps.h" />
     <ClInclude Include="directsound_setcooperativelevel.h" />
-    <ClInclude Include="directsoundbuffer_primary_basics.h" />
-    <ClInclude Include="directsoundbuffer_primary_get.h" />
-    <ClInclude Include="directsoundbuffer_primary_lock.h" />
-    <ClInclude Include="directsoundbuffer_primary_notify.h" />
-    <ClInclude Include="directsoundbuffer_primary_play.h" />
-    <ClInclude Include="directsoundbuffer_primary_play_pan.h" />
-    <ClInclude Include="directsoundbuffer_primary_play_setcooperativelevel.h" />
-    <ClInclude Include="directsoundbuffer_primary_play_volume.h" />
-    <ClInclude Include="directsoundbuffer_primary_query_interface.h" />
-    <ClInclude Include="directsoundbuffer_primary_set.h" />
-    <ClInclude Include="directsoundbuffer_primary_stop.h" />
+    <ClInclude Include="directsoundbuffer_primary.h" />
     <ClInclude Include="directsoundbuffer_secondary_basics.h" />
     <ClInclude Include="directsoundbuffer_secondary_get.h" />
     <ClInclude Include="directsoundbuffer_secondary_lock.h" />

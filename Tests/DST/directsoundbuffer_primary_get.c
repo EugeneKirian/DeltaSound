@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_primary_get.h"
+#include "directsoundbuffer_primary.h"
 #include "wnd.h"
 
 #define WINDOW_NAME "DirectSound Primary Buffer Get Properties"
