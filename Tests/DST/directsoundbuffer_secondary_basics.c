@@ -22,9 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsoundbuffer_secondary_basics.h"
-
-typedef IReferenceClock* LPREFERENCECLOCK;
+#include "directsoundbuffer_secondary.h"
 
 static BOOL TestDirectSoundBufferAddRef(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b) {
     if (a == NULL || b == NULL) {
@@ -82,8 +80,7 @@ BOOL TestDirectSoundBufferSecondaryBasics(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = dsca(NULL, &dsa, NULL);
     HRESULT rb = dscb(NULL, &dsb, NULL);
@@ -93,26 +90,13 @@ BOOL TestDirectSoundBufferSecondaryBasics(HMODULE a, HMODULE b) {
     }
 
     BOOL result = TRUE;
-
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
-    ZeroMemory(&format, sizeof(WAVEFORMATEX));
-
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 1;
-    format.nSamplesPerSec = 22050;
-    format.nAvgBytesPerSec = 22050;
-    format.nBlockAlign = 1;
-    format.wBitsPerSample = 8;
+    InitializeWaveFormat(&format, 1, 22050, 8);
 
     DSBUFFERDESC desc;
-    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-
-    desc.dwSize = sizeof(DSBUFFERDESC);
-    desc.dwBufferBytes = 176400;
-    desc.lpwfxFormat = &format;
+    InitializeDirectSoundBufferDesc(&desc, 0, 1764000, &format);
 
     ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
@@ -135,8 +119,9 @@ BOOL TestDirectSoundBufferSecondaryBasics(HMODULE a, HMODULE b) {
     }
 
 exit:
-    IDirectSoundBuffer_Release(dsba);
-    IDirectSoundBuffer_Release(dsbb);
+
+    RELEASE(dsba);
+    RELEASE(dsbb);
     RELEASE(dsa);
     RELEASE(dsb);
 

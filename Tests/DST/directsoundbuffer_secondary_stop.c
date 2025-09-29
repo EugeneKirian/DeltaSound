@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "directsoundbuffer_secondary_stop.h"
+#include "directsoundbuffer_secondary.h"
 #include "wnd.h"
 
 #define WINDOW_NAME "DirectSound Secondary Buffer Stop"
@@ -36,44 +36,19 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
     }
 
     BOOL result = TRUE;
-
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
-
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
-    ZeroMemory(&format, sizeof(WAVEFORMATEX));
+    InitializeWaveFormat(&format, 2, 22050, 8);
 
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 2;
-    format.nSamplesPerSec = 22050;
-    format.nAvgBytesPerSec = 44100;
-    format.nBlockAlign = 2;
-    format.wBitsPerSample = 8;
+    DSBUFFERDESC desc;
+    InitializeDirectSoundBufferDesc(&desc, 0, 132300, &format);
 
-    DSBUFFERDESC desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
-
-    desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = 0;
-    desca.dwBufferBytes = 132300;
-    desca.lpwfxFormat = &format;
-
-    DSBUFFERDESC descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-    descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = 0;
-    descb.dwBufferBytes = 132300;
-    descb.lpwfxFormat = &format;
-
-    WAVEFORMATEX fa;
+    WAVEFORMATEX fa, fb;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
-
-    WAVEFORMATEX fb;
     ZeroMemory(&fb, sizeof(WAVEFORMATEX));
+
     DWORD fas = 0, fbs = 0;
 
     LPVOID wave = NULL;
@@ -108,8 +83,8 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
         goto exit;
     }
 
-    ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
-    rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
+    ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
+    rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
 
     if (ra != rb) {
         result = FALSE;
@@ -122,16 +97,7 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
     }
 
     // GetCaps
-
-    ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
-    rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+    if (FAILED(CompareDirectSoundBufferCaps(dsba, dsbb))) {
         result = FALSE;
         goto exit;
     }
@@ -199,21 +165,10 @@ exit:
         free(wave);
     }
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
-
-    if (dsa != NULL) {
-        RELEASE(dsa);
-    }
-
-    if (dsb != NULL) {
-        RELEASE(dsb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

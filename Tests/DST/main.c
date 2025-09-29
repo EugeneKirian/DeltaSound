@@ -24,27 +24,9 @@ SOFTWARE.
 
 #include "directsound.h"
 #include "directsoundbuffer_primary.h"
+#include "directsoundbuffer_secondary.h"
 
-#include "directsoundbuffer_secondary_basics.h"
-#include "directsoundbuffer_secondary_query_interface.h"
-#include "directsoundbuffer_secondary_get.h"
-#include "directsoundbuffer_secondary_set.h"
-#include "directsoundbuffer_secondary_stop.h"
-#include "directsoundbuffer_secondary_lock.h"
-#include "directsoundbuffer_secondary_play.h"
-#include "directsoundbuffer_secondary_play_frequency.h"
-#include "directsoundbuffer_secondary_play_pan.h"
-#include "directsoundbuffer_secondary_play_volume.h"
-#include "directsoundbuffer_secondary_play_mono.h"
-#include "directsoundbuffer_secondary_play_stereo.h"
-#include "directsoundbuffer_secondary_play_multiple.h"
-#include "directsoundbuffer_secondary_notify.h"
-#include "directsoundbuffer_secondary_play_notify.h"
-#include "directsoundbuffer_secondary_play_setcooperativelevel.h"
-#include "directsoundbuffer_secondary_small_buffer.h"
-#include "directsoundbuffer_secondary_small_buffer_notify.h"
-
-#include "directsoundcapture_enumerate.h"
+#include "directsoundcapture.h"
 
 #include "getdeviceid.h"
 
