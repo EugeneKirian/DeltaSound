@@ -58,4 +58,5 @@ HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC pDSBD,
 
 HRESULT InitializeDirectSoundBufferCaps(LPDSBCAPS pDSBC, DWORD dwFlags, DWORD dwBufferBytes);
 
+// TODO Compare Format!!
 HRESULT CompareDirectSoundBufferCaps(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUFFER pDSBB);

@@ -36,30 +36,16 @@ static BOOL TestDirectSoundBufferPrimaryBufferStop(
     }
 
     BOOL result = TRUE;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    DSBUFFERDESC desc;
+    InitializeDirectSoundBufferDesc(&desc, DSBCAPS_PRIMARYBUFFER, 0, NULL);
 
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
-
-    DSBUFFERDESC desca;
-    ZeroMemory(&desca, sizeof(DSBUFFERDESC));
-
-    desca.dwSize = sizeof(DSBUFFERDESC);
-    desca.dwFlags = DSBCAPS_PRIMARYBUFFER;
-
-    DSBUFFERDESC descb;
-    ZeroMemory(&descb, sizeof(DSBUFFERDESC));
-
-    descb.dwSize = sizeof(DSBUFFERDESC);
-    descb.dwFlags = DSBCAPS_PRIMARYBUFFER;
-
-    WAVEFORMATEX fa;
+    WAVEFORMATEX fa, fb;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
-
-    WAVEFORMATEX fb;
     ZeroMemory(&fb, sizeof(WAVEFORMATEX));
+
     DWORD fas = 0, fbs = 0;
 
     LPVOID wave = NULL;
@@ -94,8 +80,8 @@ static BOOL TestDirectSoundBufferPrimaryBufferStop(
         goto exit;
     }
 
-    ra = IDirectSound_CreateSoundBuffer(dsa, &desca, &dsba, NULL);
-    rb = IDirectSound_CreateSoundBuffer(dsb, &descb, &dsbb, NULL);
+    ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
+    rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
 
     if (ra != rb) {
         result = FALSE;
@@ -108,16 +94,7 @@ static BOOL TestDirectSoundBufferPrimaryBufferStop(
     }
 
     // GetCaps
-
-    ra = IDirectSoundBuffer_GetCaps(dsba, &capsa);
-    rb = IDirectSoundBuffer_GetCaps(dsbb, &capsb);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    if (memcmp(&capsa, &capsb, sizeof(DSBCAPS)) != 0) {
+    if (FAILED(CompareDirectSoundBufferCaps(dsba, dsbb))) {
         result = FALSE;
         goto exit;
     }
@@ -185,21 +162,10 @@ exit:
         free(wave);
     }
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
-
-    if (dsa != NULL) {
-        RELEASE(dsa);
-    }
-
-    if (dsb != NULL) {
-        RELEASE(dsb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }

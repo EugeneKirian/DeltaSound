@@ -51,8 +51,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUND dsa = NULL;
-        LPDIRECTSOUND dsb = NULL;
+        LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, NULL, &dsa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, NULL, &dsb);
@@ -63,8 +62,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUND dsa = NULL;
-        LPDIRECTSOUND dsb = NULL;
+        LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &GUID_NULL, &dsa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &GUID_NULL, &dsb);
@@ -75,8 +73,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUND dsa = NULL;
-        LPDIRECTSOUND dsb = NULL;
+        LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSound, &dsa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSound, &dsb);
@@ -87,8 +84,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUND3DBUFFER ds3dba = NULL;
-        LPDIRECTSOUND3DBUFFER ds3dbb = NULL;
+        LPDIRECTSOUND3DBUFFER ds3dba = NULL, ds3dbb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSound3DBuffer, &ds3dba);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSound3DBuffer, &ds3dbb);
@@ -99,8 +95,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUND3DLISTENER ds3dla = NULL;
-        LPDIRECTSOUND3DLISTENER ds3dlb = NULL;
+        LPDIRECTSOUND3DLISTENER ds3dla = NULL, ds3dlb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSound3DListener, &ds3dla);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSound3DListener, &ds3dlb);
@@ -116,8 +111,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUND8 ds8a = NULL;
-        LPDIRECTSOUND8 ds8b = NULL;
+        LPDIRECTSOUND8 ds8a = NULL, ds8b = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSound8, &ds8a);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSound8, &ds8b);
@@ -128,8 +122,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDBUFFER dsba = NULL;
-        LPDIRECTSOUNDBUFFER dsbb = NULL;
+        LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundBuffer, &dsba);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundBuffer, &dsbb);
@@ -147,8 +140,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDBUFFER8 dsba = NULL;
-        LPDIRECTSOUNDBUFFER8 dsbb = NULL;
+        LPDIRECTSOUNDBUFFER8 dsba, dsbb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundBuffer8, &dsba);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundBuffer8, &dsbb);
@@ -159,8 +151,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDCAPTURE dsca = NULL;
-        LPDIRECTSOUNDCAPTURE dscb = NULL;
+        LPDIRECTSOUNDCAPTURE dsca = NULL, dscb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundCapture, &dsca);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundCapture, &dscb);
@@ -171,8 +162,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDCAPTUREBUFFER dscba = NULL;
-        LPDIRECTSOUNDCAPTUREBUFFER dscbb = NULL;
+        LPDIRECTSOUNDCAPTUREBUFFER dscba = NULL, dscbb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundCaptureBuffer, &dscba);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundCaptureBuffer, &dscbb);
@@ -183,8 +173,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDCAPTUREBUFFER8 dscba = NULL;
-        LPDIRECTSOUNDCAPTUREBUFFER8 dscbb = NULL;
+        LPDIRECTSOUNDCAPTUREBUFFER8 dscba = NULL, dscbb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundCaptureBuffer8, &dscba);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundCaptureBuffer8, &dscbb);
@@ -195,8 +184,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDCAPTUREFXAEC fxa = NULL;
-        LPDIRECTSOUNDCAPTUREFXAEC fxb = NULL;
+        LPDIRECTSOUNDCAPTUREFXAEC fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundCaptureFXAec, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundCaptureFXAec, &fxb);
@@ -207,8 +195,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDCAPTUREFXNOISESUPPRESS fxa = NULL;
-        LPDIRECTSOUNDCAPTUREFXNOISESUPPRESS fxb = NULL;
+        LPDIRECTSOUNDCAPTUREFXNOISESUPPRESS fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundCaptureFXNoiseSuppress, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundCaptureFXNoiseSuppress, &fxb);
@@ -219,8 +206,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXCHORUS fxa = NULL;
-        LPDIRECTSOUNDFXCHORUS fxb = NULL;
+        LPDIRECTSOUNDFXCHORUS fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXChorus, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXChorus, &fxb);
@@ -231,8 +217,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXCOMPRESSOR fxa = NULL;
-        LPDIRECTSOUNDFXCOMPRESSOR fxb = NULL;
+        LPDIRECTSOUNDFXCOMPRESSOR fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXCompressor, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXCompressor, &fxb);
@@ -243,8 +228,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXDISTORTION fxa = NULL;
-        LPDIRECTSOUNDFXDISTORTION fxb = NULL;
+        LPDIRECTSOUNDFXDISTORTION fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXDistortion, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXDistortion, &fxb);
@@ -255,8 +239,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXECHO fxa = NULL;
-        LPDIRECTSOUNDFXECHO fxb = NULL;
+        LPDIRECTSOUNDFXECHO fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXEcho, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXEcho, &fxb);
@@ -267,8 +250,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXFLANGER fxa = NULL;
-        LPDIRECTSOUNDFXFLANGER fxb = NULL;
+        LPDIRECTSOUNDFXFLANGER fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXFlanger, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXFlanger, &fxb);
@@ -279,8 +261,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXGARGLE fxa = NULL;
-        LPDIRECTSOUNDFXGARGLE fxb = NULL;
+        LPDIRECTSOUNDFXGARGLE fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXGargle, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXGargle, &fxb);
@@ -291,8 +272,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXI3DL2REVERB fxa = NULL;
-        LPDIRECTSOUNDFXI3DL2REVERB fxb = NULL;
+        LPDIRECTSOUNDFXI3DL2REVERB fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXI3DL2Reverb, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXI3DL2Reverb, &fxb);
@@ -303,8 +283,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXPARAMEQ fxa = NULL;
-        LPDIRECTSOUNDFXPARAMEQ fxb = NULL;
+        LPDIRECTSOUNDFXPARAMEQ fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXParamEq, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXParamEq, &fxb);
@@ -315,8 +294,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFXWAVESREVERB fxa = NULL;
-        LPDIRECTSOUNDFXWAVESREVERB fxb = NULL;
+        LPDIRECTSOUNDFXWAVESREVERB fxa = NULL, fxb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFXWavesReverb, &fxa);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFXWavesReverb, &fxb);
@@ -327,8 +305,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDFULLDUPLEX fda = NULL;
-        LPDIRECTSOUNDFULLDUPLEX fdb = NULL;
+        LPDIRECTSOUNDFULLDUPLEX fda = NULL, fdb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundFullDuplex, &fda);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundFullDuplex, &fdb);
@@ -339,8 +316,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPDIRECTSOUNDNOTIFY sna = NULL;
-        LPDIRECTSOUNDNOTIFY snb = NULL;
+        LPDIRECTSOUNDNOTIFY sna = NULL, snb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IDirectSoundNotify, &sna);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IDirectSoundNotify, &snb);
@@ -351,8 +327,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPKSPROPERTYSET pa1 = NULL;
-        LPKSPROPERTYSET pb1 = NULL;
+        LPKSPROPERTYSET pa1 = NULL, pb1 = NULL;
 
         HRESULT ra1 = IDirectSoundBuffer_QueryInterface(a, &IID_IKsPropertySet, &pa1);
         HRESULT rb1 = IDirectSoundBuffer_QueryInterface(b, &IID_IKsPropertySet, &pb1);
@@ -365,8 +340,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
             return FALSE;
         }
 
-        LPKSPROPERTYSET pa2 = NULL;
-        LPKSPROPERTYSET pb2 = NULL;
+        LPKSPROPERTYSET pa2 = NULL, pb2 = NULL;
 
         HRESULT ra2 = IDirectSoundBuffer_QueryInterface(a, &IID_IKsPropertySet, &pa2);
         HRESULT rb2 = IDirectSoundBuffer_QueryInterface(b, &IID_IKsPropertySet, &pb2);
@@ -390,8 +364,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPREFERENCECLOCK ca = NULL;
-        LPREFERENCECLOCK cb = NULL;
+        LPREFERENCECLOCK ca = NULL, cb = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IReferenceClock, &ca);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IReferenceClock, &cb);
@@ -402,8 +375,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     }
 
     {
-        LPUNKNOWN ua = NULL;
-        LPUNKNOWN ub = NULL;
+        LPUNKNOWN ua = NULL, ub = NULL;
 
         HRESULT ra = IDirectSoundBuffer_QueryInterface(a, &IID_IUnknown, &ua);
         HRESULT rb = IDirectSoundBuffer_QueryInterface(b, &IID_IUnknown, &ub);
@@ -458,15 +430,14 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
 }
 
 static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(
-    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dsFlags, DWORD dwLevel) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
 
     BOOL result = TRUE;
 
-    LPDIRECTSOUND dsa = NULL;
-    LPDIRECTSOUND dsb = NULL;
+    LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -475,14 +446,10 @@ static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(
         return FALSE;
     }
 
-    LPDIRECTSOUNDBUFFER dsba = NULL;
-    LPDIRECTSOUNDBUFFER dsbb = NULL;
+    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     DSBUFFERDESC desc;
-    ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-
-    desc.dwSize = sizeof(DSBUFFERDESC);
-    desc.dwFlags = flags;
+    InitializeDirectSoundBufferDesc(&desc, dsFlags, 0, NULL);
 
     ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
@@ -496,8 +463,8 @@ static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, level);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, level);
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, dwLevel);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, dwLevel);
 
     if (ra != rb) {
         result = FALSE;
@@ -511,21 +478,10 @@ static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(
 
 exit:
 
-    if (dsba != NULL) {
-        IDirectSoundBuffer_Release(dsba);
-    }
-
-    if (dsbb != NULL) {
-        IDirectSoundBuffer_Release(dsbb);
-    }
-
-    if (dsa != NULL) {
-        RELEASE(dsa);
-    }
-
-    if (dsb != NULL) {
-        RELEASE(dsb);
-    }
+    RELEASE(dsba);
+    RELEASE(dsbb);
+    RELEASE(dsa);
+    RELEASE(dsb);
 
     return result;
 }
