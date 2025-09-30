@@ -147,7 +147,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateA(LPDSENUMCALLBACKA pDSEnumCallback, L
         return E_FAIL;
     }
 
-    return enumerate_devices(DEVICETYPE_RECORD, DEVICEENUMERATE_ANSI,
+    return enumerate_devices(DEVICETYPE_CAPTURE, DEVICEENUMERATE_ANSI,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
@@ -160,7 +160,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW pDSEnumCallback, L
         return E_FAIL;
     }
 
-    return enumerate_devices(DEVICETYPE_RECORD, DEVICEENUMERATE_WIDE,
+    return enumerate_devices(DEVICETYPE_CAPTURE, DEVICEENUMERATE_WIDE,
         (LPDEVICEENUMERATECALLBACK)pDSEnumCallback, pContext);
 }
 
@@ -207,11 +207,11 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest) {
         kind = DEVICEKIND_COMMUNICATION;
     }
     else if (IsEqualGUID(&DSDEVID_DefaultCapture, pGuidSrc)) {
-        type = DEVICETYPE_RECORD;
+        type = DEVICETYPE_CAPTURE;
         kind = DEVICEKIND_MULTIMEDIA;
     }
     else if (IsEqualGUID(&DSDEVID_DefaultVoiceCapture, pGuidSrc)) {
-        type = DEVICETYPE_RECORD;
+        type = DEVICETYPE_CAPTURE;
         kind = DEVICEKIND_COMMUNICATION;
     }
 

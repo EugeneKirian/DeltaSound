@@ -30,15 +30,15 @@ SOFTWARE.
 
 typedef struct dsc dsc;
 
-#define DSDEVICE_AUDIO_EVENT_INDEX      0
-#define DSDEVICE_CLOSE_EVENT_INDEX      1
+#define DSCDEVICE_AUDIO_EVENT_INDEX      0
+#define DSCDEVICE_CLOSE_EVENT_INDEX      1
 
-#define DSDEVICE_MAX_EVENT_COUNT        2
+#define DSCDEVICE_MAX_EVENT_COUNT        2
 
 typedef struct dscdevice {
     allocator* Allocator;
     dsc* Instance;
-    arena* Arena;
+    // arena* Arena; // TODO
     // mixer* Mixer; // TODO
 
     device_info             Info;
@@ -47,16 +47,15 @@ typedef struct dscdevice {
     // IAudioClient*           AudioClient; // TODO
     //IAudioRenderClient*     AudioRenderer; // TODO
 
-    UINT32                  AudioClientBufferSize;  // In frames
+    //UINT32                  AudioClientBufferSize;  // In frames
 
     PWAVEFORMATEXTENSIBLE   Format;
 
-    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
+    HANDLE                  Events[DSCDEVICE_MAX_EVENT_COUNT];
 
     HANDLE                  Thread;
     HANDLE                  ThreadEvent;
 } dscdevice;
 
-HRESULT DELTACALL dscdevice_create(allocator* pAlloc,
-    dsc* pDSC, DWORD dwType, device_info* pInfo, dscdevice** ppOut);
+HRESULT DELTACALL dscdevice_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, dscdevice** ppOut);
 VOID DELTACALL dscdevice_release(dscdevice* pDev);

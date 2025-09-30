@@ -317,7 +317,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, info.Type, &info, &self->Device))) {
+    if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, &info, &self->Device))) {
         DSBUFFERDESC desc;
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 

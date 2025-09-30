@@ -94,8 +94,8 @@ static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE
     {
         LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
-        const HRESULT ra = a(&CLSID_DirectSound, &dsa, NULL);
-        const HRESULT rb = b(&CLSID_DirectSound, &dsb, NULL);
+        const HRESULT ra = a(&CLSID_DirectSoundCapture, &dsa, NULL);
+        const HRESULT rb = b(&CLSID_DirectSoundCapture, &dsb, NULL);
 
         if (ra != rb) {
             DebugBreak(); return FALSE;
@@ -241,12 +241,12 @@ BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
 
     if ((ca.Items = (LPGUID)malloc(size)) == NULL) {
         result = FALSE;
-        goto exit;
+        DebugBreak(); goto exit;
     }
 
     if ((cb.Items = (LPGUID)malloc(size)) == NULL) {
         result = FALSE;
-        goto exit;
+        DebugBreak(); goto exit;
     }
 
     ZeroMemory(ca.Items, size);
@@ -263,34 +263,34 @@ BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
 
     if (ea(EnumerateDeviceCallBackA, &ca) != eb(EnumerateDeviceCallBackA, &cb)) {
         result = FALSE;
-        goto exit;
+        DebugBreak(); goto exit;
     }
 
 
     if (ca.Count != cb.Count) {
         result = FALSE;
-        goto exit;
+        DebugBreak(); goto exit;
     }
 
     for (UINT i = 0; i < ca.Count; i++) {
         if (!IsEqualGUID(&ca.Items[i], &cb.Items[i])) {
             result = FALSE;
-            goto exit;
+            DebugBreak(); goto exit;
         }
 
         LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
-        const HRESULT ra = dsca(input_device_tests[i], &dsa, NULL);
-        const HRESULT rb = dscb(input_device_tests[i], &dsb, NULL);
+        const HRESULT ra = dsca(&ca.Items[i], &dsa, NULL);
+        const HRESULT rb = dscb(&cb.Items[i], &dsb, NULL);
 
         if (ra != rb) {
             result = FALSE;
-            goto exit;
+            DebugBreak(); goto exit;
         }
 
         if (dsa == NULL || dsb == NULL) {
             result = FALSE;
-            goto exit;
+            DebugBreak(); goto exit;
         }
 
         RELEASE(dsa);

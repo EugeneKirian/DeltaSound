@@ -181,7 +181,43 @@ HRESULT DELTACALL dsc_get_caps(dsc* self, LPDSCCAPS pDSCCaps) {
     return E_NOTIMPL;
 }
 
-HRESULT DELTACALL dsc_initialize(dsc* pDSC, LPCGUID pcGuidDevice) {
-    // TODO
-    return E_NOTIMPL;
+HRESULT DELTACALL dsc_initialize(dsc* self, LPCGUID pcGuidDevice) {
+    if (self->Device != NULL) {
+        return DSERR_ALREADYINITIALIZED;
+    }
+
+    if (pcGuidDevice == NULL || IsEqualGUID(&GUID_NULL, pcGuidDevice)) {
+        pcGuidDevice = &DSDEVID_DefaultCapture;
+    }
+
+    if (IsEqualGUID(&DSDEVID_DefaultPlayback, pcGuidDevice) ||
+        IsEqualGUID(&DSDEVID_DefaultVoicePlayback, pcGuidDevice)) {
+        return DSERR_NODRIVER;
+    }
+
+    HRESULT hr = S_OK;
+
+    device_info info;
+    ZeroMemory(&info, sizeof(device_info));
+
+    if (IsEqualGUID(&DSDEVID_DefaultCapture, pcGuidDevice) ||
+        IsEqualGUID(&DSDEVID_DefaultVoiceCapture, pcGuidDevice)) {
+        const DWORD kind = IsEqualGUID(&DSDEVID_DefaultCapture, pcGuidDevice)
+            ? DEVICEKIND_MULTIMEDIA : DEVICEKIND_COMMUNICATION;
+
+        if (FAILED(hr = device_info_get_default_device(DEVICETYPE_CAPTURE, kind, &info))) {
+            return DSERR_NODRIVER;
+        }
+    }
+    else if (FAILED(hr = device_info_get_device(DEVICETYPE_CAPTURE, pcGuidDevice, &info))) {
+        return DSERR_NODRIVER;
+    }
+
+    EnterCriticalSection(&self->Lock);
+
+    hr = dscdevice_create(self->Allocator, self, &info, &self->Device);
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }

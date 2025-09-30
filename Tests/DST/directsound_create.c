@@ -280,8 +280,8 @@ BOOL TestDirectSoundCreate(HMODULE a, HMODULE b) {
 
         LPDIRECTSOUND dsa = NULL, dsb = NULL;
 
-        const HRESULT ra = dsca(input_device_tests[i], &dsa, NULL);
-        const HRESULT rb = dscb(input_device_tests[i], &dsb, NULL);
+        const HRESULT ra = dsca(&ca.Items[i], &dsa, NULL);
+        const HRESULT rb = dscb(&cb.Items[i], &dsb, NULL);
 
         if (ra != rb) {
             result = FALSE;

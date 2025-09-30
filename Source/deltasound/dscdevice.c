@@ -27,11 +27,38 @@ SOFTWARE.
 #include "dscdevice.h"
 #include "uuid.h"
 
-HRESULT DELTACALL dscdevice_create(allocator* pAlloc,
-    dsc* pDSC, DWORD dwType, device_info* pInfo, dscdevice** ppOut) {
-    return E_NOTIMPL;
+HRESULT DELTACALL dscdevice_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, dscdevice** ppOut) {
+    if (pAlloc == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (pInfo == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    dscdevice* instance = NULL;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dscdevice), &instance))) {
+        instance->Allocator = pAlloc;
+        instance->Instance = pDSC;
+
+        CopyMemory(&instance->Info, pInfo, sizeof(device_info));
+
+        // TODO NOT IMPLEMENTED
+
+        *ppOut = instance;
+
+        return S_OK;
+    }
+
+    return hr;
 }
 
 VOID DELTACALL dscdevice_release(dscdevice* self) {
+    if (self == NULL) { return; }
+
     // TODO NOT IMPLEMENTED
+
+    allocator_free(self->Allocator, self);
 }
