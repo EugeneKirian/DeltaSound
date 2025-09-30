@@ -59,7 +59,7 @@ static BOOL CALLBACK EnumerateDeviceCallBackA(LPGUID guid, LPCSTR desc, LPCSTR m
 
 static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     {
@@ -67,7 +67,7 @@ static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE
         const HRESULT rb = b(NULL, NULL, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -76,7 +76,7 @@ static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE
         const HRESULT rb = b(NULL, NULL, (LPUNKNOWN)b);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -87,7 +87,7 @@ static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE
         const HRESULT rb = b(NULL, &dsb, (LPUNKNOWN)b);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -98,7 +98,7 @@ static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE
         const HRESULT rb = b(&CLSID_DirectSoundCapture, &dsb, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -107,7 +107,7 @@ static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE
 
 static BOOL TestDirectSoundCaptureCreateNullDevice(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     {
@@ -117,11 +117,11 @@ static BOOL TestDirectSoundCaptureCreateNullDevice(LPDIRECTSOUNDCAPTURECREATE a,
         const HRESULT rb = b(NULL, &dsb, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (dsa == NULL || dsb == NULL) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         RELEASE(dsa);
@@ -135,11 +135,11 @@ static BOOL TestDirectSoundCaptureCreateNullDevice(LPDIRECTSOUNDCAPTURECREATE a,
         const HRESULT rb = b(&GUID_NULL, &dsb, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (dsa == NULL || dsb == NULL) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         RELEASE(dsa);
@@ -151,7 +151,7 @@ static BOOL TestDirectSoundCaptureCreateNullDevice(LPDIRECTSOUNDCAPTURECREATE a,
 
 static BOOL TestDirectSoundCaptureCreateOutputDevices(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     for (UINT i = 0; i < MAX_OUTPUTDEVICE_COUNT; i++) {
@@ -161,11 +161,11 @@ static BOOL TestDirectSoundCaptureCreateOutputDevices(LPDIRECTSOUNDCAPTURECREATE
         const HRESULT rb = b(output_device_tests[i], &dsb, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (dsa == NULL || dsb == NULL) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         RELEASE(dsa);
@@ -177,7 +177,7 @@ static BOOL TestDirectSoundCaptureCreateOutputDevices(LPDIRECTSOUNDCAPTURECREATE
 
 static BOOL TestDirectSoundCaptureCreateInputDevices(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     for (UINT i = 0; i < MAX_INPUTDEVICE_COUNT; i++) {
@@ -187,11 +187,11 @@ static BOOL TestDirectSoundCaptureCreateInputDevices(LPDIRECTSOUNDCAPTURECREATE 
         const HRESULT rb = b(input_device_tests[i], &dsb, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (dsa != NULL || dsb != NULL) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -200,34 +200,34 @@ static BOOL TestDirectSoundCaptureCreateInputDevices(LPDIRECTSOUNDCAPTURECREATE 
 
 BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     LPDIRECTSOUNDCAPTURECREATE dsca = GetDirectSoundCaptureCreate(a);
     LPDIRECTSOUNDCAPTURECREATE dscb = GetDirectSoundCaptureCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Invalid inputs
     if (!TestDirectSoundCaptureCreateInvalidInputs(dsca, dscb)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // NULL Device
     if (!TestDirectSoundCaptureCreateNullDevice(dsca, dscb)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Predefined output devices
     if (!TestDirectSoundCaptureCreateOutputDevices(dsca, dscb)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Predefined input devices
     if (!TestDirectSoundCaptureCreateInputDevices(dsca, dscb)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Enumerate devices...
@@ -241,12 +241,12 @@ BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
 
     if ((ca.Items = (LPGUID)malloc(size)) == NULL) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if ((cb.Items = (LPGUID)malloc(size)) == NULL) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     ZeroMemory(ca.Items, size);
@@ -258,24 +258,24 @@ BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
         (LPDIRECTSOUNDENUMERATEA)GetProcAddress(b, "DirectSoundCaptureEnumerateA");
 
     if (ea == NULL || eb == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (ea(EnumerateDeviceCallBackA, &ca) != eb(EnumerateDeviceCallBackA, &cb)) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
 
     if (ca.Count != cb.Count) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     for (UINT i = 0; i < ca.Count; i++) {
         if (!IsEqualGUID(&ca.Items[i], &cb.Items[i])) {
             result = FALSE;
-            DebugBreak(); goto exit;
+            goto exit;
         }
 
         LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
@@ -285,12 +285,12 @@ BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
 
         if (ra != rb) {
             result = FALSE;
-            DebugBreak(); goto exit;
+            goto exit;
         }
 
         if (dsa == NULL || dsb == NULL) {
             result = FALSE;
-            DebugBreak(); goto exit;
+            goto exit;
         }
 
         RELEASE(dsa);

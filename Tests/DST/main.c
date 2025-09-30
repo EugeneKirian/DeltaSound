@@ -64,6 +64,8 @@ int main(int argc, char** argv) {
 
     TEST(DirectSoundEnumerateA);
     TEST(DirectSoundEnumerateW);
+    TEST(DirectSoundCaptureEnumerateA);
+    TEST(DirectSoundCaptureEnumerateW);
 
     TEST(GetDeviceID);
 
@@ -115,9 +117,11 @@ int main(int argc, char** argv) {
     TEST(DirectSoundDuplicateSecondaryNotify);
     // TODO duplicate with spatial buffers
 
-    TEST(DirectSoundCaptureEnumerateA);
-    TEST(DirectSoundCaptureEnumerateW);
     TEST(DirectSoundCaptureCreate);
+    TEST(DirectSoundCaptureBasics);
+
+    // TODO TEST(DirectSoundCaptureCreateSoundBuffer);
+    // TODO TEST(DirectSoundCaptureGetCaps);
 
     TEST(DllGetClassObject);
     // TODO Test DirectSound object

@@ -62,8 +62,6 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
 VOID DELTACALL deltasound_release(deltasound* self) {
     if (self == NULL) { return; }
 
-    DeleteCriticalSection(&self->Lock);
-
     {
         const DWORD count = arr_get_count(self->Renderers);
 
@@ -99,6 +97,8 @@ VOID DELTACALL deltasound_release(deltasound* self) {
             }
         }
     }
+
+    DeleteCriticalSection(&self->Lock);
 
     arr_release(self->Renderers);
     arr_release(self->Capturers);
@@ -169,10 +169,12 @@ HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* self, ds* pDS) {
         if (SUCCEEDED(hr = arr_get_item(self->Renderers, i, &instance))) {
             if (instance == pDS) {
                 hr = arr_remove_item(self->Renderers, i, NULL);
-                break;
+                goto exit;
             }
         }
     }
+
+exit:
 
     LeaveCriticalSection(&self->Lock);
 
@@ -241,10 +243,12 @@ HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* self, dsc* 
         if (SUCCEEDED(hr = arr_get_item(self->Capturers, i, &instance))) {
             if (instance == pDSC) {
                 hr = arr_remove_item(self->Capturers, i, NULL);
-                break;
+                goto exit;
             }
         }
     }
+
+exit:
 
     LeaveCriticalSection(&self->Lock);
 
