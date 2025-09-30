@@ -50,3 +50,13 @@ VOID DELTACALL dscb_release(dscb* pDSB);
 HRESULT DELTACALL dscb_query_interface(dscb* pDSB, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dscb_add_ref(dscb* pDSB, idscb* pIDSCB);
 HRESULT DELTACALL dscb_remove_ref(dscb* pDSB, idscb* pIDSCB);
+
+HRESULT DELTACALL dscb_get_caps(dscb* pDSCB, LPDSCBCAPS pDSCBCaps);
+HRESULT DELTACALL dscb_get_current_position(dscb* pDSCB, LPDWORD pdwCapturePosition, LPDWORD pdwReadPosition);
+HRESULT DELTACALL dscb_get_format(dscb* pDSCB, LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten);
+HRESULT DELTACALL dscb_get_status(dscb* pDSCB, LPDWORD pdwStatus);
+HRESULT DELTACALL dscb_initialize(dscb* pDSCB, dsc* pDirectSoundCapture, LPCDSCBUFFERDESC pcDSCBufferDesc);
+HRESULT DELTACALL dscb_lock(dscb* pDSCB, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
+HRESULT DELTACALL dscb_start(dscb* pDSCB, DWORD dwFlags);
+HRESULT DELTACALL dscb_stop(dscb* pDSCB);
+HRESULT DELTACALL dscb_unlock(dscb* pDSCB, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);

@@ -22,10 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "dsc.h"
+#include "dscb.h"
+#include "dscdevice.h"
+#include "uuid.h"
 
-#include "base.h"
+HRESULT DELTACALL dscdevice_create(allocator* pAlloc,
+    dsc* pDSC, DWORD dwType, device_info* pInfo, dscdevice** ppOut) {
+    return E_NOTIMPL;
+}
 
-BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b);
-BOOL TestDirectSoundCaptureEnumerateA(HMODULE a, HMODULE b);
-BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b);
+VOID DELTACALL dscdevice_release(dscdevice* self) {
+    // TODO NOT IMPLEMENTED
+}

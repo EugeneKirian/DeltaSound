@@ -25,7 +25,6 @@ SOFTWARE.
 #include "dsc.h"
 #include "dscb.h"
 
-
 HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -92,7 +91,8 @@ VOID DELTACALL dscb_release(dscb* self) {
 }
 
 HRESULT DELTACALL dscb_query_interface(dscb* self, REFIID riid, LPVOID* ppOut) {
-
+    // TODO
+    return E_NOTIMPL;
 }
 
 HRESULT DELTACALL dscb_add_ref(dscb* self, idscb* pIDSCB) {
@@ -107,4 +107,40 @@ HRESULT DELTACALL dscb_remove_ref(dscb* self, idscb* pIDSCB) {
     }
 
     return S_OK;
+}
+
+HRESULT DELTACALL dscb_get_caps(dscb* self, LPDSCBCAPS pDSCBCaps) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_get_current_position(dscb* self, LPDWORD pdwCapturePosition, LPDWORD pdwReadPosition) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_get_format(dscb* self, LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_get_status(dscb* self, LPDWORD pdwStatus) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDirectSoundCapture, LPCDSCBUFFERDESC pcDSCBufferDesc) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_lock(dscb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_start(dscb* self, DWORD dwFlags) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_stop(dscb* self) {
+    return E_NOTIMPL;
+}
+
+HRESULT DELTACALL dscb_unlock(dscb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
+    return E_NOTIMPL;
 }

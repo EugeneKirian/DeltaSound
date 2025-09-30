@@ -50,8 +50,8 @@ HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* pDev, LPWAVEFORMATEX* ppForm
 HRESULT DELTACALL dsdevice_render(dsdevice* pDev, DWORD dwBuffers, dsb** ppBuffers);
 HRESULT DELTACALL dsdevice_get_active_buffers(dsdevice* self, LPDWORD pdwCount, dsb*** ppBuffers);
 
-HRESULT DELTACALL dsdevice_create(
-    allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut) {
+HRESULT DELTACALL dsdevice_create(allocator* pAlloc,
+    ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut) {
     if (pAlloc == NULL) {
         return E_INVALIDARG;
     }

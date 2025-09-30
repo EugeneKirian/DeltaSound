@@ -40,6 +40,14 @@ LPDIRECTSOUNDCREATE GetDirectSoundCreate(HMODULE module) {
     return (LPDIRECTSOUNDCREATE)GetProcAddress(module, "DirectSoundCreate");
 }
 
+LPDIRECTSOUNDCAPTURECREATE GetDirectSoundCaptureCreate(HMODULE module) {
+    if (module == NULL) {
+        return NULL;
+    }
+
+    return (LPDIRECTSOUNDCAPTURECREATE)GetProcAddress(module, "DirectSoundCaptureCreate");
+}
+
 HRESULT InitializeWaveFormat(LPWAVEFORMATEX self, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits) {
     if (self == NULL) {
         return E_POINTER;

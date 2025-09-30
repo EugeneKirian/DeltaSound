@@ -26,46 +26,157 @@ SOFTWARE.
 #include "device_info.h"
 #include "dsc.h"
 #include "dscb.h"
-// TODO #include "dscdevice.h"
+#include "dscdevice.h"
 #include "idsc.h"
 
 HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut) {
+    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    dsc* instance = NULL;
+
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsc), &instance))) {
+        instance->Allocator = pAlloc;
+
+        CopyMemory(&instance->ID, riid, sizeof(GUID)); // TODO CLSID
+
+        if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+            if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
+                InitializeCriticalSection(&instance->Lock);
+
+                *ppOut = instance;
+
+                return S_OK;
+            }
+
+            intfc_release(instance->Interfaces);
+        }
+
+        allocator_free(pAlloc, instance);
+    }
+
+    return hr;
+}
+
+VOID DELTACALL dsc_release(dsc* self) {
+    if (self == NULL) { return; }
+
+    if (self->Device != NULL) {
+        dscdevice_release(self->Device);
+    }
+
+    DeleteCriticalSection(&self->Lock);
+
+    {
+        const DWORD count = intfc_get_count(self->Interfaces);
+
+        for (DWORD i = 0; i < count; i++) {
+            idsc* instance = NULL;
+
+            if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
+                idsc_release(instance);
+            }
+        }
+    }
+
+    intfc_release(self->Interfaces);
+
+    {
+        const DWORD count = arr_get_count(self->Buffers);
+        for (DWORD i = count; i != 0; i--) {
+            dscb* instance = NULL;
+
+            if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instance))) {
+                dscb_release(instance);
+            }
+        }
+    }
+
+    arr_release(self->Buffers);
+
+    if (self->Instance != NULL) {
+        deltasound_remove_direct_sound_capture(self->Instance, self);
+    }
+
+    allocator_free(self->Allocator, self);
+}
+
+
+HRESULT DELTACALL dsc_query_interface(dsc* self, REFIID riid, LPVOID* ppOut) {
+    HRESULT hr = E_NOINTERFACE;
+    idsc* instance = NULL;
+
+    EnterCriticalSection(&self->Lock);
+
+    if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
+        idsc_add_ref(instance);
+
+        *ppOut = instance;
+
+        goto exit;
+    }
+
+    if (IsEqualIID(&IID_IUnknown, riid)
+        || IsEqualIID(&IID_IDirectSoundCapture, riid)) { // TODO CLSID
+        if (SUCCEEDED(hr = idsc_create(self->Allocator, riid, &instance))) {
+            if (SUCCEEDED(hr = dsc_add_ref(self, instance))) {
+                instance->Instance = self;
+
+                *ppOut = instance;
+
+                goto exit;
+            }
+
+            idsc_release(instance);
+        }
+    }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
+}
+
+HRESULT DELTACALL dsc_add_ref(dsc* self, idsc* pIDSC) {
+    return intfc_add_item(self->Interfaces, &pIDSC->ID, pIDSC);
+}
+
+HRESULT DELTACALL dsc_remove_ref(dsc* self, idsc* pIDSC) {
+    intfc_remove_item(self->Interfaces, &pIDSC->ID);
+
+    if (intfc_get_count(self->Interfaces) == 0) {
+        dsc_release(self);
+    }
+
+    return S_OK;
+}
+
+HRESULT DELTACALL dsc_create_capture_buffer(dsc* self, REFIID riid, LPCDSCBUFFERDESC pcDSCBufferDesc, dscb** ppOut) {
     // TODO
     return E_NOTIMPL;
 }
 
-VOID DELTACALL dsc_release(dsc* pDSC) {
-    // TODO
+HRESULT DELTACALL dsc_remove_capture_buffer(dsc* self, dscb* pDSCB) {
+    HRESULT hr = S_OK;
+    const DWORD count = arr_get_count(self->Buffers);
+
+    for (DWORD i = 0; i < count; i++) {
+        dscb* instance = NULL;
+
+        if (SUCCEEDED(hr = arr_get_item(self->Buffers, i, &instance))) {
+            if (instance == pDSCB) {
+                return arr_remove_item(self->Buffers, i, NULL);
+            }
+        }
+    }
+
+    return hr;
 }
 
-
-HRESULT DELTACALL dsc_query_interface(dsc* pDSC, REFIID riid, LPVOID* ppOut) {
-    // TODO
-    return E_NOTIMPL;
-}
-
-HRESULT DELTACALL dsc_add_ref(dsc* pDSC, idsc* pIDSC) {
-    // TODO
-    return E_NOTIMPL;
-}
-
-HRESULT DELTACALL dsc_remove_ref(dsc* pDSC, idsc* pIDSC) {
-    // TODO
-    return E_NOTIMPL;
-}
-
-
-HRESULT DELTACALL dsc_create_capture_buffer(dsc* pDSC, REFIID riid, LPCDSCBUFFERDESC pcDSCBufferDesc, dscb** ppOut) {
-    // TODO
-    return E_NOTIMPL;
-}
-
-HRESULT DELTACALL dsc_remove_capture_buffer(dsc* pDSC, dscb* pDSCB) {
-    // TODO
-    return E_NOTIMPL;
-}
-
-HRESULT DELTACALL dsc_get_caps(dsc* pDSC, LPDSCCAPS pDSCCaps) {
+HRESULT DELTACALL dsc_get_caps(dsc* self, LPDSCCAPS pDSCCaps) {
     // TODO
     return E_NOTIMPL;
 }

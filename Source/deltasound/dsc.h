@@ -28,17 +28,21 @@ SOFTWARE.
 #include "intfc.h"
 
 typedef struct deltasound deltasound;
+typedef struct dscdevice dscdevice;
 typedef struct dscb dscb;
 typedef struct idsc idsc;
 
 typedef struct dsc {
     allocator*          Allocator;
-    GUID                ID;
+    GUID                ID; // TODO CLSID
     deltasound*         Instance;
     intfc*              Interfaces;
 
     CRITICAL_SECTION    Lock;
 
+    dscdevice*          Device;
+
+    arr*                Buffers;
 } dsc;
 
 HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut);

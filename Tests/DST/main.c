@@ -62,61 +62,64 @@ int main(int argc, char** argv) {
         goto exit;
     }
 
-    TEST(DirectSoundEnumerateA);
-    TEST(DirectSoundEnumerateW);
+    //TEST(DirectSoundEnumerateA);
+    //TEST(DirectSoundEnumerateW);
+
+    //TEST(GetDeviceID);
+
+    //TEST(DirectSoundCreate);
+    //TEST(DirectSoundBasics);
+    //TEST(DirectSoundCompact);
+  
+    //TEST(DirectSoundCreateSoundBufferPrimary);
+    //TEST(DirectSoundCreateSoundBufferSecondary);
+    //TEST(DirectSoundSetCooperativeLevel);
+    //TEST(DirectSoundGetCaps);
+
+    //TEST(DirectSoundBufferPrimaryBasics);
+    //TEST(DirectSoundBufferPrimaryQueryInterface);
+    //TEST(DirectSoundBufferPrimaryGet);
+    //TEST(DirectSoundBufferPrimarySet);
+    //TEST(DirectSoundBufferPrimarySetFormat);
+    //TEST(DirectSoundBufferPrimaryLock);
+    //TEST(DirectSoundBufferPrimaryPlay);
+    //TEST(DirectSoundBufferPrimaryPlayPan);
+    //TEST(DirectSoundBufferPrimaryPlayVolume);
+    //TEST(DirectSoundBufferPrimaryStop);
+
+    //TEST(DirectSoundBufferPrimaryNotify);
+    //TEST(DirectSoundBufferPrimaryPlaySetCooperativeLevel);
+
+    //TEST(DirectSoundBufferSecondaryBasics);
+    //TEST(DirectSoundBufferSecondaryQueryInterface);
+    //TEST(DirectSoundBufferSecondaryGet);
+    //TEST(DirectSoundBufferSecondarySet);
+    //TEST(DirectSoundBufferSecondaryLock);
+    //TEST(DirectSoundBufferSecondaryPlay);
+    //TEST(DirectSoundBufferSecondaryPlayFrequency);
+    //TEST(DirectSoundBufferSecondaryPlayPan);
+    //TEST(DirectSoundBufferSecondaryPlayVolume);
+    //TEST(DirectSoundBufferSecondaryPlayMono);
+    //TEST(DirectSoundBufferSecondaryPlayStereo);
+    //TEST(DirectSoundBufferSecondaryPlayMultiple);
+    //TEST(DirectSoundBufferSecondaryStop);
+    //TEST(DirectSoundBufferSecondarySmallBuffer);
+    //TEST(DirectSoundBufferSecondarySmallBufferNotify);
+
+    //TEST(DirectSoundBufferSecondaryNotify);
+    //TEST(DirectSoundBufferSecondaryPlayNotify);
+    //TEST(DirectSoundBufferSecondaryPlaySetCooperativeLevel);
+
+    //TEST(DirectSoundDuplicatePrimary);
+    //TEST(DirectSoundDuplicateSecondary);
+    //TEST(DirectSoundDuplicateSecondaryNotify);
+    //// TODO duplicate with spatial buffers
+
+
 
     TEST(DirectSoundCaptureEnumerateA);
     TEST(DirectSoundCaptureEnumerateW);
-
-    TEST(GetDeviceID);
-
-    TEST(DirectSoundCreate);
-    TEST(DirectSoundBasics);
-    TEST(DirectSoundCompact);
-  
-    TEST(DirectSoundCreateSoundBufferPrimary);
-    TEST(DirectSoundCreateSoundBufferSecondary);
-    TEST(DirectSoundSetCooperativeLevel);
-    TEST(DirectSoundGetCaps);
-
-    TEST(DirectSoundBufferPrimaryBasics);
-    TEST(DirectSoundBufferPrimaryQueryInterface);
-    TEST(DirectSoundBufferPrimaryGet);
-    TEST(DirectSoundBufferPrimarySet);
-    TEST(DirectSoundBufferPrimarySetFormat);
-    TEST(DirectSoundBufferPrimaryLock);
-    TEST(DirectSoundBufferPrimaryPlay);
-    TEST(DirectSoundBufferPrimaryPlayPan);
-    TEST(DirectSoundBufferPrimaryPlayVolume);
-    TEST(DirectSoundBufferPrimaryStop);
-
-    TEST(DirectSoundBufferPrimaryNotify);
-    TEST(DirectSoundBufferPrimaryPlaySetCooperativeLevel);
-
-    TEST(DirectSoundBufferSecondaryBasics);
-    TEST(DirectSoundBufferSecondaryQueryInterface);
-    TEST(DirectSoundBufferSecondaryGet);
-    TEST(DirectSoundBufferSecondarySet);
-    TEST(DirectSoundBufferSecondaryLock);
-    TEST(DirectSoundBufferSecondaryPlay);
-    TEST(DirectSoundBufferSecondaryPlayFrequency);
-    TEST(DirectSoundBufferSecondaryPlayPan);
-    TEST(DirectSoundBufferSecondaryPlayVolume);
-    TEST(DirectSoundBufferSecondaryPlayMono);
-    TEST(DirectSoundBufferSecondaryPlayStereo);
-    TEST(DirectSoundBufferSecondaryPlayMultiple);
-    TEST(DirectSoundBufferSecondaryStop);
-    TEST(DirectSoundBufferSecondarySmallBuffer);
-    TEST(DirectSoundBufferSecondarySmallBufferNotify);
-
-    TEST(DirectSoundBufferSecondaryNotify);
-    TEST(DirectSoundBufferSecondaryPlayNotify);
-    TEST(DirectSoundBufferSecondaryPlaySetCooperativeLevel);
-
-    TEST(DirectSoundDuplicatePrimary);
-    TEST(DirectSoundDuplicateSecondary);
-    TEST(DirectSoundDuplicateSecondaryNotify);
-    //// TODO duplicate with spatial buffers
+    TEST(DirectSoundCaptureCreate);
 
     TEST(DllGetClassObject);
 

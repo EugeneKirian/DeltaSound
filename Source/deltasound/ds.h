@@ -37,7 +37,7 @@ typedef struct ids ids;
 
 typedef struct ds {
     allocator*          Allocator;
-    GUID                ID;
+    GUID                ID; // TODO CLSID
     deltasound*         Instance;
     intfc*              Interfaces;
 

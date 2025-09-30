@@ -40,11 +40,13 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(GUID)); // TODO CLSID
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
                 dsb* main = NULL;
+
+                // TODO CLSID
                 LPCGUID id = IsEqualIID(&IID_IDirectSound, riid)
                     ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
@@ -130,7 +132,7 @@ HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, LPVOID* ppOut) {
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
-        || IsEqualIID(&IID_IDirectSound, riid)
+        || IsEqualIID(&IID_IDirectSound, riid) // TODO CLSID
         || (IsEqualIID(&IID_IDirectSound8, &self->ID) && IsEqualIID(&IID_IDirectSound8, riid))) {
         if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ds_add_ref(self, instance))) {

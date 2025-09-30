@@ -24,8 +24,39 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "arena.h"
+#include "device_info.h"
+#include "mixer.h"
 
-BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b);
-BOOL TestDirectSoundCaptureEnumerateA(HMODULE a, HMODULE b);
-BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b);
+typedef struct dsc dsc;
+
+#define DSDEVICE_AUDIO_EVENT_INDEX      0
+#define DSDEVICE_CLOSE_EVENT_INDEX      1
+
+#define DSDEVICE_MAX_EVENT_COUNT        2
+
+typedef struct dscdevice {
+    allocator* Allocator;
+    dsc* Instance;
+    arena* Arena;
+    // mixer* Mixer; // TODO
+
+    device_info             Info;
+
+    IMMDevice*              Device;
+    // IAudioClient*           AudioClient; // TODO
+    //IAudioRenderClient*     AudioRenderer; // TODO
+
+    UINT32                  AudioClientBufferSize;  // In frames
+
+    PWAVEFORMATEXTENSIBLE   Format;
+
+    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
+
+    HANDLE                  Thread;
+    HANDLE                  ThreadEvent;
+} dscdevice;
+
+HRESULT DELTACALL dscdevice_create(allocator* pAlloc,
+    dsc* pDSC, DWORD dwType, device_info* pInfo, dscdevice** ppOut);
+VOID DELTACALL dscdevice_release(dscdevice* pDev);
