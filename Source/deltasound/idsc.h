@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include "allocator.h"
 
+#define DSCBCAPS_NONE   0
+
 typedef struct dsc dsc;
 typedef struct idsc_vft idsc_vft;
 typedef struct idscb idscb;

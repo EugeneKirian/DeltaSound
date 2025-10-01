@@ -191,7 +191,6 @@ HRESULT DELTACALL idscb_get_status(idscb* self, LPDWORD pdwStatus) {
     return dscb_get_status(self->Instance, pdwStatus);
 }
 
-
 HRESULT DELTACALL idscb_initialize(idscb* self, dsc* pDSC, LPCDSCBUFFERDESC pcDesc) {
     if (self == NULL) {
         return E_POINTER;

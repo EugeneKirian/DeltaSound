@@ -43,15 +43,11 @@ HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut) {
         CopyMemory(&instance->ID, riid, sizeof(GUID)); // TODO CLSID
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
-            if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
-                InitializeCriticalSection(&instance->Lock);
+            InitializeCriticalSection(&instance->Lock);
 
-                *ppOut = instance;
+            *ppOut = instance;
 
-                return S_OK;
-            }
-
-            intfc_release(instance->Interfaces);
+            return S_OK;
         }
 
         allocator_free(pAlloc, instance);
@@ -83,18 +79,9 @@ VOID DELTACALL dsc_release(dsc* self) {
 
     intfc_release(self->Interfaces);
 
-    {
-        const DWORD count = arr_get_count(self->Buffers);
-        for (DWORD i = count; i != 0; i--) {
-            dscb* instance = NULL;
-
-            if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instance))) {
-                dscb_release(instance);
-            }
-        }
+    if (self->Buffer != NULL) {
+        dscb_release(self->Buffer);
     }
-
-    arr_release(self->Buffers);
 
     if (self->Instance != NULL) {
         deltasound_remove_direct_sound_capture(self->Instance, self);
@@ -102,7 +89,6 @@ VOID DELTACALL dsc_release(dsc* self) {
 
     allocator_free(self->Allocator, self);
 }
-
 
 HRESULT DELTACALL dsc_query_interface(dsc* self, REFIID riid, LPVOID* ppOut) {
     HRESULT hr = E_NOINTERFACE;
@@ -154,31 +140,69 @@ HRESULT DELTACALL dsc_remove_ref(dsc* self, idsc* pIDSC) {
     return S_OK;
 }
 
-HRESULT DELTACALL dsc_create_capture_buffer(dsc* self, REFIID riid, LPCDSCBUFFERDESC pcDSCBufferDesc, dscb** ppOut) {
-    // TODO
-    return E_NOTIMPL;
-}
-
-HRESULT DELTACALL dsc_remove_capture_buffer(dsc* self, dscb* pDSCB) {
-    HRESULT hr = S_OK;
-    const DWORD count = arr_get_count(self->Buffers);
-
-    for (DWORD i = 0; i < count; i++) {
-        dscb* instance = NULL;
-
-        if (SUCCEEDED(hr = arr_get_item(self->Buffers, i, &instance))) {
-            if (instance == pDSCB) {
-                return arr_remove_item(self->Buffers, i, NULL);
-            }
-        }
+HRESULT DELTACALL dsc_create_capture_buffer(dsc* self, REFIID riid, LPCDSCBUFFERDESC pcDesc, dscb** ppOut) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
     }
+
+    if (self->Buffer != NULL) {
+        return DSERR_ALLOCATED;
+    }
+
+    HRESULT hr = S_OK;
+    dscb* instance = NULL;
+
+    EnterCriticalSection(&self->Lock);
+
+    if (SUCCEEDED(hr = dscb_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+        if (SUCCEEDED(hr = dscb_initialize(instance, self, pcDesc))) {
+            self->Buffer = instance;
+
+            *ppOut = instance;
+
+            goto exit;
+        }
+
+        dscb_release(instance);
+    }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
 
     return hr;
 }
 
+HRESULT DELTACALL dsc_remove_capture_buffer(dsc* self, dscb* pDSCB) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Buffer == NULL || self->Buffer != pDSCB) {
+        return DSERR_INVALIDCALL;
+    }
+
+    self->Buffer = NULL;
+
+    return S_OK;
+}
+
 HRESULT DELTACALL dsc_get_caps(dsc* self, LPDSCCAPS pDSCCaps) {
-    // TODO
-    return E_NOTIMPL;
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    pDSCCaps->dwFlags = DSCCAPS_MULTIPLECAPTURE;
+    pDSCCaps->dwFormats =
+        WAVE_FORMAT_96S16 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M08
+        | WAVE_FORMAT_48S16 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M08
+        | WAVE_FORMAT_44S16 | WAVE_FORMAT_44M16 | WAVE_FORMAT_44S08 | WAVE_FORMAT_44M08
+        | WAVE_FORMAT_4S16 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M08
+        | WAVE_FORMAT_2S16 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M08
+        | WAVE_FORMAT_1S16 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M08;
+    pDSCCaps->dwChannels = 2;
+
+    return S_OK;
 }
 
 HRESULT DELTACALL dsc_initialize(dsc* self, LPCGUID pcGuidDevice) {

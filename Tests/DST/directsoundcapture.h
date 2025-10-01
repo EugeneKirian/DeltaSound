@@ -28,5 +28,7 @@ SOFTWARE.
 
 BOOL TestDirectSoundCaptureBasics(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCaptureCreateCaptureBuffer(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCaptureEnumerateA(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCaptureEnumerateW(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCaptureGetCaps(HMODULE a, HMODULE b);

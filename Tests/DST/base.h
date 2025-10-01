@@ -58,7 +58,13 @@ HRESULT InitializeWaveFormat(LPWAVEFORMATEX pwfxFormat, DWORD dwChannels, DWORD 
 HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC pDSBD,
     DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat);
 
+HRESULT InitializeDirectSoundCaptureBufferDesc(LPDSCBUFFERDESC pDSBD,
+    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat);
+
 HRESULT InitializeDirectSoundBufferCaps(LPDSBCAPS pDSBC, DWORD dwFlags, DWORD dwBufferBytes);
+HRESULT InitializeDirectSoundCaptureBufferCaps(LPDSCBCAPS pDSBC, DWORD dwFlags, DWORD dwBufferBytes);
 
 HRESULT CompareDirectSoundBufferFormat(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUFFER pDSBB);
 HRESULT CompareDirectSoundBufferCaps(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUFFER pDSBB);
+
+HRESULT CompareDirectSoundCaptureBufferCaps(LPDIRECTSOUNDCAPTUREBUFFER pDSBA, LPDIRECTSOUNDCAPTUREBUFFER pDSBB);

@@ -50,7 +50,7 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
 
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX) /* TODO */, &instance->Format))) {
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEXTENSIBLE), &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
                 InitializeCriticalSection(&instance->Lock);
 
@@ -193,6 +193,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSoundBuffer, riid)
+        // TODO CLSID
         || (IsEqualIID(&IID_IDirectSoundBuffer8, &self->ID) && IsEqualIID(&IID_IDirectSoundBuffer8, riid))) {
         idsb* instance = NULL;
 
@@ -445,7 +446,7 @@ HRESULT DELTACALL dsb_initialize(dsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc) {
     }
     else {
         self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
-        CopyMemory(self->Format, pcDesc->lpwfxFormat, sizeof(WAVEFORMATEX)); // TODO support larger structs
+        CopyMemory(self->Format, pcDesc->lpwfxFormat, SIZEOFFORMAT(pcDesc->lpwfxFormat));
     }
 
     if (pcDesc->dwSize == sizeof(DSBUFFERDESC)) {

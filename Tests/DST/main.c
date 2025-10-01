@@ -120,8 +120,8 @@ int main(int argc, char** argv) {
     TEST(DirectSoundCaptureCreate);
     TEST(DirectSoundCaptureBasics);
 
-    // TODO TEST(DirectSoundCaptureCreateSoundBuffer);
-    // TODO TEST(DirectSoundCaptureGetCaps);
+    TEST(DirectSoundCaptureCreateCaptureBuffer);
+    TEST(DirectSoundCaptureGetCaps);
 
     TEST(DllGetClassObject);
     // TODO Test DirectSound object

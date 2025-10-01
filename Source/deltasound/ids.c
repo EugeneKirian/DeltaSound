@@ -204,6 +204,8 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         }
     }
 
+    // pUnkOuter
+
     if (pUnkOuter != NULL) {
         return DSERR_NOAGGREGATION;
     }

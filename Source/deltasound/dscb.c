@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "dsc.h"
 #include "dscb.h"
+#include "wave.h"
 
 HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
@@ -38,7 +39,7 @@ HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut) {
 
         CopyMemory(&instance->ID, riid, sizeof(GUID));
 
-        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEX) /* TODO */, &instance->Format))) {
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEXTENSIBLE), &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
                 InitializeCriticalSection(&instance->Lock);
 
@@ -61,8 +62,8 @@ HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut) {
 VOID DELTACALL dscb_release(dscb* self) {
     if (self == NULL) { return; }
 
-    // TODO self->Play = DSBPLAY_NONE;
-    // TODO self->Status = DSBSTATUS_NONE;
+    self->Start = DSCBSTART_NONE;
+    self->Status = DSCBSTATUS_NONE;
 
     DeleteCriticalSection(&self->Lock);
 
@@ -91,8 +92,46 @@ VOID DELTACALL dscb_release(dscb* self) {
 }
 
 HRESULT DELTACALL dscb_query_interface(dscb* self, REFIID riid, LPVOID* ppOut) {
-    // TODO
-    return E_NOTIMPL;
+    HRESULT hr = E_NOINTERFACE;
+
+    EnterCriticalSection(&self->Lock);
+
+    {
+        idscb* instance = NULL;
+
+        if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
+            idscb_add_ref(instance);
+
+            *ppOut = instance;
+
+            goto exit;
+        }
+    }
+
+    if (IsEqualIID(&IID_IUnknown, riid)
+        || IsEqualIID(&IID_IDirectSoundCaptureBuffer, riid)
+        // TODO CLSID
+        || (IsEqualIID(&IID_IDirectSoundCaptureBuffer8, &self->ID) && IsEqualIID(&IID_IDirectSoundCaptureBuffer8, riid))) {
+        idscb* instance = NULL;
+
+        if (SUCCEEDED(hr = idscb_create(self->Allocator, riid, &instance))) {
+            if (SUCCEEDED(hr = dscb_add_ref(self, instance))) {
+                instance->Instance = self;
+
+                *ppOut = instance;
+
+                goto exit;
+            }
+
+            idscb_release(instance);
+        }
+    }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
 }
 
 HRESULT DELTACALL dscb_add_ref(dscb* self, idscb* pIDSCB) {
@@ -109,8 +148,14 @@ HRESULT DELTACALL dscb_remove_ref(dscb* self, idscb* pIDSCB) {
     return S_OK;
 }
 
-HRESULT DELTACALL dscb_get_caps(dscb* self, LPDSCBCAPS pDSCBCaps) {
-    return E_NOTIMPL;
+HRESULT DELTACALL dscb_get_caps(dscb* self, LPDSCBCAPS pCaps) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    CopyMemory(pCaps, &self->Caps, sizeof(DSCBCAPS));
+
+    return S_OK;
 }
 
 HRESULT DELTACALL dscb_get_current_position(dscb* self, LPDWORD pdwCapturePosition, LPDWORD pdwReadPosition) {
@@ -125,8 +170,24 @@ HRESULT DELTACALL dscb_get_status(dscb* self, LPDWORD pdwStatus) {
     return E_NOTIMPL;
 }
 
-HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDirectSoundCapture, LPCDSCBUFFERDESC pcDSCBufferDesc) {
-    return E_NOTIMPL;
+HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDSC, LPCDSCBUFFERDESC pcDesc) {
+    if (self->Instance != NULL) {
+        return DSERR_ALREADYINITIALIZED;
+    }
+
+    self->Instance = pDSC;
+
+    self->Caps.dwFlags = pcDesc->dwFlags;
+
+    // TODO Set DSCBCAPS_WAVEMAPPED caps when the format is not one of the standard ones?
+
+    self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
+    CopyMemory(self->Format, pcDesc->lpwfxFormat, SIZEOFFORMAT(pcDesc->lpwfxFormat));
+
+    // TODO NOT IMPLEMENTED
+    //return dscbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
+
+    return S_OK;
 }
 
 HRESULT DELTACALL dscb_lock(dscb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {

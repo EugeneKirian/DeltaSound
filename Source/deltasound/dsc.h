@@ -24,7 +24,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "arr.h"
 #include "intfc.h"
 
 typedef struct deltasound deltasound;
@@ -42,7 +41,7 @@ typedef struct dsc {
 
     dscdevice*          Device;
 
-    arr*                Buffers;
+    dscb*               Buffer;
 } dsc;
 
 HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut);
@@ -52,7 +51,7 @@ HRESULT DELTACALL dsc_query_interface(dsc* pDSC, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dsc_add_ref(dsc* pDSC, idsc* pIDSC);
 HRESULT DELTACALL dsc_remove_ref(dsc* pDSC, idsc* pIDSC);
 
-HRESULT DELTACALL dsc_create_capture_buffer(dsc* pDSC, REFIID riid, LPCDSCBUFFERDESC pcDSCBufferDesc, dscb** ppOut);
+HRESULT DELTACALL dsc_create_capture_buffer(dsc* pDSC, REFIID riid, LPCDSCBUFFERDESC pcDesc, dscb** ppOut);
 HRESULT DELTACALL dsc_remove_capture_buffer(dsc* pDSC, dscb* pDSCB);
 
 HRESULT DELTACALL dsc_get_caps(dsc* pDSC, LPDSCCAPS pDSCCaps);

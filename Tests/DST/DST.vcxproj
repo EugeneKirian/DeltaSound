@@ -149,6 +149,8 @@
     <ClCompile Include="directsoundbuffer_secondary_small_buffer_notify.c" />
     <ClCompile Include="directsoundcapture_basics.c" />
     <ClCompile Include="directsoundcapture_create.c" />
+    <ClCompile Include="directsoundcapture_createcapturebuffer.c" />
+    <ClCompile Include="directsoundcapture_getcaps.c" />
     <ClCompile Include="directsound_basics.c" />
     <ClCompile Include="directsound_compact.c" />
     <ClCompile Include="directsound_create.c" />

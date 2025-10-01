@@ -26,6 +26,7 @@ SOFTWARE.
 #include "idscb.h"
 #include "dsc.h"
 #include "dscb.h"
+#include "wave.h"
 
 HRESULT DELTACALL idsc_create_capture_buffer(idsc* self, LPCDSCBUFFERDESC pDSCBufferDesc, idscb** ppDSCBuffer, LPUNKNOWN pUnkOuter);
 HRESULT DELTACALL idsc_get_caps(idsc* self, LPDSCCAPS pDSCCaps);
@@ -121,60 +122,74 @@ ULONG DELTACALL idsc_remove_ref(idsc* self) {
 }
 
 HRESULT DELTACALL idsc_create_capture_buffer(idsc* self,
-    LPCDSCBUFFERDESC pDSCBufferDesc, idscb** ppDSCBuffer, LPUNKNOWN pUnkOuter) {
+    LPCDSCBUFFERDESC pcDesc, idscb** ppDSCBuffer, LPUNKNOWN pUnkOuter) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pDSCBufferDesc == NULL || ppDSCBuffer == NULL) {
+    if (pcDesc == NULL || ppDSCBuffer == NULL) {
         return E_INVALIDARG;
     }
 
     // dwSize
 
-    if (pDSCBufferDesc->dwSize != sizeof(dscb_desc_min)
-        && pDSCBufferDesc->dwSize != sizeof(dscb_desc_max)) {
+    if (pcDesc->dwSize != sizeof(dscb_desc_min)
+        && pcDesc->dwSize != sizeof(dscb_desc_max)) {
         return E_INVALIDARG;
     }
 
     // dwFlags
 
-    // TODO
+    if (pcDesc->dwFlags != DSCBCAPS_NONE
+        && pcDesc->dwFlags != DSCBCAPS_WAVEMAPPED) {
+        return E_INVALIDARG;
+    }
 
     // dwBufferBytes
 
-    // TODO
+    if (pcDesc->dwBufferBytes < DSBSIZE_MIN || pcDesc->dwBufferBytes > DSBSIZE_MAX) {
+        return E_INVALIDARG;
+    }
 
     // dwReserved
 
-    // TODO
-
-    if (pDSCBufferDesc->dwReserved != 0) {
+    if (pcDesc->dwReserved != 0) {
         return E_INVALIDARG;
     }
 
     // lpwfxFormat
 
-    // TODO
-
-    if (pDSCBufferDesc->dwSize == sizeof(dscb_desc_max)) {
-        // dwFXCount
-
-        // TODO
-
-        // lpDSCFXDesc
-
-        // TODO
+    if (pcDesc->lpwfxFormat == NULL) {
+        return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
+
+    if (FAILED(hr = wave_format_is_valid(pcDesc->lpwfxFormat, TRUE))) {
+        return hr;
+    }
+
+    if (pcDesc->dwSize == sizeof(dscb_desc_max)) {
+        // TODO NOT IMPLEMENTED
+
+        // dwFXCount
+
+        // lpDSCFXDesc
+    }
+
+    // pUnkOuter
+
+    if (pUnkOuter != NULL) {
+        return DSERR_NOAGGREGATION;
+    }
+
     dscb* instance = NULL;
 
     // TODO CLSID
     REFIID id = IsEqualIID(&self->ID, &IID_IDirectSoundCapture)
-        ? &IID_IDirectSoundCapture : &IID_IDirectSoundCapture8;
+        ? &IID_IDirectSoundCaptureBuffer : &IID_IDirectSoundCaptureBuffer8;
 
-    if (SUCCEEDED(hr = dsc_create_capture_buffer(self->Instance, id, pDSCBufferDesc, &instance))) {
+    if (SUCCEEDED(hr = dsc_create_capture_buffer(self->Instance, id, pcDesc, &instance))) {
         hr = dscb_query_interface(instance, id, ppDSCBuffer);
     }
 
