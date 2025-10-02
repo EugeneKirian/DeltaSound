@@ -52,6 +52,7 @@ typedef IReferenceClock* LPREFERENCECLOCK;
 
 LPDIRECTSOUNDCREATE GetDirectSoundCreate(HMODULE module);
 LPDIRECTSOUNDCAPTURECREATE GetDirectSoundCaptureCreate(HMODULE module);
+LPFNGETCLASSOBJECT GetDllGetClassObject(HMODULE module);
 
 HRESULT InitializeWaveFormat(LPWAVEFORMATEX pwfxFormat, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits);
 

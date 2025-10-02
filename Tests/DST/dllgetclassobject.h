@@ -27,3 +27,4 @@ SOFTWARE.
 #include "base.h"
 
 BOOL TestDllGetClassObject(HMODULE a, HMODULE b);
+BOOL TestDllGetClassObjectDirectSound(HMODULE a, HMODULE b);

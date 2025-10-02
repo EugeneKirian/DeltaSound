@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundCaptureGetCaps);
 
     TEST(DllGetClassObject);
-    // TODO Test DirectSound object
+    TEST(DllGetClassObjectDirectSound);
     // TODO Test DirectSoundCapture object
 
 exit:
