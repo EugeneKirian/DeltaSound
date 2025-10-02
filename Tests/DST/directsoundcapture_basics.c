@@ -177,6 +177,9 @@ static BOOL TestDirectSoundCaptureQueryInterface(LPDIRECTSOUNDCAPTURE a, LPDIREC
         if (a != dsca || b != dscb) {
             return FALSE;
         }
+
+        IDirectSoundCapture_Release(dsca);
+        IDirectSoundCapture_Release(dscb);
     }
 
     {
@@ -367,7 +370,7 @@ static BOOL TestDirectSoundCaptureQueryInterface(LPDIRECTSOUNDCAPTURE a, LPDIREC
     }
 
     {
-        LPREFERENCECLOCK ca = NULL, cb = NULL;
+        LPUNKNOWN ca = NULL, cb = NULL;
 
         const HRESULT ra = IDirectSoundCapture_QueryInterface(a, &IID_IDirectSoundPrivate, &ca);
         const HRESULT rb = IDirectSoundCapture_QueryInterface(b, &IID_IDirectSoundPrivate, &cb);

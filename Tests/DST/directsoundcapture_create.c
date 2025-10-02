@@ -149,6 +149,29 @@ static BOOL TestDirectSoundCaptureCreateNullDevice(LPDIRECTSOUNDCAPTURECREATE a,
     return TRUE;
 }
 
+static BOOL TestDirectSoundCaptureCreateInputDevices(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    for (UINT i = 0; i < MAX_INPUTDEVICE_COUNT; i++) {
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
+
+        const HRESULT ra = a(input_device_tests[i], &dsa, NULL);
+        const HRESULT rb = b(input_device_tests[i], &dsb, NULL);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+
+        if (dsa != NULL || dsb != NULL) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 static BOOL TestDirectSoundCaptureCreateOutputDevices(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -170,29 +193,6 @@ static BOOL TestDirectSoundCaptureCreateOutputDevices(LPDIRECTSOUNDCAPTURECREATE
 
         RELEASE(dsa);
         RELEASE(dsb);
-    }
-
-    return TRUE;
-}
-
-static BOOL TestDirectSoundCaptureCreateInputDevices(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
-    if (a == NULL || b == NULL) {
-        return FALSE;
-    }
-
-    for (UINT i = 0; i < MAX_INPUTDEVICE_COUNT; i++) {
-        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
-
-        const HRESULT ra = a(input_device_tests[i], &dsa, NULL);
-        const HRESULT rb = b(input_device_tests[i], &dsb, NULL);
-
-        if (ra != rb) {
-            return FALSE;
-        }
-
-        if (dsa != NULL || dsb != NULL) {
-            return FALSE;
-        }
     }
 
     return TRUE;
@@ -220,13 +220,13 @@ BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    // Predefined output devices
-    if (!TestDirectSoundCaptureCreateOutputDevices(dsca, dscb)) {
+    // Predefined input devices
+    if (!TestDirectSoundCaptureCreateInputDevices(dsca, dscb)) {
         return FALSE;
     }
 
-    // Predefined input devices
-    if (!TestDirectSoundCaptureCreateInputDevices(dsca, dscb)) {
+    // Predefined output devices
+    if (!TestDirectSoundCaptureCreateOutputDevices(dsca, dscb)) {
         return FALSE;
     }
 
