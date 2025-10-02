@@ -127,8 +127,8 @@ BOOL TestDllGetClassObject(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    LPFNGETCLASSOBJECT gcoa = (LPFNGETCLASSOBJECT)GetProcAddress(a, "DllGetClassObject");
-    LPFNGETCLASSOBJECT gcob = (LPFNGETCLASSOBJECT)GetProcAddress(b, "DllGetClassObject");
+    LPFNGETCLASSOBJECT gcoa = GetDllGetClassObject(a);
+    LPFNGETCLASSOBJECT gcob = GetDllGetClassObject(b);
 
     if (gcoa == NULL || gcob == NULL) {
         return FALSE;

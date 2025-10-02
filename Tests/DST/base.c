@@ -48,6 +48,14 @@ LPDIRECTSOUNDCAPTURECREATE GetDirectSoundCaptureCreate(HMODULE module) {
     return (LPDIRECTSOUNDCAPTURECREATE)GetProcAddress(module, "DirectSoundCaptureCreate");
 }
 
+LPFNGETCLASSOBJECT GetDllGetClassObject(HMODULE module) {
+    if (module == NULL) {
+        return NULL;
+    }
+
+    return (LPFNGETCLASSOBJECT)GetProcAddress(module, "DllGetClassObject");
+}
+
 HRESULT InitializeWaveFormat(LPWAVEFORMATEX self, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits) {
     if (self == NULL) {
         return E_POINTER;

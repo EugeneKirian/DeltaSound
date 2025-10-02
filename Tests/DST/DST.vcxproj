@@ -191,6 +191,7 @@
     <ClCompile Include="directsoundbuffer_secondary_stop.c" />
     <ClCompile Include="directsoundcapture_enumerate.c" />
     <ClCompile Include="dllgetclassobject.c" />
+    <ClCompile Include="dllgetclassobject_directsound.c" />
     <ClCompile Include="getdeviceid.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="misc.c" />
