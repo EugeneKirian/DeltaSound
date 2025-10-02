@@ -192,6 +192,7 @@
     <ClCompile Include="directsoundcapture_enumerate.c" />
     <ClCompile Include="dllgetclassobject.c" />
     <ClCompile Include="dllgetclassobject_directsound.c" />
+    <ClCompile Include="dllgetclassobject_directsoundcapture.c" />
     <ClCompile Include="getdeviceid.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="misc.c" />
