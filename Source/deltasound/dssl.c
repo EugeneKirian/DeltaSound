@@ -36,7 +36,7 @@ HRESULT DELTACALL dssl_create(allocator* pAlloc, REFIID riid, dssl** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssl), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             InitializeCriticalSection(&instance->Lock);

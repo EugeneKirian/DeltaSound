@@ -151,7 +151,7 @@ HRESULT DELTACALL intfc_add_item(intfc* self, REFIID riid, LPVOID pItem) {
         }
     }
 
-    CopyMemory(&self->Items[self->Count].ID, riid, sizeof(GUID));
+    CopyMemory(&self->Items[self->Count].ID, riid, sizeof(IID));
     self->Items[self->Count].Item = pItem;
 
     self->Count++;

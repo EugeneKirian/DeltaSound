@@ -85,7 +85,7 @@ HRESULT WINAPI DirectSoundCreate(LPCGUID pcGuidDevice, LPDIRECTSOUND* ppDS, LPUN
     LPDIRECTSOUND instance = NULL;
 
     if (SUCCEEDED(hr = deltasound_create_direct_sound(delta,
-        &IID_IDirectSound /* TODO CLSID */, pcGuidDevice, &instance))) {
+        &CLSID_DirectSound, pcGuidDevice, &instance))) {
         *ppDS = instance;
     }
 
@@ -131,7 +131,7 @@ HRESULT WINAPI DirectSoundCaptureCreate(LPCGUID pcGuidDevice, LPDIRECTSOUNDCAPTU
     LPDIRECTSOUNDCAPTURE instance = NULL;
 
     if (SUCCEEDED(hr = deltasound_create_direct_sound_capture(delta,
-        &IID_IDirectSoundCapture /* TODO CLSID */, pcGuidDevice, &instance))) {
+        &CLSID_DirectSoundCapture, pcGuidDevice, &instance))) {
         *ppDSC = instance;
     }
 
@@ -165,13 +165,43 @@ HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW pDSEnumCallback, L
 }
 
 HRESULT WINAPI DirectSoundCreate8(LPCGUID pcGuidDevice, LPDIRECTSOUND8* ppDS8, LPUNKNOWN pUnkOuter) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (ppDS8 == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (pUnkOuter != NULL) {
+        return DSERR_NOAGGREGATION;
+    }
+
+    HRESULT hr = S_OK;
+    LPDIRECTSOUND8 instance = NULL;
+
+    if (SUCCEEDED(hr = deltasound_create_direct_sound(delta,
+        &CLSID_DirectSound8, pcGuidDevice, &instance))) {
+        *ppDS8 = instance;
+    }
+
+    return hr;
 }
 
 HRESULT WINAPI DirectSoundCaptureCreate8(LPCGUID pcGuidDevice, LPDIRECTSOUNDCAPTURE8* ppDSC8, LPUNKNOWN pUnkOuter) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (ppDSC8 == NULL) {
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (pUnkOuter != NULL) {
+        return DSERR_NOAGGREGATION;
+    }
+
+    HRESULT hr = S_OK;
+    LPDIRECTSOUNDCAPTURE8 instance = NULL;
+
+    if (SUCCEEDED(hr = deltasound_create_direct_sound_capture(delta,
+        &CLSID_DirectSoundCapture8, pcGuidDevice, &instance))) {
+        *ppDSC8 = instance;
+    }
+
+    return hr;
 }
 
 HRESULT WINAPI DirectSoundFullDuplexCreate(

@@ -108,12 +108,17 @@ VOID DELTACALL deltasound_release(deltasound* self) {
 }
 
 HRESULT DELTACALL deltasound_create_direct_sound(deltasound* self,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut) {
+    REFCLSID rclsid, LPCGUID pcGuidDevice, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppOut == NULL) {
+    if (rclsid == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (!IsEqualCLSID(&CLSID_DirectSound, rclsid)
+        && !IsEqualCLSID(&CLSID_DirectSound8, rclsid)) {
         return E_INVALIDARG;
     }
 
@@ -122,11 +127,14 @@ HRESULT DELTACALL deltasound_create_direct_sound(deltasound* self,
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = ds_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+    if (SUCCEEDED(hr = ds_create(self->Allocator, rclsid, &instance))) {
         instance->Instance = self;
 
         if (SUCCEEDED(hr = ds_initialize(instance, pcGuidDevice))) {
             ids* intfc = NULL;
+
+            REFIID riid = IsEqualCLSID(&CLSID_DirectSound, rclsid)
+                ? &IID_IDirectSound : &IID_IDirectSound8;
 
             if (SUCCEEDED(hr = ds_query_interface(instance, riid, &intfc))) {
                 if (SUCCEEDED(hr = arr_add_item(self->Renderers, instance))) {
@@ -182,12 +190,17 @@ exit:
 }
 
 HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* self,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut) {
+    REFCLSID rclsid, LPCGUID pcGuidDevice, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppOut == NULL) {
+    if (rclsid == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (!IsEqualCLSID(&CLSID_DirectSoundCapture, rclsid)
+        && !IsEqualCLSID(&CLSID_DirectSoundCapture8, rclsid)) {
         return E_INVALIDARG;
     }
 
@@ -196,13 +209,13 @@ HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* self,
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dsc_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+    if (SUCCEEDED(hr = dsc_create(self->Allocator, rclsid, &instance))) {
         instance->Instance = self;
 
         if (SUCCEEDED(hr = dsc_initialize(instance, pcGuidDevice))) {
             ids* intfc = NULL;
 
-            if (SUCCEEDED(hr = dsc_query_interface(instance, riid, &intfc))) {
+            if (SUCCEEDED(hr = dsc_query_interface(instance, &IID_IDirectSoundCapture, &intfc))) {
                 if (SUCCEEDED(hr = arr_add_item(self->Capturers, instance))) {
 
                     *ppOut = intfc;

@@ -32,7 +32,7 @@ typedef struct ksp ksp;
 typedef struct iksp {
     const iksp_vft* Self;
     allocator*      Allocator;
-    GUID            ID;
+    IID             ID;
     LONG            RefCount;
     ksp*            Instance;
 } iksp;

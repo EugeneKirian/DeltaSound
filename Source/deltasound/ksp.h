@@ -31,7 +31,7 @@ typedef struct intfc intfc;
 
 typedef struct ksp {
     allocator*          Allocator;
-    GUID                ID;
+    IID                 ID;
     dsb*                Instance;
     intfc*              Interfaces;
 

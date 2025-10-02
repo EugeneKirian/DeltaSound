@@ -31,7 +31,7 @@ typedef struct dsb dsb;
 
 typedef struct dssb {
     allocator*          Allocator;
-    GUID                ID;
+    IID                 ID;
     dsb*                Instance;
     intfc*              Interfaces;
 

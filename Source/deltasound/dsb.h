@@ -48,7 +48,7 @@ typedef struct dssb dssb;
 
 typedef struct dsb {
     allocator*          Allocator;
-    GUID                ID;
+    IID                 ID;
     ds*                 Instance;
     intfc*              Interfaces;
     ksp*                PropertySet;

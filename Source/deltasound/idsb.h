@@ -46,7 +46,7 @@ typedef struct idsb_vft idsb_vft;
 typedef struct idsb {
     const idsb_vft* Self;
     allocator*      Allocator;
-    GUID            ID;
+    IID             ID;
     LONG            RefCount;
     dsb*            Instance;
 } idsb;
