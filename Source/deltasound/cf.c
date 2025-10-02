@@ -38,7 +38,7 @@ HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(cf), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, rclsid, sizeof(GUID));
+        CopyMemory(&instance->ID, rclsid, sizeof(CLSID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             InitializeCriticalSection(&instance->Lock);
@@ -123,10 +123,11 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
 
     EnterCriticalSection(&self->Lock);
 
-    if (IsEqualCLSID(&self->ID, &CLSID_DirectSound)) {
+    if (IsEqualCLSID(&CLSID_DirectSound, &self->ID)
+        || IsEqualCLSID(&CLSID_DirectSound8, &self->ID)) {
         ds* instance = NULL;
 
-        if (SUCCEEDED(hr = ds_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+        if (SUCCEEDED(hr = ds_create(self->Allocator, &self->ID, &instance))) {
             instance->Instance = self->Instance;
 
             ids* intfc = NULL;
@@ -143,13 +144,11 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
             ds_release(instance);
         }
     }
-    else if (IsEqualCLSID(&self->ID, &CLSID_DirectSound8)) {
-        // TODO
-    }
-    else if (IsEqualCLSID(&self->ID, &CLSID_DirectSoundCapture)) {
+    else if (IsEqualCLSID(&CLSID_DirectSoundCapture, &self->ID)
+        || IsEqualCLSID(&CLSID_DirectSoundCapture8, &self->ID)) {
         dsc* instance = NULL;
 
-        if (SUCCEEDED(hr = dsc_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+        if (SUCCEEDED(hr = dsc_create(self->Allocator, &self->ID, &instance))) {
             instance->Instance = self->Instance;
 
             ids* intfc = NULL;
@@ -166,13 +165,13 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
             dsc_release(instance);
         }
     }
-    else if (IsEqualCLSID(&self->ID, &CLSID_DirectSoundCapture8)) {
+    else if (IsEqualCLSID(&CLSID_DirectSoundCapture8, &self->ID)) {
         // TODO
     }
-    else if (IsEqualCLSID(&self->ID, &CLSID_DirectSoundFullDuplex)) {
+    else if (IsEqualCLSID(&CLSID_DirectSoundFullDuplex, &self->ID)) {
         // TODO
     }
-    else if (IsEqualCLSID(&self->ID, &CLSID_DirectSoundPrivate)) {
+    else if (IsEqualCLSID(&CLSID_DirectSoundPrivate, &self->ID)) {
         // TODO
     }
 

@@ -29,8 +29,8 @@ SOFTWARE.
 #include "dsdevice.h"
 #include "ids.h"
 
-HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
-    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
+HRESULT DELTACALL ds_create(allocator* pAlloc, REFCLSID rclsid, ds** ppOut) {
+    if (pAlloc == NULL || rclsid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
@@ -40,17 +40,16 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, riid, sizeof(GUID)); // TODO CLSID
+        CopyMemory(&instance->ID, rclsid, sizeof(CLSID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
                 dsb* main = NULL;
 
-                // TODO CLSID
-                LPCGUID id = IsEqualIID(&IID_IDirectSound, riid)
+                REFIID riid = IsEqualCLSID(&CLSID_DirectSound, rclsid)
                     ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
-                if (SUCCEEDED(hr = dsb_create(pAlloc, id, &main))) {
+                if (SUCCEEDED(hr = dsb_create(pAlloc, riid, &main))) {
                     InitializeCriticalSection(&instance->Lock);
 
                     instance->Main = main;
@@ -132,8 +131,8 @@ HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, LPVOID* ppOut) {
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
-        || IsEqualIID(&IID_IDirectSound, riid) // TODO CLSID
-        || (IsEqualIID(&IID_IDirectSound8, &self->ID) && IsEqualIID(&IID_IDirectSound8, riid))) {
+        || (IsEqualCLSID(&CLSID_DirectSound, &self->ID) && IsEqualIID(&IID_IDirectSound, riid))
+        || (IsEqualCLSID(&CLSID_DirectSound8, &self->ID) && IsEqualIID(&IID_IDirectSound8, riid))) {
         if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ds_add_ref(self, instance))) {
                 instance->Instance = self;
@@ -183,12 +182,17 @@ HRESULT DELTACALL ds_create_sound_buffer(ds* self, REFIID riid, LPCDSBUFFERDESC 
         return S_OK;
     }
 
+    if ((IsEqualCLSID(&CLSID_DirectSound, &self->ID) && !IsEqualIID(&IID_IDirectSoundBuffer, riid))
+        || (IsEqualCLSID(&CLSID_DirectSound8, &self->ID) && !IsEqualIID(&IID_IDirectSoundBuffer8, riid))) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dsb* instance = NULL;
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dsb_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+    if (SUCCEEDED(hr = dsb_create(self->Allocator, riid, &instance))) {
         if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
             if (SUCCEEDED(hr = arr_add_item(self->Buffers, instance))) {
 

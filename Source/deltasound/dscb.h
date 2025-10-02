@@ -34,7 +34,7 @@ typedef struct dsc dsc;
 
 typedef struct dscb {
     allocator*          Allocator;
-    GUID                ID;
+    IID                 ID;
     dsc*                Instance;
     intfc*              Interfaces;
     // TODO Notifications

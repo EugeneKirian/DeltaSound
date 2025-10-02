@@ -64,7 +64,7 @@ HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
         instance->Allocator = pAlloc;
 
         instance->Self = &iksp_self;
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
         *ppOut = instance;

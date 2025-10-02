@@ -62,7 +62,7 @@ HRESULT DELTACALL idsc_create(allocator* pAlloc, REFIID riid, idsc** ppOut) {
         instance->Allocator = pAlloc;
 
         instance->Self = &idsc_self;
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
         *ppOut = instance;
@@ -185,12 +185,11 @@ HRESULT DELTACALL idsc_create_capture_buffer(idsc* self,
 
     dscb* instance = NULL;
 
-    // TODO CLSID
-    REFIID id = IsEqualIID(&self->ID, &IID_IDirectSoundCapture)
+    REFIID riid = IsEqualIID(&IID_IDirectSoundCapture, &self->ID)
         ? &IID_IDirectSoundCaptureBuffer : &IID_IDirectSoundCaptureBuffer8;
 
-    if (SUCCEEDED(hr = dsc_create_capture_buffer(self->Instance, id, pcDesc, &instance))) {
-        hr = dscb_query_interface(instance, id, ppDSCBuffer);
+    if (SUCCEEDED(hr = dsc_create_capture_buffer(self->Instance, riid, pcDesc, &instance))) {
+        hr = dscb_query_interface(instance, riid, ppDSCBuffer);
     }
 
     return hr;

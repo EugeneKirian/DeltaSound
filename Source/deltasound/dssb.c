@@ -36,7 +36,7 @@ HRESULT DELTACALL dssb_create(allocator* pAlloc, REFIID riid, dssb** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dssb), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             InitializeCriticalSection(&instance->Lock);

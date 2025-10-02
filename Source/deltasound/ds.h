@@ -37,7 +37,7 @@ typedef struct ids ids;
 
 typedef struct ds {
     allocator*          Allocator;
-    GUID                ID; // TODO CLSID
+    CLSID               ID;
     deltasound*         Instance;
     intfc*              Interfaces;
 
@@ -51,7 +51,7 @@ typedef struct ds {
     arr*                Buffers;    // Secondary Buffers
 } ds;
 
-HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut);
+HRESULT DELTACALL ds_create(allocator* pAlloc, REFCLSID rclsid, ds** ppOut);
 VOID DELTACALL ds_release(ds* pDS);
 
 HRESULT DELTACALL ds_query_interface(ds* pDS, REFIID riid, LPVOID* ppOut);

@@ -56,7 +56,7 @@ HRESULT DELTACALL icf_create(allocator* pAlloc, REFIID riid, icf** ppOut) {
         instance->Allocator = pAlloc;
 
         instance->Self = &icf_self;
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
         *ppOut = instance;

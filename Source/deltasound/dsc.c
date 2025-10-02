@@ -29,8 +29,8 @@ SOFTWARE.
 #include "dscdevice.h"
 #include "idsc.h"
 
-HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut) {
-    if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
+HRESULT DELTACALL dsc_create(allocator* pAlloc, REFCLSID rclsid, dsc** ppOut) {
+    if (pAlloc == NULL || rclsid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
@@ -40,7 +40,7 @@ HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsc), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, riid, sizeof(GUID)); // TODO CLSID
+        CopyMemory(&instance->ID, rclsid, sizeof(CLSID));
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             InitializeCriticalSection(&instance->Lock);
@@ -105,7 +105,7 @@ HRESULT DELTACALL dsc_query_interface(dsc* self, REFIID riid, LPVOID* ppOut) {
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
-        || IsEqualIID(&IID_IDirectSoundCapture, riid)) { // TODO CLSID
+        || IsEqualIID(&IID_IDirectSoundCapture, riid)) {
         if (SUCCEEDED(hr = idsc_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = dsc_add_ref(self, instance))) {
                 instance->Instance = self;
@@ -149,12 +149,17 @@ HRESULT DELTACALL dsc_create_capture_buffer(dsc* self, REFIID riid, LPCDSCBUFFER
         return DSERR_ALLOCATED;
     }
 
+    if ((IsEqualCLSID(&CLSID_DirectSoundCapture, &self->ID) && !IsEqualIID(&IID_IDirectSoundCaptureBuffer, riid))
+        || (IsEqualCLSID(&CLSID_DirectSoundCapture8, &self->ID) && !IsEqualIID(&IID_IDirectSoundCaptureBuffer8, riid))) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     dscb* instance = NULL;
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dscb_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+    if (SUCCEEDED(hr = dscb_create(self->Allocator, riid, &instance))) {
         if (SUCCEEDED(hr = dscb_initialize(instance, self, pcDesc))) {
             self->Buffer = instance;
 

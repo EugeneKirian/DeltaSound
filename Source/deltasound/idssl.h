@@ -32,7 +32,7 @@ typedef struct idssl_vft idssl_vft;
 typedef struct idssl {
     const idssl_vft*    Self;
     allocator*          Allocator;
-    GUID                ID;
+    IID                 ID;
     LONG                RefCount;
     dssl*               Instance;
 } idssl;

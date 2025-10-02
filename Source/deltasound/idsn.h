@@ -32,7 +32,7 @@ typedef struct idsn_vft idsn_vft;
 typedef struct idsn {
     const idsn_vft*     Self;
     allocator*          Allocator;
-    GUID                ID;
+    IID                 ID;
     LONG                RefCount;
     dsn*                Instance;
 } idsn;

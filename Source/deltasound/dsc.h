@@ -33,7 +33,7 @@ typedef struct idsc idsc;
 
 typedef struct dsc {
     allocator*          Allocator;
-    GUID                ID; // TODO CLSID
+    CLSID               ID;
     deltasound*         Instance;
     intfc*              Interfaces;
 
@@ -44,7 +44,7 @@ typedef struct dsc {
     dscb*               Buffer;
 } dsc;
 
-HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut);
+HRESULT DELTACALL dsc_create(allocator* pAlloc, REFCLSID rclsid, dsc** ppOut);
 VOID DELTACALL dsc_release(dsc* pDSC);
 
 HRESULT DELTACALL dsc_query_interface(dsc* pDSC, REFIID riid, LPVOID* ppOut);

@@ -42,11 +42,11 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
 VOID DELTACALL deltasound_release(deltasound* pD);
 
 HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
+    REFCLSID rclsid, LPCGUID pcGuidDevice, LPVOID* ppOut);
 HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* pD, ds* pDS);
 
 HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
+    REFCLSID rclsid, LPCGUID pcGuidDevice, LPVOID* ppOut);
 HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* pD, dsc* pDSC);
 
 HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,

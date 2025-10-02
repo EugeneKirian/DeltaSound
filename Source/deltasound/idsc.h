@@ -35,7 +35,7 @@ typedef struct idscb idscb;
 typedef struct idsc {
     const idsc_vft* Self;
     allocator*      Allocator;
-    GUID            ID;
+    IID             ID;
     LONG            RefCount;
     dsc*            Instance;
 } idsc;

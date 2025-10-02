@@ -48,7 +48,7 @@ HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsb), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(WAVEFORMATEXTENSIBLE), &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
@@ -123,7 +123,7 @@ HRESULT DELTACALL dsb_duplicate(dsb* self, dsb** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(dsb), &instance))) {
         instance->Allocator = self->Allocator;
 
-        CopyMemory(&instance->ID, &self->ID, sizeof(GUID));
+        CopyMemory(&instance->ID, &self->ID, sizeof(IID));
 
         if (SUCCEEDED(hr = allocator_allocate(self->Allocator, SIZEOFFORMATEX(self->Format), &instance->Format))) {
             if (SUCCEEDED(hr = intfc_create(self->Allocator, &instance->Interfaces))) {
@@ -192,8 +192,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
-        || IsEqualIID(&IID_IDirectSoundBuffer, riid)
-        // TODO CLSID
+        || (IsEqualIID(&IID_IDirectSoundBuffer, &self->ID) && IsEqualIID(&IID_IDirectSoundBuffer, riid))
         || (IsEqualIID(&IID_IDirectSoundBuffer8, &self->ID) && IsEqualIID(&IID_IDirectSoundBuffer8, riid))) {
         idsb* instance = NULL;
 

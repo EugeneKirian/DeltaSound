@@ -32,7 +32,7 @@ typedef struct icf_vft icf_vft;
 typedef struct icf {
     const icf_vft*  Self;
     allocator*      Allocator;
-    GUID            ID;
+    IID             ID;
     LONG            RefCount;
     cf*             Instance;
 } icf;

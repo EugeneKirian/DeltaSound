@@ -107,7 +107,7 @@ HRESULT DELTACALL idsb_create(allocator* pAlloc, REFIID riid, idsb** ppOut) {
         instance->Allocator = pAlloc;
 
         instance->Self = &idsb_self;
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
         *ppOut = instance;

@@ -80,7 +80,7 @@ HRESULT DELTACALL ids_create(allocator* pAlloc, REFIID riid, ids** ppOut) {
         instance->Allocator = pAlloc;
 
         instance->Self = &ids_self;
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
         *ppOut = instance;
@@ -212,12 +212,11 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
 
     dsb* instance = NULL;
 
-    // TODO CLSID
-    REFIID id = IsEqualIID(&self->ID, &IID_IDirectSound)
+    REFIID riid = IsEqualIID(&IID_IDirectSound, &self->ID)
         ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
-    if (SUCCEEDED(hr = ds_create_sound_buffer(self->Instance, id, pcDesc, &instance))) {
-        hr = dsb_query_interface(instance, id, ppBuffer);
+    if (SUCCEEDED(hr = ds_create_sound_buffer(self->Instance, riid, pcDesc, &instance))) {
+        hr = dsb_query_interface(instance, riid, ppBuffer);
     }
 
     return hr;
@@ -248,8 +247,8 @@ HRESULT DELTACALL ids_duplicate_sound_buffer(ids* self, idsb* pDSBufferOriginal,
         return E_INVALIDARG;
     }
 
-    if (!IsEqualIID(&pDSBufferOriginal->ID, &IID_IDirectSoundBuffer)
-        && !IsEqualIID(&pDSBufferOriginal->ID, &IID_IDirectSoundBuffer8)) {
+    if (!IsEqualIID(&IID_IDirectSoundBuffer, &pDSBufferOriginal->ID)
+        && !IsEqualIID(&IID_IDirectSoundBuffer8, &pDSBufferOriginal->ID)) {
         return E_INVALIDARG;
     }
 
