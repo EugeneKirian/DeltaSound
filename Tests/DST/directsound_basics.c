@@ -367,7 +367,7 @@ static BOOL TestDirectSoundQueryInterface(LPDIRECTSOUND a, LPDIRECTSOUND b) {
     }
 
     {
-        LPREFERENCECLOCK ca = NULL, cb = NULL;
+        LPUNKNOWN ca = NULL, cb = NULL;
 
         const HRESULT ra = IDirectSound_QueryInterface(a, &IID_IDirectSoundPrivate, &ca);
         const HRESULT rb = IDirectSound_QueryInterface(b, &IID_IDirectSoundPrivate, &cb);

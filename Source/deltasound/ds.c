@@ -40,11 +40,13 @@ HRESULT DELTACALL ds_create(allocator* pAlloc, REFIID riid, ds** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ds), &instance))) {
         instance->Allocator = pAlloc;
 
-        CopyMemory(&instance->ID, riid, sizeof(GUID));
+        CopyMemory(&instance->ID, riid, sizeof(GUID)); // TODO CLSID
 
         if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
             if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Buffers))) {
                 dsb* main = NULL;
+
+                // TODO CLSID
                 LPCGUID id = IsEqualIID(&IID_IDirectSound, riid)
                     ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 
@@ -130,7 +132,7 @@ HRESULT DELTACALL ds_query_interface(ds* self, REFIID riid, LPVOID* ppOut) {
     }
 
     if (IsEqualIID(&IID_IUnknown, riid)
-        || IsEqualIID(&IID_IDirectSound, riid)
+        || IsEqualIID(&IID_IDirectSound, riid) // TODO CLSID
         || (IsEqualIID(&IID_IDirectSound8, &self->ID) && IsEqualIID(&IID_IDirectSound8, riid))) {
         if (SUCCEEDED(hr = ids_create(self->Allocator, riid, &instance))) {
             if (SUCCEEDED(hr = ds_add_ref(self, instance))) {
@@ -186,7 +188,7 @@ HRESULT DELTACALL ds_create_sound_buffer(ds* self, REFIID riid, LPCDSBUFFERDESC 
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dsb_create(self->Allocator, riid, &instance))) {
+    if (SUCCEEDED(hr = dsb_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
         if (SUCCEEDED(hr = dsb_initialize(instance, self, pcDesc))) {
             if (SUCCEEDED(hr = arr_add_item(self->Buffers, instance))) {
 
@@ -206,7 +208,7 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL ds_remove_dsb(ds* self, dsb* pDSB) {
+HRESULT DELTACALL ds_remove_sound_buffer(ds* self, dsb* pDSB) {
     HRESULT hr = S_OK;
     const DWORD count = arr_get_count(self->Buffers);
 
@@ -315,7 +317,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, info.Type, &info, &self->Device))) {
+    if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, &info, &self->Device))) {
         DSBUFFERDESC desc;
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 

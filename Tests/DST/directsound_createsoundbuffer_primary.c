@@ -26,7 +26,7 @@ SOFTWARE.
 
 #define MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT   9
 
-const static DWORD CreatePrimaryBufferInvalidFlags[MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT] = {
+const static DWORD CreateCaptureBufferInvalidFlags[MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT] = {
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_STATIC,
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLFREQUENCY,
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLPOSITIONNOTIFY,
@@ -39,7 +39,7 @@ const static DWORD CreatePrimaryBufferInvalidFlags[MAX_PRIMARY_BUFFER_INVALID_FL
 
 #define MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT   10
 
-const static DWORD CreatePrimaryBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
+const static DWORD CreateCaptureBufferSuccessFlags[MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT] = {
     DSBCAPS_PRIMARYBUFFER,
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_LOCSOFTWARE,
     DSBCAPS_PRIMARYBUFFER | DSBCAPS_LOCHARDWARE,
@@ -455,14 +455,14 @@ BOOL TestDirectSoundCreateSoundBufferPrimary(HMODULE a, HMODULE b) {
     }
 
     for (int i = 0; i < MAX_PRIMARY_BUFFER_INVALID_FLAG_COUNT; i++) {
-        if (!TestDirectSoundCreateBufferPrimaryInvalidFlags(dsa, dsb, CreatePrimaryBufferInvalidFlags[i])) {
+        if (!TestDirectSoundCreateBufferPrimaryInvalidFlags(dsa, dsb, CreateCaptureBufferInvalidFlags[i])) {
             result = FALSE;
             goto exit;
         }
     }
 
     for (int i = 0; i < MAX_PRIMARY_BUFFER_SUCCESS_FLAG_COUNT; i++) {
-        if (!TestDirectSoundCreateBufferPrimary(dsa, dsb, CreatePrimaryBufferSuccessFlags[i])) {
+        if (!TestDirectSoundCreateBufferPrimary(dsa, dsb, CreateCaptureBufferSuccessFlags[i])) {
             result = FALSE;
             goto exit;
         }
@@ -472,7 +472,6 @@ BOOL TestDirectSoundCreateSoundBufferPrimary(HMODULE a, HMODULE b) {
         result = FALSE;
         goto exit;
     }
-
 
 exit:
 

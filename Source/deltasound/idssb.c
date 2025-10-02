@@ -120,16 +120,16 @@ VOID DELTACALL idssb_release(idssb* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL idssb_query_interface(idssb* self, REFIID riid, LPVOID* ppvObject) {
+HRESULT DELTACALL idssb_query_interface(idssb* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppvObject == NULL) {
+    if (riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    return dssb_query_interface(self->Instance, riid, ppvObject);
+    return dssb_query_interface(self->Instance, riid, ppOut);
 }
 
 ULONG DELTACALL idssb_add_ref(idssb* self) {

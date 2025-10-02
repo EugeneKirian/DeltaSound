@@ -24,33 +24,35 @@ SOFTWARE.
 
 #pragma once
 
-#include "arr.h"
+#include "intfc.h"
 
-typedef struct cf cf;
-typedef struct ds ds;
-typedef struct dsc dsc;
+typedef struct deltasound deltasound;
+typedef struct dscdevice dscdevice;
+typedef struct dscb dscb;
+typedef struct idsc idsc;
 
-typedef struct deltasound {
+typedef struct dsc {
     allocator*          Allocator;
+    GUID                ID; // TODO CLSID
+    deltasound*         Instance;
+    intfc*              Interfaces;
+
     CRITICAL_SECTION    Lock;
-    arr*                Renderers;
-    arr*                Capturers;
-    arr*                Factories;
-} deltasound;
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pD);
+    dscdevice*          Device;
 
-HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* pD, ds* pDS);
+    dscb*               Buffer;
+} dsc;
 
-HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* pD, dsc* pDSC);
+HRESULT DELTACALL dsc_create(allocator* pAlloc, REFIID riid, dsc** ppOut);
+VOID DELTACALL dsc_release(dsc* pDSC);
 
-HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,
-    REFCLSID rclsid, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pcF);
+HRESULT DELTACALL dsc_query_interface(dsc* pDSC, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL dsc_add_ref(dsc* pDSC, idsc* pIDSC);
+HRESULT DELTACALL dsc_remove_ref(dsc* pDSC, idsc* pIDSC);
 
-HRESULT DELTACALL deltasound_can_unload(deltasound* pD);
+HRESULT DELTACALL dsc_create_capture_buffer(dsc* pDSC, REFIID riid, LPCDSCBUFFERDESC pcDesc, dscb** ppOut);
+HRESULT DELTACALL dsc_remove_capture_buffer(dsc* pDSC, dscb* pDSCB);
+
+HRESULT DELTACALL dsc_get_caps(dsc* pDSC, LPDSCCAPS pDSCCaps);
+HRESULT DELTACALL dsc_initialize(dsc* pDSC, LPCGUID pcGuidDevice);

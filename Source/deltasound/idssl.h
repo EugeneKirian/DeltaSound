@@ -60,6 +60,6 @@ typedef HRESULT(DELTACALL* LPIDSSLCOMMITDEFERREDSETTINGS)(idssl*);
 HRESULT DELTACALL idssl_create(allocator* pAlloc, REFIID riid, idssl** ppOut);
 VOID DELTACALL idssl_release(idssl* pIDSSL);
 
-HRESULT DELTACALL idssl_query_interface(idssl* pIDSSL, REFIID riid, LPVOID* ppvObject);
+HRESULT DELTACALL idssl_query_interface(idssl* pIDSSL, REFIID riid, LPVOID* ppOut);
 ULONG DELTACALL idssl_add_ref(idssl* pIDSSL);
 ULONG DELTACALL idssl_remove_ref(idssl* pIDSSL);

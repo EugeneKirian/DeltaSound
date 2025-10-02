@@ -40,6 +40,14 @@ LPDIRECTSOUNDCREATE GetDirectSoundCreate(HMODULE module) {
     return (LPDIRECTSOUNDCREATE)GetProcAddress(module, "DirectSoundCreate");
 }
 
+LPDIRECTSOUNDCAPTURECREATE GetDirectSoundCaptureCreate(HMODULE module) {
+    if (module == NULL) {
+        return NULL;
+    }
+
+    return (LPDIRECTSOUNDCAPTURECREATE)GetProcAddress(module, "DirectSoundCaptureCreate");
+}
+
 HRESULT InitializeWaveFormat(LPWAVEFORMATEX self, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits) {
     if (self == NULL) {
         return E_POINTER;
@@ -69,6 +77,36 @@ HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC self,
     self->dwFlags = dwFlags;
     self->dwBufferBytes = dwBufferSize;
     self->lpwfxFormat = pwfxFormat;
+
+    return S_OK;
+}
+
+HRESULT InitializeDirectSoundCaptureBufferDesc(LPDSCBUFFERDESC self,
+    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    ZeroMemory(self, sizeof(DSCBUFFERDESC));
+
+    self->dwSize = sizeof(DSCBUFFERDESC);
+    self->dwFlags = dwFlags;
+    self->dwBufferBytes = dwBufferSize;
+    self->lpwfxFormat = pwfxFormat;
+
+    return S_OK;
+}
+
+HRESULT InitializeDirectSoundCaptureBufferCaps(LPDSCBCAPS self, DWORD dwFlags, DWORD dwBufferBytes) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    ZeroMemory(self, sizeof(DSCBCAPS));
+
+    self->dwSize = sizeof(DSCBCAPS);
+    self->dwFlags = dwFlags;
+    self->dwBufferBytes = dwBufferBytes;
 
     return S_OK;
 }
@@ -119,4 +157,19 @@ HRESULT CompareDirectSoundBufferCaps(LPDIRECTSOUNDBUFFER pDSBA, LPDIRECTSOUNDBUF
     const HRESULT rb = IDirectSoundBuffer_GetCaps(pDSBB, &capsb);
 
     return (ra == rb && memcmp(&capsa, &capsb, sizeof(DSBCAPS)) == 0) ? S_OK : E_FAIL;
+}
+
+HRESULT CompareDirectSoundCaptureBufferCaps(LPDIRECTSOUNDCAPTUREBUFFER pDSBA, LPDIRECTSOUNDCAPTUREBUFFER pDSBB) {
+    if (pDSBA == NULL || pDSBB == NULL) {
+        return E_INVALIDARG;
+    }
+
+    DSCBCAPS capsa, capsb;
+    InitializeDirectSoundCaptureBufferCaps(&capsa, 0, 0);
+    InitializeDirectSoundCaptureBufferCaps(&capsb, 0, 0);
+
+    const HRESULT ra = IDirectSoundCaptureBuffer_GetCaps(pDSBA, &capsa);
+    const HRESULT rb = IDirectSoundCaptureBuffer_GetCaps(pDSBB, &capsb);
+
+    return (ra == rb && memcmp(&capsa, &capsb, sizeof(DSCBCAPS)) == 0) ? S_OK : E_FAIL;
 }

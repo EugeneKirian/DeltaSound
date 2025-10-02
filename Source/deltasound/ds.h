@@ -37,7 +37,7 @@ typedef struct ids ids;
 
 typedef struct ds {
     allocator*          Allocator;
-    GUID                ID;
+    GUID                ID; // TODO CLSID
     deltasound*         Instance;
     intfc*              Interfaces;
 
@@ -59,7 +59,7 @@ HRESULT DELTACALL ds_add_ref(ds* pDS, ids* pIDS);
 HRESULT DELTACALL ds_remove_ref(ds* pDS, ids* pIDS);
 
 HRESULT DELTACALL ds_create_sound_buffer(ds* pDS, REFIID riid, LPCDSBUFFERDESC pcDesc, dsb** ppOut);
-HRESULT DELTACALL ds_remove_dsb(ds* pDS, dsb* pDSB);
+HRESULT DELTACALL ds_remove_sound_buffer(ds* pDS, dsb* pDSB);
 
 HRESULT DELTACALL ds_get_caps(ds* pDS, LPDSCAPS pCaps);
 HRESULT DELTACALL ds_duplicate_sound_buffer(ds* self, dsb* pDSBufferOriginal, dsb** ppDSBufferDuplicate);

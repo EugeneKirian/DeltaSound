@@ -34,7 +34,7 @@ HRESULT DELTACALL idsb_get_format(idsb* self, LPWAVEFORMATEX pwfxFormat, DWORD d
 HRESULT DELTACALL idsb_get_volume(idsb* self, LPLONG plVolume);
 HRESULT DELTACALL idsb_get_pan(idsb* self, LPLONG plPan);
 HRESULT DELTACALL idsb_get_frequency(idsb* self, LPDWORD pdwFrequency);
-HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus);
+HRESULT DELTACALL idsb_get_status(idsb* self, LPDWORD pdwStatus);
 HRESULT DELTACALL idsb_initialize(idsb* self, ds* pDS, LPCDSBUFFERDESC pcDesc);
 HRESULT DELTACALL idsb_lock(idsb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags);
 HRESULT DELTACALL idsb_play(idsb* self, DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags);
@@ -81,7 +81,7 @@ const static idsb_vft idsb_self = {
     idsb_get_volume,
     idsb_get_pan,
     idsb_get_frequency,
-    isdb_get_status,
+    idsb_get_status,
     idsb_initialize,
     idsb_lock,
     idsb_play,
@@ -122,16 +122,16 @@ VOID DELTACALL idsb_release(idsb* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppvObject) {
+HRESULT DELTACALL idsb_query_interface(idsb* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppvObject == NULL) {
+    if (riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    return dsb_query_interface(self->Instance, riid, ppvObject);
+    return dsb_query_interface(self->Instance, riid, ppOut);
 }
 
 ULONG DELTACALL idsb_add_ref(idsb* self) {
@@ -259,7 +259,7 @@ HRESULT DELTACALL idsb_get_frequency(idsb* self, LPDWORD pdwFrequency) {
     return dsb_get_frequency(self->Instance, pdwFrequency);
 }
 
-HRESULT DELTACALL isdb_get_status(idsb* self, LPDWORD pdwStatus) {
+HRESULT DELTACALL idsb_get_status(idsb* self, LPDWORD pdwStatus) {
     if (self == NULL) {
         return E_POINTER;
     }

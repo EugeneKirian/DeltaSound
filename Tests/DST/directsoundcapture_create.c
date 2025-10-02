@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "directsound.h"
+#include "directsoundcapture.h"
 
 #define MAX_STORAGE_COUNT           128
 
@@ -57,7 +57,7 @@ static BOOL CALLBACK EnumerateDeviceCallBackA(LPGUID guid, LPCSTR desc, LPCSTR m
     return context->Count < MAX_STORAGE_COUNT;
 }
 
-static BOOL TestDirectSoundCreateInvalidInputs(LPDIRECTSOUNDCREATE a, LPDIRECTSOUNDCREATE b) {
+static BOOL TestDirectSoundCaptureCreateInvalidInputs(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -81,7 +81,7 @@ static BOOL TestDirectSoundCreateInvalidInputs(LPDIRECTSOUNDCREATE a, LPDIRECTSO
     }
 
     {
-        LPDIRECTSOUND dsa = NULL, dsb = NULL;
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
         const HRESULT ra = a(NULL, &dsa, (LPUNKNOWN)a);
         const HRESULT rb = b(NULL, &dsb, (LPUNKNOWN)b);
@@ -92,10 +92,10 @@ static BOOL TestDirectSoundCreateInvalidInputs(LPDIRECTSOUNDCREATE a, LPDIRECTSO
     }
 
     {
-        LPDIRECTSOUND dsa = NULL, dsb = NULL;
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
-        const HRESULT ra = a(&CLSID_DirectSound, &dsa, NULL);
-        const HRESULT rb = b(&CLSID_DirectSound, &dsb, NULL);
+        const HRESULT ra = a(&CLSID_DirectSoundCapture, &dsa, NULL);
+        const HRESULT rb = b(&CLSID_DirectSoundCapture, &dsb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -105,13 +105,13 @@ static BOOL TestDirectSoundCreateInvalidInputs(LPDIRECTSOUNDCREATE a, LPDIRECTSO
     return TRUE;
 }
 
-static BOOL TestDirectSoundCreateNullDevice(LPDIRECTSOUNDCREATE a, LPDIRECTSOUNDCREATE b) {
+static BOOL TestDirectSoundCaptureCreateNullDevice(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
 
     {
-        LPDIRECTSOUND dsa = NULL, dsb = NULL;
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
         const HRESULT ra = a(NULL, &dsa, NULL);
         const HRESULT rb = b(NULL, &dsb, NULL);
@@ -129,7 +129,7 @@ static BOOL TestDirectSoundCreateNullDevice(LPDIRECTSOUNDCREATE a, LPDIRECTSOUND
     }
 
     {
-        LPDIRECTSOUND dsa = NULL, dsb = NULL;
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
         const HRESULT ra = a(&GUID_NULL, &dsa, NULL);
         const HRESULT rb = b(&GUID_NULL, &dsb, NULL);
@@ -149,16 +149,16 @@ static BOOL TestDirectSoundCreateNullDevice(LPDIRECTSOUNDCREATE a, LPDIRECTSOUND
     return TRUE;
 }
 
-static BOOL TestDirectSoundCreateOutputDevices(LPDIRECTSOUNDCREATE a, LPDIRECTSOUNDCREATE b) {
+static BOOL TestDirectSoundCaptureCreateInputDevices(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
 
-    for (UINT i = 0; i < MAX_OUTPUTDEVICE_COUNT; i++) {
-        LPDIRECTSOUND dsa = NULL, dsb = NULL;
+    for (UINT i = 0; i < MAX_INPUTDEVICE_COUNT; i++) {
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
-        const HRESULT ra = a(output_device_tests[i], &dsa, NULL);
-        const HRESULT rb = b(output_device_tests[i], &dsb, NULL);
+        const HRESULT ra = a(input_device_tests[i], &dsa, NULL);
+        const HRESULT rb = b(input_device_tests[i], &dsb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -172,16 +172,16 @@ static BOOL TestDirectSoundCreateOutputDevices(LPDIRECTSOUNDCREATE a, LPDIRECTSO
     return TRUE;
 }
 
-static BOOL TestDirectSoundCreateInputDevices(LPDIRECTSOUNDCREATE a, LPDIRECTSOUNDCREATE b) {
+static BOOL TestDirectSoundCaptureCreateOutputDevices(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
 
-    for (UINT i = 0; i < MAX_INPUTDEVICE_COUNT; i++) {
-        LPDIRECTSOUND dsa = NULL, dsb = NULL;
+    for (UINT i = 0; i < MAX_OUTPUTDEVICE_COUNT; i++) {
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
-        const HRESULT ra = a(input_device_tests[i], &dsa, NULL);
-        const HRESULT rb = b(input_device_tests[i], &dsb, NULL);
+        const HRESULT ra = a(output_device_tests[i], &dsa, NULL);
+        const HRESULT rb = b(output_device_tests[i], &dsb, NULL);
 
         if (ra != rb) {
             return FALSE;
@@ -198,35 +198,35 @@ static BOOL TestDirectSoundCreateInputDevices(LPDIRECTSOUNDCREATE a, LPDIRECTSOU
     return TRUE;
 }
 
-BOOL TestDirectSoundCreate(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundCaptureCreate(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
 
-    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
-    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
+    LPDIRECTSOUNDCAPTURECREATE dsca = GetDirectSoundCaptureCreate(a);
+    LPDIRECTSOUNDCAPTURECREATE dscb = GetDirectSoundCaptureCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
     }
 
     // Invalid inputs
-    if (!TestDirectSoundCreateInvalidInputs(dsca, dscb)) {
+    if (!TestDirectSoundCaptureCreateInvalidInputs(dsca, dscb)) {
         return FALSE;
     }
 
     // NULL Device
-    if (!TestDirectSoundCreateNullDevice(dsca, dscb)) {
-        return FALSE;
-    }
-
-    // Predefined output devices
-    if (!TestDirectSoundCreateOutputDevices(dsca, dscb)) {
+    if (!TestDirectSoundCaptureCreateNullDevice(dsca, dscb)) {
         return FALSE;
     }
 
     // Predefined input devices
-    if (!TestDirectSoundCreateInputDevices(dsca, dscb)) {
+    if (!TestDirectSoundCaptureCreateInputDevices(dsca, dscb)) {
+        return FALSE;
+    }
+
+    // Predefined output devices
+    if (!TestDirectSoundCaptureCreateOutputDevices(dsca, dscb)) {
         return FALSE;
     }
 
@@ -253,9 +253,9 @@ BOOL TestDirectSoundCreate(HMODULE a, HMODULE b) {
     ZeroMemory(cb.Items, size);
 
     LPDIRECTSOUNDENUMERATEA ea =
-        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(a, "DirectSoundEnumerateA");
+        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(a, "DirectSoundCaptureEnumerateA");
     LPDIRECTSOUNDENUMERATEA eb =
-        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(b, "DirectSoundEnumerateA");
+        (LPDIRECTSOUNDENUMERATEA)GetProcAddress(b, "DirectSoundCaptureEnumerateA");
 
     if (ea == NULL || eb == NULL) {
         return FALSE;
@@ -278,7 +278,7 @@ BOOL TestDirectSoundCreate(HMODULE a, HMODULE b) {
             goto exit;
         }
 
-        LPDIRECTSOUND dsa = NULL, dsb = NULL;
+        LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
 
         const HRESULT ra = dsca(&ca.Items[i], &dsa, NULL);
         const HRESULT rb = dscb(&cb.Items[i], &dsb, NULL);

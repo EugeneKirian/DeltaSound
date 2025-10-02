@@ -24,33 +24,38 @@ SOFTWARE.
 
 #pragma once
 
-#include "arr.h"
+#include "arena.h"
+#include "device_info.h"
+#include "mixer.h"
 
-typedef struct cf cf;
-typedef struct ds ds;
 typedef struct dsc dsc;
 
-typedef struct deltasound {
-    allocator*          Allocator;
-    CRITICAL_SECTION    Lock;
-    arr*                Renderers;
-    arr*                Capturers;
-    arr*                Factories;
-} deltasound;
+#define DSCDEVICE_AUDIO_EVENT_INDEX      0
+#define DSCDEVICE_CLOSE_EVENT_INDEX      1
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pD);
+#define DSCDEVICE_MAX_EVENT_COUNT        2
 
-HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* pD, ds* pDS);
+typedef struct dscdevice {
+    allocator* Allocator;
+    dsc* Instance;
+    // arena* Arena; // TODO
+    // mixer* Mixer; // TODO
 
-HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* pD, dsc* pDSC);
+    device_info             Info;
 
-HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,
-    REFCLSID rclsid, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pcF);
+    IMMDevice*              Device;
+    // IAudioClient*           AudioClient; // TODO
+    //IAudioRenderClient*     AudioRenderer; // TODO
 
-HRESULT DELTACALL deltasound_can_unload(deltasound* pD);
+    //UINT32                  AudioClientBufferSize;  // In frames
+
+    PWAVEFORMATEXTENSIBLE   Format;
+
+    HANDLE                  Events[DSCDEVICE_MAX_EVENT_COUNT];
+
+    HANDLE                  Thread;
+    HANDLE                  ThreadEvent;
+} dscdevice;
+
+HRESULT DELTACALL dscdevice_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, dscdevice** ppOut);
+VOID DELTACALL dscdevice_release(dscdevice* pDev);

@@ -47,6 +47,6 @@ typedef HRESULT(DELTACALL* LPIDSNSETNOTIFICATIONPOSITIONS)(idsn*,
 HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut);
 VOID DELTACALL idsn_release(idsn* pIDSN);
 
-HRESULT DELTACALL idsn_query_interface(idsn* pIDSN, REFIID riid, LPVOID* ppvObject);
+HRESULT DELTACALL idsn_query_interface(idsn* pIDSN, REFIID riid, LPVOID* ppOut);
 ULONG DELTACALL idsn_add_ref(idsn* pIDSN);
 ULONG DELTACALL idsn_remove_ref(idsn* pIDSN);

@@ -57,6 +57,5 @@ typedef struct dsdevice {
     HANDLE                  ThreadEvent;
 } dsdevice;
 
-HRESULT DELTACALL dsdevice_create(allocator* pAlloc,
-    ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut);
+HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo, dsdevice** ppOut);
 VOID DELTACALL dsdevice_release(dsdevice* pDev);

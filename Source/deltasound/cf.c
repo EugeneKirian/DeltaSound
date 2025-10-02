@@ -25,6 +25,7 @@ SOFTWARE.
 #include "cf.h"
 #include "deltasound.h"
 #include "ds.h"
+#include "dsc.h"
 
 HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
     if (pAlloc == NULL || rclsid == NULL || ppOut == NULL) {
@@ -108,7 +109,13 @@ HRESULT DELTACALL cf_add_ref(cf* self, icf* pICF) {
 }
 
 HRESULT DELTACALL cf_remove_ref(cf* self, icf* pICF) {
-    return intfc_remove_item(self->Interfaces, &pICF->ID);
+    intfc_remove_item(self->Interfaces, &pICF->ID);
+
+    if (intfc_get_count(self->Interfaces) == 0) {
+        cf_release(self);
+    }
+
+    return S_OK;
 }
 
 HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
@@ -119,13 +126,13 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
     if (IsEqualCLSID(&self->ID, &CLSID_DirectSound)) {
         ds* instance = NULL;
 
-        if (SUCCEEDED(hr = ds_create(self->Allocator, riid, &instance))) {
+        if (SUCCEEDED(hr = ds_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
             instance->Instance = self->Instance;
 
             ids* intfc = NULL;
 
             if (SUCCEEDED(hr = ds_query_interface(instance, riid, &intfc))) {
-                if (SUCCEEDED(hr = arr_add_item(self->Instance->Items, instance))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Instance->Renderers, instance))) {
 
                     *ppOut = intfc;
 
@@ -140,7 +147,24 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
         // TODO
     }
     else if (IsEqualCLSID(&self->ID, &CLSID_DirectSoundCapture)) {
-        // TODO
+        dsc* instance = NULL;
+
+        if (SUCCEEDED(hr = dsc_create(self->Allocator, riid /* TODO CLSID */, &instance))) {
+            instance->Instance = self->Instance;
+
+            ids* intfc = NULL;
+
+            if (SUCCEEDED(hr = dsc_query_interface(instance, riid, &intfc))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Instance->Capturers, instance))) {
+
+                    *ppOut = intfc;
+
+                    goto exit;
+                }
+            }
+
+            dsc_release(instance);
+        }
     }
     else if (IsEqualCLSID(&self->ID, &CLSID_DirectSoundCapture8)) {
         // TODO

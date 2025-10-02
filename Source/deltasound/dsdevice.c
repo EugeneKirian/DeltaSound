@@ -43,20 +43,14 @@ typedef struct dsdevice_thread_context {
 
 DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx);
 
-HRESULT DELTACALL dsdevice_allocate(allocator* pAlloc, dsdevice** ppOut);
 HRESULT DELTACALL dsdevice_initialize(dsdevice* pDev);
 HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* pDev, LPWAVEFORMATEX* ppFormat);
 
 HRESULT DELTACALL dsdevice_render(dsdevice* pDev, DWORD dwBuffers, dsb** ppBuffers);
 HRESULT DELTACALL dsdevice_get_active_buffers(dsdevice* self, LPDWORD pdwCount, dsb*** ppBuffers);
 
-HRESULT DELTACALL dsdevice_create(
-    allocator* pAlloc, ds* pDS, DWORD dwType, device_info* pInfo, dsdevice** ppOut) {
+HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo, dsdevice** ppOut) {
     if (pAlloc == NULL) {
-        return E_INVALIDARG;
-    }
-
-    if (dwType != DEVICETYPE_RENDER && dwType != DEVICETYPE_RECORD) {
         return E_INVALIDARG;
     }
 
@@ -67,7 +61,8 @@ HRESULT DELTACALL dsdevice_create(
     HRESULT hr = S_OK;
     dsdevice* instance = NULL;
 
-    if (SUCCEEDED(hr = dsdevice_allocate(pAlloc, &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsdevice), &instance))) {
+        instance->Allocator = pAlloc;
         instance->Instance = pDS;
 
         CopyMemory(&instance->Info, pInfo, sizeof(device_info));
@@ -154,23 +149,6 @@ VOID DELTACALL dsdevice_release(dsdevice* self) {
 }
 
 /* ---------------------------------------------------------------------- */
-
-HRESULT DELTACALL dsdevice_allocate(allocator* pAlloc, dsdevice** ppOut) {
-    if (pAlloc == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
-
-    HRESULT hr = S_OK;
-    dsdevice* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsdevice), &instance))) {
-        instance->Allocator = pAlloc;
-
-        *ppOut = instance;
-    }
-
-    return hr;
-}
 
 HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
     if (self == NULL) {

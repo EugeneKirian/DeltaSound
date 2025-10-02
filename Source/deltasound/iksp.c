@@ -79,16 +79,16 @@ VOID DELTACALL iksp_release(iksp* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL iksp_query_interface(iksp* self, REFIID riid, LPVOID* ppvObject) {
+HRESULT DELTACALL iksp_query_interface(iksp* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppvObject == NULL) {
+    if (riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    return ksp_query_interface(self->Instance, riid, ppvObject);
+    return ksp_query_interface(self->Instance, riid, ppOut);
 }
 
 ULONG DELTACALL iksp_add_ref(iksp* self) {

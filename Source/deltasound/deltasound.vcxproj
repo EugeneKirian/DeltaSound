@@ -25,6 +25,9 @@
     <ClInclude Include="base.h" />
     <ClInclude Include="cf.h" />
     <ClInclude Include="deltasound.h" />
+    <ClInclude Include="dsc.h" />
+    <ClInclude Include="dscb.h" />
+    <ClInclude Include="dscdevice.h" />
     <ClInclude Include="dsdevice.h" />
     <ClInclude Include="device_info.h" />
     <ClInclude Include="ds.h" />
@@ -37,6 +40,8 @@
     <ClInclude Include="icf.h" />
     <ClInclude Include="ids.h" />
     <ClInclude Include="idsb.h" />
+    <ClInclude Include="idsc.h" />
+    <ClInclude Include="idscb.h" />
     <ClInclude Include="idsn.h" />
     <ClInclude Include="idssb.h" />
     <ClInclude Include="idssl.h" />
@@ -54,6 +59,9 @@
     <ClCompile Include="arr.c" />
     <ClCompile Include="cf.c" />
     <ClCompile Include="deltasound.c" />
+    <ClCompile Include="dsc.c" />
+    <ClCompile Include="dscb.c" />
+    <ClCompile Include="dscdevice.c" />
     <ClCompile Include="dsdevice.c" />
     <ClCompile Include="device_info.c" />
     <ClCompile Include="ds.c" />
@@ -66,6 +74,8 @@
     <ClCompile Include="icf.c" />
     <ClCompile Include="ids.c" />
     <ClCompile Include="idsb.c" />
+    <ClCompile Include="idsc.c" />
+    <ClCompile Include="idscb.c" />
     <ClCompile Include="idsn.c" />
     <ClCompile Include="idssb.c" />
     <ClCompile Include="idssl.c" />

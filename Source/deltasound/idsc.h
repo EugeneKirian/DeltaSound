@@ -24,33 +24,34 @@ SOFTWARE.
 
 #pragma once
 
-#include "arr.h"
+#include "allocator.h"
 
-typedef struct cf cf;
-typedef struct ds ds;
+#define DSCBCAPS_NONE   0
+
 typedef struct dsc dsc;
+typedef struct idsc_vft idsc_vft;
+typedef struct idscb idscb;
 
-typedef struct deltasound {
-    allocator*          Allocator;
-    CRITICAL_SECTION    Lock;
-    arr*                Renderers;
-    arr*                Capturers;
-    arr*                Factories;
-} deltasound;
+typedef struct idsc {
+    const idsc_vft* Self;
+    allocator*      Allocator;
+    GUID            ID;
+    LONG            RefCount;
+    dsc*            Instance;
+} idsc;
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
-VOID DELTACALL deltasound_release(deltasound* pD);
+typedef HRESULT(DELTACALL* LPIDSCQUERYINTERFACE)(idsc*, REFIID, LPVOID*);
+typedef ULONG(DELTACALL* LPIDSCADDREF)(idsc*);
+typedef ULONG(DELTACALL* LPIDSCRELEASE)(idsc*);
 
-HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound(deltasound* pD, ds* pDS);
+typedef HRESULT(DELTACALL* LPIDSCCREATECAPTUREBUFFER)(idsc*,
+    LPCDSCBUFFERDESC pcDSCBufferDesc, idscb** ppDSCBuffer, LPUNKNOWN pUnkOuter);
+typedef HRESULT(DELTACALL* LPIDSCGETCAPS)(idsc*, LPDSCCAPS pDSCCaps);
+typedef HRESULT(DELTACALL* LPIDSCINITIALIZE)(idsc*, LPCGUID pcGuidDevice);
 
-HRESULT DELTACALL deltasound_create_direct_sound_capture(deltasound* pD,
-    REFIID riid, LPCGUID pcGuidDevice, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* pD, dsc* pDSC);
+HRESULT DELTACALL idsc_create(allocator* pAlloc, REFIID riid, idsc** ppOut);
+VOID DELTACALL idsc_release(idsc* pIDSC);
 
-HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,
-    REFCLSID rclsid, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pcF);
-
-HRESULT DELTACALL deltasound_can_unload(deltasound* pD);
+HRESULT DELTACALL idsc_query_interface(idsc* pIDSC, REFIID riid, LPVOID* ppOut);
+ULONG DELTACALL idsc_add_ref(idsc* pIDSC);
+ULONG DELTACALL idsc_remove_ref(idsc* pIDSC);

@@ -95,16 +95,16 @@ VOID DELTACALL ids_release(ids* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppvObject) {
+HRESULT DELTACALL ids_query_interface(ids* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (riid == NULL || ppvObject == NULL) {
+    if (riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
-    return ds_query_interface(self->Instance, riid, ppvObject);
+    return ds_query_interface(self->Instance, riid, ppOut);
 }
 
 ULONG DELTACALL ids_add_ref(ids* self) {
@@ -204,12 +204,15 @@ HRESULT DELTACALL ids_create_sound_buffer(ids* self,
         }
     }
 
+    // pUnkOuter
+
     if (pUnkOuter != NULL) {
         return DSERR_NOAGGREGATION;
     }
 
     dsb* instance = NULL;
 
+    // TODO CLSID
     REFIID id = IsEqualIID(&self->ID, &IID_IDirectSound)
         ? &IID_IDirectSoundBuffer : &IID_IDirectSoundBuffer8;
 

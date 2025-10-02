@@ -27,7 +27,7 @@ SOFTWARE.
 #include "base.h"
 
 #define DEVICETYPE_RENDER           0
-#define DEVICETYPE_RECORD           1
+#define DEVICETYPE_CAPTURE          1
 #define DEVICETYPE_ALL              2
 #define DEVICETYPE_INVALID          (-1)
 
