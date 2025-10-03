@@ -629,30 +629,19 @@ HRESULT DELTACALL prvt_get_description_ansi(prvt* self,
                 DWORD offset = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA);
 
                 // Description
-                {
-                    pPropertyData->Description = (LPSTR)((size_t)pPropertyData + offset);
-
-                    offset += WideCharToMultiByte(CP_ACP, 0, device->Name, -1,
-                        pPropertyData->Description, ulDataLength - offset, NULL, NULL);
-                }
+                pPropertyData->Description = (LPSTR)((size_t)pPropertyData + offset);
+                offset += WideCharToMultiByte(CP_ACP, 0, device->Name, -1,
+                    pPropertyData->Description, ulDataLength - offset, NULL, NULL);
 
                 // Module
-                {
-                    pPropertyData->Module = (LPSTR)((size_t)pPropertyData + offset);
-
-                    offset += WideCharToMultiByte(CP_ACP, 0, device->Module, -1,
-                        pPropertyData->Module, ulDataLength - offset, NULL, NULL);
-                }
+                pPropertyData->Module = (LPSTR)((size_t)pPropertyData + offset);
+                offset += WideCharToMultiByte(CP_ACP, 0, device->Module, -1,
+                    pPropertyData->Module, ulDataLength - offset, NULL, NULL);
 
                 // Interface
-                {
-                    pPropertyData->Interface = (LPSTR)((size_t)pPropertyData + offset);
-
-                    offset += WideCharToMultiByte(CP_ACP, 0, intfc, -1,
-                        pPropertyData->Interface, ulDataLength - offset, NULL, NULL);
-
-                    strupr(pPropertyData->Interface);
-                }
+                pPropertyData->Interface = (LPSTR)((size_t)pPropertyData + offset);
+                WideCharToMultiByte(CP_ACP, 0, intfc, -1,
+                    pPropertyData->Interface, ulDataLength - offset, NULL, NULL);
             }
 
             pPropertyData->WaveDeviceId = 0;
@@ -671,6 +660,94 @@ HRESULT DELTACALL prvt_get_description_ansi(prvt* self,
 
 HRESULT DELTACALL prvt_get_description_wide(prvt* self,
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned) {
-    // TODO
-    return E_NOTIMPL;
+    if (pPropertyData == NULL) {
+        return E_INVALIDARG;
+    }
+
+    *pulBytesReturned = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+
+    if (ulDataLength != 0
+        && ulDataLength < sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA)) {
+        return E_INVALIDARG;
+    }
+
+    if (sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA) <= ulDataLength) {
+        if (pPropertyData->DataFlow != DIRECTSOUNDDEVICE_DATAFLOW_RENDER
+            && pPropertyData->DataFlow != DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE) {
+            return E_INVALIDARG;
+        }
+
+        HRESULT hr = S_OK;
+        device_info* device = NULL;
+
+        if (IsEqualGUID(&GUID_NULL, &pPropertyData->DeviceId)) {
+            CopyMemory(&pPropertyData->DeviceId,
+                pPropertyData->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER
+                ? &DSDEVID_DefaultPlayback : &DSDEVID_DefaultCapture, sizeof(GUID));
+        }
+
+        if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(device_info), &device))) {
+            if (IsEqualGUID(&DSDEVID_DefaultPlayback, &pPropertyData->DeviceId)
+                || IsEqualGUID(&DSDEVID_DefaultCapture, &pPropertyData->DeviceId)) {
+                if (FAILED(hr = device_info_get_default_device(pPropertyData->DataFlow, DEVICEKIND_MULTIMEDIA, device))) {
+                    goto exit;
+                }
+            }
+            else if (IsEqualGUID(&DSDEVID_DefaultVoicePlayback, &pPropertyData->DeviceId)
+                || IsEqualGUID(&DSDEVID_DefaultVoiceCapture, &pPropertyData->DeviceId)) {
+                if (FAILED(hr = device_info_get_default_device(pPropertyData->DataFlow, DEVICEKIND_COMMUNICATION, device))) {
+                    goto exit;
+                }
+            }
+            else if (FAILED(hr = device_info_get_device(pPropertyData->DataFlow, &pPropertyData->DeviceId, device))) {
+                goto exit;
+            }
+
+            CopyMemory(&pPropertyData->DeviceId, &device->ID, sizeof(GUID));
+
+            DWORD length = 0;
+            WCHAR intfc[MAX_INTERFACE_LENGTH];
+            ZeroMemory(intfc, sizeof(WCHAR) * MAX_INTERFACE_LENGTH);
+
+            DWORD bytes = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA)
+                + (wcslen(device->Name) + 1) * sizeof(WCHAR)
+                + (wcslen(device->Module) + 1) * sizeof(WCHAR);
+
+            if (SUCCEEDED(hr = prvt_get_device_interface(self,
+                pPropertyData->DataFlow, device->Module, intfc, MAX_INTERFACE_LENGTH, &length))) {
+                bytes += (wcslen(intfc) + 1) * sizeof(WCHAR);
+            }
+
+            *pulBytesReturned = bytes;
+
+            if (bytes <= ulDataLength) {
+                DWORD offset = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+
+                // Description
+                pPropertyData->Description = (LPWSTR)((size_t)pPropertyData + offset);
+                wcscpy(pPropertyData->Description, device->Name);
+                offset += (wcslen(device->Name) + 1) * sizeof(WCHAR);
+
+                // Module
+                pPropertyData->Description = (LPWSTR)((size_t)pPropertyData + offset);
+                wcscpy(pPropertyData->Module, device->Module);
+                offset += (wcslen(device->Module) + 1) * sizeof(WCHAR);
+
+                // Interface
+                pPropertyData->Description = (LPWSTR)((size_t)pPropertyData + offset);
+                wcscpy(pPropertyData->Interface, intfc);
+            }
+
+            pPropertyData->WaveDeviceId = 0;
+            pPropertyData->Type = DIRECTSOUNDDEVICE_TYPE_WDM;
+
+        exit:
+
+            allocator_free(self->Allocator, device);
+        }
+
+        return hr;
+    }
+
+    return S_OK;
 }
