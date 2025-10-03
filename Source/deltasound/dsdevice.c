@@ -99,8 +99,7 @@ HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo
 
                 ctx->Device = instance;
 
-                instance->Thread = CreateThread(NULL, 0,
-                    (LPTHREAD_START_ROUTINE)dsdevice_thread, ctx, 0, NULL);
+                instance->Thread = CreateThread(NULL, 0, dsdevice_thread, ctx, 0, NULL);
 
                 if (instance->Thread == NULL) {
                     dsdevice_release(instance);

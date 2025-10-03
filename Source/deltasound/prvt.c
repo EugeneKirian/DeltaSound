@@ -33,6 +33,9 @@ HRESULT DELTACALL prvt_get_wave_device_mapping_ansi(prvt* self,
 HRESULT DELTACALL prvt_get_wave_device_mapping_wide(prvt* self,
     PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned);
 
+HRESULT DELTACALL prvt_get_description(prvt* self,
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned);
+
 HRESULT DELTACALL prvt_create(allocator* pAlloc, REFIID riid, prvt** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -147,16 +150,19 @@ HRESULT DELTACALL prvt_get(prvt* self,
             return prvt_get_wave_device_mapping_ansi(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA)pPropertyData, ulDataLength, pulBytesReturned);
         }
-        //DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1 = 2,
-        //DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1 = 3,
+        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1: {
+            return prvt_get_description(self,
+                (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA)pPropertyData, ulDataLength, pulBytesReturned);
+        }
+        // TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1
         case DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W: {
             return prvt_get_wave_device_mapping_wide(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA)pPropertyData, ulDataLength, pulBytesReturned);
         }
-        // DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A = 5,
-        // DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W = 6,
-        // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A = 7,
-        // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W = 8,
+        // TODO DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A
+        // TODO DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W
+        // TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A
+        // TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W
         }
     }
 
@@ -232,11 +238,11 @@ HRESULT DELTACALL prvt_get_wave_device_mapping_ansi(prvt* self,
                     BOOL match = FALSE;
 
                     for (DWORD i = 0; i < count; i++) {
-                        CHAR name[MAX_DEVICE_ID_LENGTH];
-                        ZeroMemory(name, MAX_DEVICE_ID_LENGTH);
+                        CHAR name[MAX_DEVICE_NAME_LENGTH];
+                        ZeroMemory(name, MAX_DEVICE_NAME_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            devices[i].Name, -1, name, MAX_DEVICE_ID_LENGTH, NULL, NULL);
+                            devices[i].Name, -1, name, MAX_DEVICE_NAME_LENGTH, NULL, NULL);
 
                         if (strncmp(pPropertyData->DeviceName, name, MAXPNAMELEN - 1) == 0) {
                             match = TRUE;
@@ -312,6 +318,76 @@ HRESULT DELTACALL prvt_get_wave_device_mapping_wide(prvt* self,
 
                 allocator_free(self->Allocator, devices);
             }
+        }
+
+        return hr;
+    }
+
+    return S_OK;
+}
+
+HRESULT DELTACALL prvt_get_description(prvt* self,
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned) {
+    if (pPropertyData == NULL) {
+        return E_INVALIDARG;
+    }
+
+    *pulBytesReturned = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA);
+
+    if (ulDataLength != 0
+        && ulDataLength != sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA)) {
+        return E_INVALIDARG;
+    }
+
+    if (ulDataLength == sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA)) {
+        if (pPropertyData->DataFlow != DIRECTSOUNDDEVICE_DATAFLOW_RENDER
+            && pPropertyData->DataFlow != DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE) {
+            return E_INVALIDARG;
+        }
+
+        HRESULT hr = S_OK;
+        device_info* device = NULL;
+
+        if (IsEqualGUID(&GUID_NULL, &pPropertyData->DeviceId)) {
+            CopyMemory(&pPropertyData->DeviceId,
+                pPropertyData->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER
+                ? &DSDEVID_DefaultPlayback : &DSDEVID_DefaultCapture, sizeof(GUID));
+        }
+
+        if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(device_info), &device))) {
+            if (IsEqualGUID(&DSDEVID_DefaultPlayback, &pPropertyData->DeviceId)
+                || IsEqualGUID(&DSDEVID_DefaultCapture, &pPropertyData->DeviceId)) {
+                if (FAILED(hr = device_info_get_default_device(pPropertyData->DataFlow, DEVICEKIND_MULTIMEDIA, device))) {
+                    goto exit;
+                }
+            }
+            else if (IsEqualGUID(&DSDEVID_DefaultVoicePlayback, &pPropertyData->DeviceId)
+                || IsEqualGUID(&DSDEVID_DefaultVoiceCapture, &pPropertyData->DeviceId)) {
+                if (FAILED(hr = device_info_get_default_device(pPropertyData->DataFlow, DEVICEKIND_COMMUNICATION, device))) {
+                    goto exit;
+                }
+            }
+            else if (FAILED(hr = device_info_get_device(pPropertyData->DataFlow, &pPropertyData->DeviceId, device))) {
+                goto exit;
+            }
+
+            CopyMemory(&pPropertyData->DeviceId, &device->ID, sizeof(GUID));
+
+            WideCharToMultiByte(CP_ACP, 0, device->Name, -1,
+                pPropertyData->DescriptionA, MAX_DEVICE_NAME_LENGTH, NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, device->Module, -1,
+                pPropertyData->ModuleA, MAX_DEVICE_MODULE_LENGTH, NULL, NULL);
+
+            wcscpy_s(pPropertyData->DescriptionW, MAX_DEVICE_NAME_LENGTH - 1, device->Name);
+            wcscpy_s(pPropertyData->ModuleW, MAX_DEVICE_MODULE_LENGTH - 1, device->Module);
+
+            pPropertyData->Devnode = 0;
+            pPropertyData->WaveDeviceId = 0;
+            pPropertyData->Type = DIRECTSOUNDDEVICE_TYPE_WDM;
+
+        exit:
+
+            allocator_free(self->Allocator, device);
         }
 
         return hr;

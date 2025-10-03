@@ -36,13 +36,14 @@ SOFTWARE.
 #define DEVICEKIND_COMMUNICATION    2
 #define DEVICEKIND_INVALID          (-1)
 
-#define MAX_DEVICE_ID_LENGTH        128
+#define MAX_DEVICE_NAME_LENGTH      256
+#define MAX_DEVICE_MODULE_LENGTH    MAX_PATH
 
 typedef struct device_info {
     GUID    ID;
     DWORD   Type;
-    WCHAR   Name[MAX_DEVICE_ID_LENGTH];
-    WCHAR   Module[MAX_DEVICE_ID_LENGTH];
+    WCHAR   Name[MAX_DEVICE_NAME_LENGTH];
+    WCHAR   Module[MAX_DEVICE_MODULE_LENGTH];
 } device_info;
 
 HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount);

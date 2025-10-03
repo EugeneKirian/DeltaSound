@@ -83,7 +83,7 @@ HRESULT DELTACALL device_info_get_device(DWORD dwType, LPCGUID pcGuidDevice, dev
     ctx.Device = pDevice;
 
     return device_info_thread_wait(CreateThread(NULL, 0,
-        (LPTHREAD_START_ROUTINE)device_info_get_device_thread, &ctx, 0, NULL));
+        device_info_get_device_thread, &ctx, 0, NULL));
 }
 
 HRESULT DELTACALL device_info_get_devices(DWORD dwType, UINT* pdwCount, device_info* pDevices) {
@@ -129,7 +129,7 @@ HRESULT DELTACALL device_info_get_default_device(DWORD dwType, DWORD dwKind, dev
     ctx.Device = pDevice;
 
     return device_info_thread_wait(CreateThread(NULL, 0,
-        (LPTHREAD_START_ROUTINE)device_info_get_default_device_thread, &ctx, 0, NULL));
+        device_info_get_default_device_thread, &ctx, 0, NULL));
 }
 
 /* ---------------------------------------------------------------------- */
@@ -146,7 +146,7 @@ HRESULT DELTACALL device_info_thread_wait(HANDLE thread) {
         DWORD code = EXIT_SUCCESS;
 
         if (!GetExitCodeThread(thread, &code) || code != EXIT_SUCCESS) {
-            hr = E_FAIL;
+            hr = DSERR_NODRIVER;
         }
     }
 
@@ -198,7 +198,7 @@ HRESULT DELTACALL device_info_get_module(IMMDevice* pDevice, LPWSTR pszId) {
     LPWSTR instance = NULL;
 
     if (SUCCEEDED(hr = IMMDevice_GetId(pDevice, &instance))) {
-        wcscpy_s(pszId, MAX_DEVICE_ID_LENGTH - 1, instance);
+        wcscpy_s(pszId, MAX_DEVICE_NAME_LENGTH - 1, instance);
         CoTaskMemFree(instance);
     }
 
@@ -224,7 +224,7 @@ HRESULT DELTACALL device_info_get_name(IMMDevice* pDevice, LPWSTR pszName) {
 
         if (SUCCEEDED(hr = IPropertyStore_GetValue(props, &PKEY_Device_FriendlyName, &name))) {
             if (name.vt != VT_EMPTY) {
-                wcscpy_s(pszName, MAX_DEVICE_ID_LENGTH - 1, name.pwszVal);
+                wcscpy_s(pszName, MAX_DEVICE_NAME_LENGTH - 1, name.pwszVal);
             }
         }
 
