@@ -172,8 +172,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <PrecompiledHeaderOutputFile />
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -196,8 +195,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <PrecompiledHeaderOutputFile />
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -218,8 +216,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <PrecompiledHeaderOutputFile />
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -242,8 +239,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <PrecompiledHeaderOutputFile />
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>
