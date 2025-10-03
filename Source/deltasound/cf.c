@@ -26,6 +26,7 @@ SOFTWARE.
 #include "deltasound.h"
 #include "ds.h"
 #include "dsc.h"
+#include "prvt.h"
 
 HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
     if (pAlloc == NULL || rclsid == NULL || ppOut == NULL) {
@@ -40,12 +41,16 @@ HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
 
         CopyMemory(&instance->ID, rclsid, sizeof(CLSID));
 
-        if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
-            InitializeCriticalSection(&instance->Lock);
+        if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Private))) {
+            if (SUCCEEDED(hr = intfc_create(pAlloc, &instance->Interfaces))) {
+                InitializeCriticalSection(&instance->Lock);
 
-            *ppOut = instance;
+                *ppOut = instance;
 
-            return S_OK;
+                return S_OK;
+            }
+
+            arr_release(instance->Private);
         }
 
         allocator_free(pAlloc, instance);
@@ -57,9 +62,23 @@ HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
 VOID DELTACALL cf_release(cf* self) {
     if (self == NULL) { return; }
 
+    {
+        const DWORD count = arr_get_count(self->Private);
+
+        for (DWORD i = count; i != 0; i--) {
+            prvt* instance = NULL;
+
+            if (SUCCEEDED(arr_remove_item(self->Private, i - 1, &instance))) {
+                prvt_release(instance);
+            }
+        }
+    }
+
     if (self->Instance != NULL) {
         deltasound_remove_class_factory(self->Instance, self);
     }
+
+    arr_release(self->Private);
 
     allocator_free(self->Allocator, self);
 }
@@ -111,7 +130,8 @@ HRESULT DELTACALL cf_add_ref(cf* self, icf* pICF) {
 HRESULT DELTACALL cf_remove_ref(cf* self, icf* pICF) {
     intfc_remove_item(self->Interfaces, &pICF->ID);
 
-    if (intfc_get_count(self->Interfaces) == 0) {
+    if (intfc_get_count(self->Interfaces) == 0
+        && arr_get_count(self->Private) == 0) {
         cf_release(self);
     }
 
@@ -133,7 +153,7 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
             ids* intfc = NULL;
 
             if (SUCCEEDED(hr = ds_query_interface(instance, riid, &intfc))) {
-                if (SUCCEEDED(hr = arr_add_item(self->Instance->Renderers, instance))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Instance->Render, instance))) {
 
                     *ppOut = intfc;
 
@@ -154,7 +174,7 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
             ids* intfc = NULL;
 
             if (SUCCEEDED(hr = dsc_query_interface(instance, riid, &intfc))) {
-                if (SUCCEEDED(hr = arr_add_item(self->Instance->Capturers, instance))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Instance->Capture, instance))) {
 
                     *ppOut = intfc;
 
@@ -172,12 +192,67 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
         // TODO
     }
     else if (IsEqualCLSID(&CLSID_DirectSoundPrivate, &self->ID)) {
-        // TODO
+        prvt* instance = NULL;
+
+        if (SUCCEEDED(hr = prvt_create(self->Allocator, &self->ID, &instance))) {
+            instance->Instance = self;
+
+            iprvt* intfc = NULL;
+
+            if (SUCCEEDED(hr = prvt_query_interface(instance, riid, &intfc))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Private, instance))) {
+
+                    *ppOut = intfc;
+
+                    goto exit;
+                }
+            }
+
+            prvt_release(instance);
+        }
     }
 
 exit:
 
     LeaveCriticalSection(&self->Lock);
+
+    return hr;
+}
+
+HRESULT DELTACALL cf_remove_private(cf* self, prvt* pPrvt) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pPrvt == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&self->Lock);
+
+    const DWORD count = arr_get_count(self->Private);
+
+    for (DWORD i = 0; i < count; i++) {
+        prvt* instance = NULL;
+
+        if (SUCCEEDED(hr = arr_get_item(self->Private, i, &instance))) {
+            if (instance == pPrvt) {
+                hr = arr_remove_item(self->Private, i, NULL);
+                goto exit;
+            }
+        }
+    }
+
+exit:
+
+    LeaveCriticalSection(&self->Lock);
+
+    if (intfc_get_count(self->Interfaces) == 0
+        && arr_get_count(self->Private) == 0) {
+        cf_release(self);
+    }
 
     return hr;
 }

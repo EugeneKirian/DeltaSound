@@ -24,10 +24,12 @@ SOFTWARE.
 
 #pragma once
 
+#include "arr.h"
 #include "icf.h"
 #include "intfc.h"
 
 typedef struct deltasound deltasound;
+typedef struct prvt prvt;
 
 typedef struct cf {
     allocator*          Allocator;
@@ -36,6 +38,8 @@ typedef struct cf {
     intfc*              Interfaces;
 
     CRITICAL_SECTION    Lock;
+
+    arr*                Private;
 } cf;
 
 HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut);
@@ -45,4 +49,6 @@ HRESULT DELTACALL cf_query_interface(cf* pCF, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL cf_add_ref(cf* pCF, icf* pICF);
 HRESULT DELTACALL cf_remove_ref(cf* pCF, icf* pICF);
 
-HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL cf_create_instance(cf* pCF, REFIID riid, LPVOID* ppOut);
+
+HRESULT DELTACALL cf_remove_private(cf* pCF, prvt* pPrvt);

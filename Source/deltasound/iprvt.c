@@ -22,49 +22,50 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "iksp.h"
-#include "ksp.h"
+#include "cf.h"
+#include "iprvt.h"
+#include "prvt.h"
 
-HRESULT DELTACALL iksp_get(iksp*,
+HRESULT DELTACALL iprvt_get(iprvt*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData,
     ULONG ulDataLength, PULONG pulBytesReturned);
-HRESULT DELTACALL iksp_set(iksp*,
+HRESULT DELTACALL iprvt_set(iprvt*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength);
-HRESULT DELTACALL iksp_query_support(iksp*,
+HRESULT DELTACALL iprvt_query_support(iprvt*,
     REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport);
 
-struct iksp_vft {
-    LPIKSPQUERYINTERFACE    QueryInterface;
-    LPIKSPADDREF            AddRef;
-    LPIKSPRELEASE           Release;
-    LPIKSPGET               Get;
-    LPIKSPSET               Set;
-    LPIKSPQUERYSUPPORT      QuerySupport;
+typedef struct iprvt_vft {
+    LPIPRVTQUERYINTERFACE    QueryInterface;
+    LPIPRVTADDREF            AddRef;
+    LPIPRVTRELEASE           Release;
+    LPIPRVTGET               Get;
+    LPIPRVTSET               Set;
+    LPIPRVTQUERYSUPPORT      QuerySupport;
+} iprvt_vft;
+
+const static iprvt_vft iprvt_self = {
+    iprvt_query_interface,
+    iprvt_add_ref,
+    iprvt_remove_ref,
+    iprvt_get,
+    iprvt_set,
+    iprvt_query_support
 };
 
-const static iksp_vft iksp_self = {
-    iksp_query_interface,
-    iksp_add_ref,
-    iksp_remove_ref,
-    iksp_get,
-    iksp_set,
-    iksp_query_support
-};
-
-HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
+HRESULT DELTACALL iprvt_create(allocator* pAlloc, REFIID riid, iprvt** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    iksp* instance = NULL;
+    iprvt* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(iksp), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(iprvt), &instance))) {
         instance->Allocator = pAlloc;
 
-        instance->Self = &iksp_self;
+        instance->Self = &iprvt_self;
         CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
@@ -74,13 +75,13 @@ HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
     return hr;
 }
 
-VOID DELTACALL iksp_release(iksp* self) {
+VOID DELTACALL iprvt_release(iprvt* self) {
     if (self == NULL) { return; }
 
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL iksp_query_interface(iksp* self, REFIID riid, LPVOID* ppOut) {
+HRESULT DELTACALL iprvt_query_interface(iprvt* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -89,10 +90,10 @@ HRESULT DELTACALL iksp_query_interface(iksp* self, REFIID riid, LPVOID* ppOut) {
         return E_INVALIDARG;
     }
 
-    return ksp_query_interface(self->Instance, riid, ppOut);
+    return prvt_query_interface(self->Instance, riid, ppOut);
 }
 
-ULONG DELTACALL iksp_add_ref(iksp* self) {
+ULONG DELTACALL iprvt_add_ref(iprvt* self) {
     if (self == NULL) {
         return 0;
     }
@@ -100,7 +101,7 @@ ULONG DELTACALL iksp_add_ref(iksp* self) {
     return InterlockedIncrement(&self->RefCount);
 }
 
-ULONG DELTACALL iksp_remove_ref(iksp* self) {
+ULONG DELTACALL iprvt_remove_ref(iprvt* self) {
     if (self == NULL) {
         return 0;
     }
@@ -115,32 +116,55 @@ ULONG DELTACALL iksp_remove_ref(iksp* self) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
-            ksp_remove_ref(self->Instance, self);
+            prvt_remove_ref(self->Instance, self);
         }
 
-        iksp_release(self);
+        iprvt_release(self);
     }
 
     return result;
 }
 
-HRESULT DELTACALL iksp_get(iksp* self,
+HRESULT DELTACALL iprvt_get(iprvt* self,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData,
     ULONG ulDataLength, PULONG pulBytesReturned) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (rguidPropSet == NULL || pulBytesReturned == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return prvt_get(self->Instance, rguidPropSet, ulId,
+        pInstanceData, ulInstanceLength, pPropertyData, ulDataLength, pulBytesReturned);
 }
 
-HRESULT DELTACALL iksp_set(iksp* self,
+HRESULT DELTACALL iprvt_set(iprvt* self,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (rguidPropSet == NULL) {
+        return E_INVALIDARG;
+    }
+
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
 }
 
-HRESULT DELTACALL iksp_query_support(iksp* self,
+HRESULT DELTACALL iprvt_query_support(iprvt* self,
     REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport) {
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (rguidPropSet == NULL || pulTypeSupport == NULL) {
+        return E_INVALIDARG;
+    }
+
+    return prvt_query_support(self->Instance, rguidPropSet, ulId, pulTypeSupport);
 }

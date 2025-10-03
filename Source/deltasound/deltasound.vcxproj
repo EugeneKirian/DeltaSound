@@ -47,8 +47,10 @@
     <ClInclude Include="idssl.h" />
     <ClInclude Include="iksp.h" />
     <ClInclude Include="intfc.h" />
+    <ClInclude Include="iprvt.h" />
     <ClInclude Include="ksp.h" />
     <ClInclude Include="mixer.h" />
+    <ClInclude Include="prvt.h" />
     <ClInclude Include="rcm.h" />
     <ClInclude Include="uuid.h" />
     <ClInclude Include="wave.h" />
@@ -81,8 +83,10 @@
     <ClCompile Include="idssl.c" />
     <ClCompile Include="iksp.c" />
     <ClCompile Include="intfc.c" />
+    <ClCompile Include="iprvt.c" />
     <ClCompile Include="ksp.c" />
     <ClCompile Include="mixer.c" />
+    <ClCompile Include="prvt.c" />
     <ClCompile Include="rcm.c" />
     <ClCompile Include="uuid.c" />
     <ClCompile Include="wave.c" />

@@ -86,8 +86,7 @@ HRESULT DELTACALL device_info_get_device(DWORD dwType, LPCGUID pcGuidDevice, dev
         (LPTHREAD_START_ROUTINE)device_info_get_device_thread, &ctx, 0, NULL));
 }
 
-HRESULT DELTACALL device_info_get_devices(
-    DWORD dwType, UINT* pdwCount, device_info* pDevices) {
+HRESULT DELTACALL device_info_get_devices(DWORD dwType, UINT* pdwCount, device_info* pDevices) {
     if (dwType != DEVICETYPE_RENDER
         && dwType != DEVICETYPE_CAPTURE && dwType != DEVICETYPE_ALL) {
         return E_INVALIDARG;
@@ -109,8 +108,7 @@ HRESULT DELTACALL device_info_get_devices(
         (LPTHREAD_START_ROUTINE)device_info_get_devices_thread, &ctx, 0, NULL));
 }
 
-HRESULT DELTACALL device_info_get_default_device(
-    DWORD dwType, DWORD dwKind, device_info* pDevice) {
+HRESULT DELTACALL device_info_get_default_device(DWORD dwType, DWORD dwKind, device_info* pDevice) {
     if (dwType != DEVICETYPE_RENDER && dwType != DEVICETYPE_CAPTURE) {
         return E_INVALIDARG;
     }

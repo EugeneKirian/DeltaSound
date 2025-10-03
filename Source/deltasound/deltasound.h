@@ -33,8 +33,9 @@ typedef struct dsc dsc;
 typedef struct deltasound {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
-    arr*                Renderers;
-    arr*                Capturers;
+
+    arr*                Render;
+    arr*                Capture;
     arr*                Factories;
 } deltasound;
 
