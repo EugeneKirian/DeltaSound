@@ -69,6 +69,36 @@ static HRESULT CreateDescriptionA(DWORD dwSize, DIRECTSOUNDDEVICE_DATAFLOW dfDat
     return S_OK;
 }
 
+static HRESULT CreateDescriptionW(DWORD dwSize, DIRECTSOUNDDEVICE_DATAFLOW dfDataFlow,
+    LPCGUID lpcID, PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA* ppOut) {
+    if (dwSize < sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA)) {
+        return E_INVALIDARG;
+    }
+
+    if (ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA instance =
+        (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA)malloc(dwSize);
+
+    if (instance == NULL) {
+        return E_OUTOFMEMORY;
+    }
+
+    ZeroMemory(instance, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA));
+
+    instance->DataFlow = dfDataFlow;
+
+    if (lpcID != NULL) {
+        CopyMemory(&instance->DeviceId, lpcID, sizeof(GUID));
+    }
+
+    *ppOut = instance;
+
+    return S_OK;
+}
+
 static BOOL CompareDeviceData(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA a,
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA b) {
     if (a == NULL || b == NULL) {
@@ -132,7 +162,44 @@ static BOOL CompareDeviceDataA(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA 
 
     if (a->Interface != NULL && b->Interface != NULL) {
         // NOTE. DirectSound converts Interface value to uppercase for RENDER devices...
-        if (strcmpi(a->Interface, b->Interface) != 0) {
+        if (stricmp(a->Interface, b->Interface) != 0) {
+            DebugBreak(); return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL CompareDeviceDataW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA a,
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (a->Type != b->Type || a->DataFlow != b->DataFlow
+        || a->WaveDeviceId != b->WaveDeviceId) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (a->Description != NULL && b->Description != NULL) {
+        if (wcscmp(a->Description, b->Description) != 0) {
+            DebugBreak(); return FALSE;
+        }
+    }
+
+    if (a->Module != NULL && b->Module != NULL) {
+        if (wcscmp(a->Module, b->Module) != 0) {
+            DebugBreak(); return FALSE;
+        }
+    }
+
+    if (a->Interface != NULL && b->Interface != NULL) {
+        // NOTE. DirectSound converts Interface value to uppercase for RENDER devices...
+        if (wcsicmp(a->Interface, b->Interface) != 0) {
             DebugBreak(); return FALSE;
         }
     }
@@ -1399,6 +1466,519 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionA(LPKSPROPERTYSET a
     return TRUE;
 }
 
+static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    GUID valid;
+    ZeroMemory(&valid, sizeof(GUID));
+
+    // DIRECTSOUNDDEVICE_DATAFLOW_RENDER (Default Device)
+    {
+        ULONG la = 0, lb = 0;
+
+        {
+            const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+            PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_RENDER, NULL, &da);
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_RENDER, NULL, &db);
+
+            // Length
+
+            const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+            const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+            if (ra != rb || la != lb) {
+                free(da);
+                free(db);
+                DebugBreak(); return FALSE;
+            }
+
+            free(da);
+            free(db);
+        }
+
+        // Values
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(la, DIRECTSOUNDDEVICE_DATAFLOW_RENDER, NULL, &da);
+        CreateDescriptionW(lb, DIRECTSOUNDDEVICE_DATAFLOW_RENDER, NULL, &db);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, la, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        free(da);
+        free(db);
+    }
+
+    {
+        ULONG la = 0, lb = 0;
+
+        {
+            const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+            PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &DSDEVID_DefaultPlayback, &da);
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &DSDEVID_DefaultPlayback, &db);
+
+            // Length
+
+            const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+            const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+            if (ra != rb || la != lb) {
+                free(da);
+                free(db);
+                DebugBreak(); return FALSE;
+            }
+
+            free(da);
+            free(db);
+        }
+
+        // Values
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(la, DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &DSDEVID_DefaultPlayback, &da);
+        CreateDescriptionW(lb, DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &DSDEVID_DefaultPlayback, &db);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, la, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        CopyMemory(&valid, &da->DeviceId, sizeof(GUID));
+
+        free(da);
+        free(db);
+    }
+
+    // DIRECTSOUNDDEVICE_DATAFLOW_RENDER & Invalid DeviceID
+    {
+        ULONG la = 0, lb = 0;
+        const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+            DIRECTSOUNDDEVICE_DATAFLOW_RENDER, NULL, &da);
+        CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+            DIRECTSOUNDDEVICE_DATAFLOW_RENDER, NULL, &db);
+
+        memset(&da->DeviceId, 0xFF, sizeof(GUID));
+        memset(&db->DeviceId, 0xFF, sizeof(GUID));
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        free(da);
+        free(db);
+    }
+
+    // TODO DIRECTSOUNDDEVICE_DATAFLOW_RENDER & DeviceID
+    {
+        ULONG la = 0, lb = 0;
+
+        {
+            const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+            PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &valid, &da);
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &valid, &db);
+
+            // Length
+
+            const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+            const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+            if (ra != rb || la != lb) {
+                free(da);
+                free(db);
+                DebugBreak(); return FALSE;
+            }
+
+            free(da);
+            free(db);
+        }
+
+        // Values
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(la, DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &valid, &da);
+        CreateDescriptionW(lb, DIRECTSOUNDDEVICE_DATAFLOW_RENDER, &valid, &db);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, la, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        free(da);
+        free(db);
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    GUID valid;
+    ZeroMemory(&valid, sizeof(GUID));
+
+    // DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE (Default Device)
+    {
+        ULONG la = 0, lb = 0;
+
+        {
+            const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+            PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, NULL, &da);
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, NULL, &db);
+
+            // Length
+
+            const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+            const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+            if (ra != rb || la != lb) {
+                free(da);
+                free(db);
+                DebugBreak(); return FALSE;
+            }
+
+            free(da);
+            free(db);
+        }
+
+        // Values
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(la, DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, NULL, &da);
+        CreateDescriptionW(lb, DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, NULL, &db);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, la, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        free(da);
+        free(db);
+    }
+
+    {
+        ULONG la = 0, lb = 0;
+
+        {
+            const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+            PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &DSDEVID_DefaultCapture, &da);
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &DSDEVID_DefaultCapture, &db);
+
+            // Length
+
+            const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+            const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+            if (ra != rb || la != lb) {
+                free(da);
+                free(db);
+                DebugBreak(); return FALSE;
+            }
+
+            free(da);
+            free(db);
+        }
+
+        // Values
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(la, DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &DSDEVID_DefaultCapture, &da);
+        CreateDescriptionW(lb, DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &DSDEVID_DefaultCapture, &db);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, la, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        CopyMemory(&valid, &da->DeviceId, sizeof(GUID));
+
+        free(da);
+        free(db);
+    }
+
+    // DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & Invalid DeviceID
+    {
+        ULONG la = 0, lb = 0;
+        const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+            DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, NULL, &da);
+        CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+            DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, NULL, &db);
+
+        memset(&da->DeviceId, 0xFF, sizeof(GUID));
+        memset(&db->DeviceId, 0xFF, sizeof(GUID));
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        free(da);
+        free(db);
+    }
+
+    // TODO DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & DeviceID
+    {
+        ULONG la = 0, lb = 0;
+
+        {
+            const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+            PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &valid, &da);
+            CreateDescriptionW(sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA),
+                DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &valid, &db);
+
+            // Length
+
+            const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, length, &la);
+            const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+                DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
+
+            if (ra != rb || la != lb) {
+                free(da);
+                free(db);
+                DebugBreak(); return FALSE;
+            }
+
+            free(da);
+            free(db);
+        }
+
+        // Values
+
+        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da = NULL, db = NULL;
+
+        CreateDescriptionW(la, DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &valid, &da);
+        CreateDescriptionW(lb, DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE, &valid, &db);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, da, la, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+
+        if (!CompareDeviceDataW(da, db)) {
+            free(da);
+            free(db);
+
+            DebugBreak(); return FALSE;
+        }
+
+        free(da);
+        free(db);
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    // Invalid
+    {
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, NULL, 0, NULL);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, NULL, 0, NULL);
+
+        if (ra != rb) {
+            DebugBreak(); return FALSE;
+        }
+    }
+
+    {
+        ULONG la = 0, lb = 0;
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, NULL, 0, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, NULL, 0, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+    }
+
+    {
+        ULONG la = 0, lb = 0;
+        const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+
+        DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da, db;
+        ZeroMemory(&da, length);
+        ZeroMemory(&db, length);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, &da, 0, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, &db, 0, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+    }
+
+    {
+        ULONG la = 0, lb = 0;
+        const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+
+        DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA da, db;
+        ZeroMemory(&da, length);
+        ZeroMemory(&db, length);
+
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, &da, length - 4, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, &db, length - 4, &lb);
+
+        if (ra != rb || la != lb) {
+            DebugBreak(); return FALSE;
+        }
+    }
+
+    if (!TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(a, b)) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (!TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(a, b)) {
+        DebugBreak(); return FALSE;
+    }
+
+    return TRUE;
+}
+
 static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
         DebugBreak(); return FALSE;
@@ -1425,8 +2005,12 @@ static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPER
     if (!TestDirectSoundPrivateKsPropertySetGetDescriptionA(a, b)) {
         DebugBreak(); return FALSE;
     }
-    //TODO DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W
-    // TODO
+
+    // DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W
+    if (!TestDirectSoundPrivateKsPropertySetGetDescriptionW(a, b)) {
+        DebugBreak(); return FALSE;
+    }
+
     //TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A
     //TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W
 
@@ -1458,8 +2042,6 @@ static BOOL TestDirectSoundPrivateKsPropertySet(LPCLASSFACTORY a, LPCLASSFACTORY
         result = FALSE;
         goto exit;
     }
-
-    // TODO GET
 
     // TODO SET
 
