@@ -33,14 +33,34 @@ typedef struct DeviceEnumerateContext {
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA Items;
 } DeviceEnumerateContext;
 
+typedef struct DeviceDescriptionA {
+    DIRECTSOUNDDEVICE_TYPE      Type;
+    DIRECTSOUNDDEVICE_DATAFLOW  DataFlow;
+    GUID                        DeviceId;
+    CHAR                        Description[0x100];
+    CHAR                        Module[MAX_PATH];
+    CHAR                        Interface[0x100];
+    ULONG                       WaveDeviceId;
+} DeviceDescriptionA;
+
 typedef struct DeviceEnumerateContextA {
     DWORD Count;
-    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA Items;
+    DeviceDescriptionA* Items;
 } DeviceEnumerateContextA;
+
+typedef struct DeviceDescriptionW {
+    DIRECTSOUNDDEVICE_TYPE      Type;
+    DIRECTSOUNDDEVICE_DATAFLOW  DataFlow;
+    GUID                        DeviceId;
+    WCHAR                       Description[0x100];
+    WCHAR                       Module[MAX_PATH];
+    WCHAR                       Interface[0x100];
+    ULONG                       WaveDeviceId;
+} DeviceDescriptionW;
 
 typedef struct DeviceEnumerateContextW {
     DWORD Count;
-    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA Items;
+    DeviceDescriptionW* Items;
 } DeviceEnumerateContextW;
 
 #define DIRECTSOUND_DEVICE_PROPERTY_COUNT   8
@@ -144,6 +164,64 @@ static BOOL CompareDeviceData(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA a
     }
 
     if (wcscmp(a->ModuleW, b->ModuleW) != 0) {
+        DebugBreak(); return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL CompareDeviceDescriptionA(DeviceDescriptionA* a, DeviceDescriptionA* b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (a->Type != b->Type
+        || a->DataFlow != b->DataFlow || a->WaveDeviceId != b->WaveDeviceId) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (strcmp(a->Description, b->Description) != 0) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (strcmp(a->Module, b->Module) != 0) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (stricmp(a->Interface, b->Interface) != 0) {
+        DebugBreak(); return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL CompareDeviceDescriptionW(DeviceDescriptionW* a, DeviceDescriptionW* b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (a->Type != b->Type
+        || a->DataFlow != b->DataFlow || a->WaveDeviceId != b->WaveDeviceId) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (wcscmp(a->Description, b->Description) != 0) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (wcscmp(a->Module, b->Module) != 0) {
+        DebugBreak(); return FALSE;
+    }
+
+    if (wcsicmp(a->Interface, b->Interface) != 0) {
         DebugBreak(); return FALSE;
     }
 
@@ -2085,6 +2163,196 @@ exit:
     return result;
 }
 
+BOOL CALLBACK TestEnumerateCallbackA(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA lpData, LPVOID lpContext) {
+    if (lpContext == NULL) {
+        return FALSE;
+    }
+
+    DeviceEnumerateContextA* ctx = (DeviceEnumerateContextA*)lpContext;
+
+    if (MAX_ENUMERATE_DEVICE_COUNT <= ctx->Count) {
+        return FALSE;
+    }
+
+    ctx->Items[ctx->Count].Type = lpData->Type;
+    ctx->Items[ctx->Count].DataFlow = lpData->DataFlow;
+    CopyMemory(&ctx->Items[ctx->Count].DeviceId, &lpData->DeviceId, sizeof(GUID));
+    strcpy(ctx->Items[ctx->Count].Description, lpData->Description);
+    strcpy(ctx->Items[ctx->Count].Module, lpData->Module);
+    strcpy(ctx->Items[ctx->Count].Interface, lpData->Interface);
+    ctx->Items[ctx->Count].WaveDeviceId = lpData->WaveDeviceId;
+
+    ctx->Count++;
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundPrivateKsPropertySetEnumerateA(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    BOOL result = TRUE;
+    HRESULT ra = S_OK, rb = S_OK;
+    ULONG la = 0, lb = 0;
+    const DWORD size = MAX_ENUMERATE_DEVICE_COUNT
+        * sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA);
+
+    DeviceEnumerateContextA ca, cb;
+    ZeroMemory(&ca, sizeof(DeviceEnumerateContextA));
+    ZeroMemory(&cb, sizeof(DeviceEnumerateContextA));
+
+    DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA da, db;
+
+    da.Callback = TestEnumerateCallbackA;
+    da.Context = &ca;
+
+    db.Callback = TestEnumerateCallbackA;
+    db.Context = &cb;
+
+    ca.Items = (DeviceDescriptionA*)malloc(size);
+    cb.Items = (DeviceDescriptionA*)malloc(size);
+
+    if (ca.Items == NULL || cb.Items == NULL) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ZeroMemory(ca.Items, size);
+    ZeroMemory(cb.Items, size);
+
+    ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+        DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A, NULL, 0,
+        &da, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA), &la);
+    rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+        DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A, NULL, 0,
+        &db, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA), &lb);
+
+    if (ra != rb || la != lb) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    if (ca.Count != cb.Count) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    for (DWORD i = 0; i < ca.Count; i++) {
+        if (!CompareDeviceDescriptionA(&ca.Items[i], &cb.Items[i])) {
+            result = FALSE;
+            DebugBreak(); goto exit;
+        }
+    }
+
+exit:
+
+    if (ca.Items != NULL) {
+        free(ca.Items);
+    }
+
+    if (cb.Items != NULL) {
+        free(cb.Items);
+    }
+
+    return result;
+}
+
+BOOL CALLBACK TestEnumerateCallbackW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA lpData, LPVOID lpContext) {
+    if (lpContext == NULL) {
+        return FALSE;
+    }
+
+    DeviceEnumerateContextW* ctx = (DeviceEnumerateContextW*)lpContext;
+
+    if (MAX_ENUMERATE_DEVICE_COUNT <= ctx->Count) {
+        return FALSE;
+    }
+
+    ctx->Items[ctx->Count].Type = lpData->Type;
+    ctx->Items[ctx->Count].DataFlow = lpData->DataFlow;
+    CopyMemory(&ctx->Items[ctx->Count].DeviceId, &lpData->DeviceId, sizeof(GUID));
+    wcscpy(ctx->Items[ctx->Count].Description, lpData->Description);
+    wcscpy(ctx->Items[ctx->Count].Module, lpData->Module);
+    wcscpy(ctx->Items[ctx->Count].Interface, lpData->Interface);
+    ctx->Items[ctx->Count].WaveDeviceId = lpData->WaveDeviceId;
+
+    ctx->Count++;
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundPrivateKsPropertySetEnumerateW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    BOOL result = TRUE;
+    HRESULT ra = S_OK, rb = S_OK;
+    ULONG la = 0, lb = 0;
+    const DWORD size = MAX_ENUMERATE_DEVICE_COUNT
+        * sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+
+    DeviceEnumerateContextW ca, cb;
+    ZeroMemory(&ca, sizeof(DeviceEnumerateContextW));
+    ZeroMemory(&cb, sizeof(DeviceEnumerateContextW));
+
+    DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA da, db;
+
+    da.Callback = TestEnumerateCallbackW;
+    da.Context = &ca;
+
+    db.Callback = TestEnumerateCallbackW;
+    db.Context = &cb;
+
+    ca.Items = (DeviceDescriptionW*)malloc(size);
+    cb.Items = (DeviceDescriptionW*)malloc(size);
+
+    if (ca.Items == NULL || cb.Items == NULL) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ZeroMemory(ca.Items, size);
+    ZeroMemory(cb.Items, size);
+
+    ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+        DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W, NULL, 0,
+        &da, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA), &la);
+    rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+        DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W, NULL, 0,
+        &db, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA), &lb);
+
+    if (ra != rb || la != lb) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    if (ca.Count != cb.Count) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    for (DWORD i = 0; i < ca.Count; i++) {
+        if (!CompareDeviceDescriptionW(&ca.Items[i], &cb.Items[i])) {
+            result = FALSE;
+            DebugBreak(); goto exit;
+        }
+    }
+
+exit:
+
+    if (ca.Items != NULL) {
+        free(ca.Items);
+    }
+
+    if (cb.Items != NULL) {
+        free(cb.Items);
+    }
+
+    return result;
+}
+
 static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
         DebugBreak(); return FALSE;
@@ -2120,8 +2388,15 @@ static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPER
         DebugBreak(); return FALSE;
     }
 
-    //TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A
-    //TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W
+    // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A
+    if (!TestDirectSoundPrivateKsPropertySetEnumerateA(a, b)) {
+        DebugBreak(); return FALSE;
+    }
+
+    // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W
+    if (!TestDirectSoundPrivateKsPropertySetEnumerateW(a, b)) {
+        DebugBreak(); return FALSE;
+    }
 
     return TRUE;
 }
@@ -2152,6 +2427,12 @@ static BOOL TestDirectSoundPrivateKsPropertySet(LPCLASSFACTORY a, LPCLASSFACTORY
         goto exit;
     }
 
+    // TODO SET
+    // TODO SET
+    // TODO SET
+    // TODO SET
+    // TODO SET
+    // TODO SET
     // TODO SET
 
 exit:

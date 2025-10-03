@@ -744,12 +744,12 @@ HRESULT DELTACALL prvt_get_description_wide(prvt* self,
                 offset += (wcslen(device->Name) + 1) * sizeof(WCHAR);
 
                 // Module
-                pPropertyData->Description = (LPWSTR)((size_t)pPropertyData + offset);
+                pPropertyData->Module = (LPWSTR)((size_t)pPropertyData + offset);
                 wcscpy(pPropertyData->Module, device->Module);
                 offset += (wcslen(device->Module) + 1) * sizeof(WCHAR);
 
                 // Interface
-                pPropertyData->Description = (LPWSTR)((size_t)pPropertyData + offset);
+                pPropertyData->Interface = (LPWSTR)((size_t)pPropertyData + offset);
                 wcscpy(pPropertyData->Interface, intfc);
             }
 
@@ -823,10 +823,10 @@ HRESULT DELTACALL prvt_enumerate_devices_ansi(prvt* self,
         return E_INVALIDARG;
     }
 
-    *pulBytesReturned = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA);
+    *pulBytesReturned = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA);
 
     if (ulDataLength != 0
-        && ulDataLength < sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA)) {
+        && ulDataLength < sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA)) {
         return E_INVALIDARG;
     }
 
@@ -843,20 +843,32 @@ HRESULT DELTACALL prvt_enumerate_devices_ansi(prvt* self,
         if (SUCCEEDED(hr = allocator_allocate(self->Allocator, count * sizeof(device_info), &devices))) {
             if (SUCCEEDED(hr = device_info_get_devices(DEVICETYPE_ALL, &count, devices))) {
                 for (DWORD i = 0; i < count; i++) {
+                    BOOL result = TRUE;
                     DWORD length = 0;
                     DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA info;
-
-                    // TODO Resize?
+                    ZeroMemory(&info, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA));
 
                     info.DataFlow = devices[i].Type;
                     CopyMemory(&info.DeviceId, &devices[i].ID, sizeof(GUID));
 
                     if (SUCCEEDED(prvt_get_description_ansi(self, &info,
                         sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA), &length))) {
+                        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA device = NULL;
 
-                        if (!pPropertyData->Callback(&info, pPropertyData->Context)) {
-                            break;
+                        if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &device))) {
+                            device->DataFlow = devices[i].Type;
+                            CopyMemory(&device->DeviceId, &devices[i].ID, sizeof(GUID));
+
+                            if (SUCCEEDED(prvt_get_description_ansi(self, device, length, &length))) {
+                                result = pPropertyData->Callback(device, pPropertyData->Context);
+                            }
+
+                            allocator_free(self->Allocator, device);
                         }
+                    }
+
+                    if (!result) {
+                        break;
                     }
                 }
             }
@@ -874,10 +886,10 @@ HRESULT DELTACALL prvt_enumerate_devices_wide(prvt* self,
         return E_INVALIDARG;
     }
 
-    *pulBytesReturned = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA);
+    *pulBytesReturned = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA);
 
     if (ulDataLength != 0
-        && ulDataLength < sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA)) {
+        && ulDataLength < sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA)) {
         return E_INVALIDARG;
     }
 
@@ -894,20 +906,32 @@ HRESULT DELTACALL prvt_enumerate_devices_wide(prvt* self,
         if (SUCCEEDED(hr = allocator_allocate(self->Allocator, count * sizeof(device_info), &devices))) {
             if (SUCCEEDED(hr = device_info_get_devices(DEVICETYPE_ALL, &count, devices))) {
                 for (DWORD i = 0; i < count; i++) {
+                    BOOL result = TRUE;
                     DWORD length = 0;
                     DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA info;
-
-                    // TODO Resize?
+                    ZeroMemory(&info, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA));
 
                     info.DataFlow = devices[i].Type;
                     CopyMemory(&info.DeviceId, &devices[i].ID, sizeof(GUID));
 
                     if (SUCCEEDED(prvt_get_description_wide(self, &info,
                         sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA), &length))) {
+                        PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA device = NULL;
 
-                        if (!pPropertyData->Callback(&info, pPropertyData->Context)) {
-                            break;
+                        if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &device))) {
+                            device->DataFlow = devices[i].Type;
+                            CopyMemory(&device->DeviceId, &devices[i].ID, sizeof(GUID));
+
+                            if (SUCCEEDED(prvt_get_description_wide(self, device, length, &length))) {
+                                result = pPropertyData->Callback(device, pPropertyData->Context);
+                            }
+
+                            allocator_free(self->Allocator, device);
                         }
+                    }
+
+                    if (!result) {
+                        break;
                     }
                 }
             }
