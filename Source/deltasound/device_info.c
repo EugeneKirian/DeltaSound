@@ -61,6 +61,7 @@ DWORD WINAPI device_info_get_default_device_thread(get_default_device_context* p
 HRESULT DELTACALL device_info_get_id(IMMDevice* pDevice, LPGUID pID);
 HRESULT DELTACALL device_info_get_module(IMMDevice* pDevice, LPWSTR pszId);
 HRESULT DELTACALL device_info_get_name(IMMDevice* pDevice, LPWSTR pszName);
+HRESULT DELTACALL device_info_get_type(IMMDevice* pDevice, LPDWORD pdwType);
 
 HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount) {
     return device_info_get_devices(dwType, pdwCount, NULL);
@@ -151,6 +152,7 @@ HRESULT DELTACALL device_info_thread_wait(HANDLE thread) {
     }
 
     CloseHandle(thread);
+
     return hr;
 }
 
@@ -236,6 +238,29 @@ HRESULT DELTACALL device_info_get_name(IMMDevice* pDevice, LPWSTR pszName) {
     return hr;
 }
 
+
+HRESULT DELTACALL device_info_get_type(IMMDevice* pDevice, LPDWORD pdwType) {
+    if (pDevice == NULL) {
+        return E_POINTER;
+    }
+
+    if (pdwType == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    IMMEndpoint* epoint = NULL;
+
+    if (SUCCEEDED(hr = IMMDevice_QueryInterface(pDevice, &IID_IMMEndpoint, &epoint))) {
+
+        hr = IMMEndpoint_GetDataFlow(epoint, (EDataFlow*)pdwType);
+
+        RELEASE(epoint);
+    }
+
+    return hr;
+}
+
 DWORD WINAPI device_info_get_device_thread(get_device_context* ctx) {
     if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
         return EXIT_FAILURE;
@@ -302,6 +327,7 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
     }
 
     HRESULT hr = S_OK;
+    UINT read = 0, written = 0;
     IMMDeviceEnumerator* enumerator = NULL;
     IMMDeviceCollection* collection = NULL;
 
@@ -311,11 +337,10 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
     }
 
     if (FAILED(hr = IMMDeviceEnumerator_EnumAudioEndpoints(enumerator,
-        (EDataFlow)ctx->Type, DEVICE_STATE_ACTIVE, &collection))) {
+        ctx->Type, DEVICE_STATE_ACTIVE, &collection))) {
         goto exit;
     }
 
-    UINT written = 0, read = 0;
     if (FAILED(hr = IMMDeviceCollection_GetCount(collection, &read))) {
         goto exit;
     }
@@ -334,8 +359,9 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
             if (SUCCEEDED(hr = device_info_get_id(device, &ctx->Devices[written].ID))) {
                 if (SUCCEEDED(hr = device_info_get_module(device, ctx->Devices[written].Module))) {
                     if (SUCCEEDED(hr = device_info_get_name(device, ctx->Devices[written].Name))) {
-                        ctx->Devices[written].Type = ctx->Type;
-                        written++;
+                        if (SUCCEEDED(hr = device_info_get_type(device, &ctx->Devices[written].Type))) {
+                            written++;
+                        }
                     }
                 }
             }

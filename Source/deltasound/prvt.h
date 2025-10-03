@@ -47,8 +47,7 @@ HRESULT DELTACALL prvt_remove_ref(prvt* pPrvt, iprvt* pIPrvt);
 
 HRESULT DELTACALL prvt_get(prvt* pPrvt,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
-    ULONG ulInstanceLength, LPVOID pPropertyData,
-    ULONG ulDataLength, PULONG pulBytesReturned);
+    ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned);
 HRESULT DELTACALL prvt_set(prvt* pPrvt,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength);

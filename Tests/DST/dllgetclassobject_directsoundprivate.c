@@ -24,7 +24,24 @@ SOFTWARE.
 
 #include "dllgetclassobject.h"
 
+#define MAX_ENUMERATE_DEVICE_COUNT  128
+
 #define MAX_DEVICE_NAME_LENGTH      128
+
+typedef struct DeviceEnumerateContext {
+    DWORD Count;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA Items;
+} DeviceEnumerateContext;
+
+typedef struct DeviceEnumerateContextA {
+    DWORD Count;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA Items;
+} DeviceEnumerateContextA;
+
+typedef struct DeviceEnumerateContextW {
+    DWORD Count;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA Items;
+} DeviceEnumerateContextW;
 
 #define DIRECTSOUND_DEVICE_PROPERTY_COUNT   8
 
@@ -1979,6 +1996,95 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionW(LPKSPROPERTYSET a
     return TRUE;
 }
 
+BOOL CALLBACK TestEnumerateCallback(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA lpData, LPVOID lpContext) {
+    if (lpContext == NULL) {
+        return FALSE;
+    }
+
+    DeviceEnumerateContext* ctx = (DeviceEnumerateContext*)lpContext;
+
+    if (MAX_ENUMERATE_DEVICE_COUNT <= ctx->Count) {
+        return FALSE;
+    }
+
+    CopyMemory(&ctx->Items[ctx->Count], lpData, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA));
+
+    ctx->Count++;
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundPrivateKsPropertySetEnumerate1(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
+    if (a == NULL || b == NULL) {
+        DebugBreak(); return FALSE;
+    }
+
+    BOOL result = TRUE;
+    HRESULT ra = S_OK, rb = S_OK;
+    ULONG la = 0, lb = 0;
+    const DWORD size = MAX_ENUMERATE_DEVICE_COUNT
+        * sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA);
+
+    DeviceEnumerateContext ca, cb;
+    ZeroMemory(&ca, sizeof(DeviceEnumerateContext));
+    ZeroMemory(&cb, sizeof(DeviceEnumerateContext));
+
+    DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1_DATA da, db;
+
+    da.Callback = TestEnumerateCallback;
+    da.Context = &ca;
+
+    db.Callback = TestEnumerateCallback;
+    db.Context = &cb;
+
+    ca.Items = (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA)malloc(size);
+    cb.Items = (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA)malloc(size);
+
+    if (ca.Items == NULL || cb.Items == NULL) {
+        result = FALSE;
+        goto exit;
+    }
+
+    ZeroMemory(ca.Items, size);
+    ZeroMemory(cb.Items, size);
+
+    ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice,
+        DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1, NULL, 0,
+        &da, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1_DATA), &la);
+    rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice,
+        DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1, NULL, 0,
+        &db, sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1_DATA), &lb);
+
+    if (ra != rb || la != lb) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    if (ca.Count != cb.Count) {
+        result = FALSE;
+        DebugBreak(); goto exit;
+    }
+
+    for (DWORD i = 0; i < ca.Count; i++) {
+        if (!CompareDeviceData(&ca.Items[i], &cb.Items[i])) {
+            result = FALSE;
+            DebugBreak(); goto exit;
+        }
+    }
+
+exit:
+
+    if (ca.Items != NULL) {
+        free(ca.Items);
+    }
+
+    if (cb.Items != NULL) {
+        free(cb.Items);
+    }
+
+    return result;
+}
+
 static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
         DebugBreak(); return FALSE;
@@ -1994,7 +2100,10 @@ static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPER
         DebugBreak(); return FALSE;
     }
 
-    // TODO DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1
+    // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1
+    if (!TestDirectSoundPrivateKsPropertySetEnumerate1(a, b)) {
+        DebugBreak(); return FALSE;
+    }
 
     //DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W
     if (!TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(a, b)) {

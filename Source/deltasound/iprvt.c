@@ -28,8 +28,7 @@ SOFTWARE.
 
 HRESULT DELTACALL iprvt_get(iprvt*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
-    ULONG ulInstanceLength, LPVOID pPropertyData,
-    ULONG ulDataLength, PULONG pulBytesReturned);
+    ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned);
 HRESULT DELTACALL iprvt_set(iprvt*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength);
@@ -127,8 +126,7 @@ ULONG DELTACALL iprvt_remove_ref(iprvt* self) {
 
 HRESULT DELTACALL iprvt_get(iprvt* self,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
-    ULONG ulInstanceLength, LPVOID pPropertyData,
-    ULONG ulDataLength, PULONG pulBytesReturned) {
+    ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned) {
     if (self == NULL) {
         return E_POINTER;
     }
