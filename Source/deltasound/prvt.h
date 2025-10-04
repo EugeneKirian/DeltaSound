@@ -26,13 +26,13 @@ SOFTWARE.
 
 #include "iprvt.h"
 
-typedef struct cf cf;
+typedef struct deltasound deltasound;
 typedef struct intfc intfc;
 
 typedef struct prvt {
     allocator*          Allocator;
     IID                 ID;
-    cf*                 Instance;
+    deltasound*         Instance;
     intfc*              Interfaces;
 
     CRITICAL_SECTION    Lock;

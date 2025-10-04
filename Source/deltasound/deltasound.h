@@ -29,14 +29,16 @@ SOFTWARE.
 typedef struct cf cf;
 typedef struct ds ds;
 typedef struct dsc dsc;
+typedef struct prvt prvt;
 
 typedef struct deltasound {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
 
+    arr*                Create;
     arr*                Render;
     arr*                Capture;
-    arr*                Factories;
+    arr*                Private;
 } deltasound;
 
 HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
@@ -52,6 +54,9 @@ HRESULT DELTACALL deltasound_remove_direct_sound_capture(deltasound* pD, dsc* pD
 
 HRESULT DELTACALL deltasound_create_class_factory(deltasound* pD,
     REFCLSID rclsid, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pcF);
+HRESULT DELTACALL deltasound_remove_class_factory(deltasound* pD, cf* pCF);
+
+HRESULT DELTACALL deltasound_add_private(deltasound* pD, prvt* pPrvt);
+HRESULT DELTACALL deltasound_remove_private(deltasound* pD, prvt* pPrvt);
 
 HRESULT DELTACALL deltasound_can_unload(deltasound* pD);

@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "cf.h"
+#include "deltasound.h"
 #include "device_info.h"
 #include "intfc.h"
 #include "prvt.h"
@@ -105,7 +105,7 @@ VOID DELTACALL prvt_release(prvt* self) {
     intfc_release(self->Interfaces);
 
     if (self->Instance != NULL) {
-        cf_remove_private(self->Instance, self);
+        deltasound_remove_private(self->Instance, self);
     }
 
     allocator_free(self->Allocator, self);

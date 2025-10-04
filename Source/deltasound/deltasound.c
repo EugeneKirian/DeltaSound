@@ -27,6 +27,7 @@ SOFTWARE.
 #include "device_info.h"
 #include "ds.h"
 #include "dsc.h"
+#include "prvt.h"
 
 #define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
 
@@ -39,12 +40,16 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
 
         if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Render))) {
             if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Capture))) {
-                if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Factories))) {
-                    InitializeCriticalSection(&instance->Lock);
+                if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Create))) {
+                    if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Private))) {
+                        InitializeCriticalSection(&instance->Lock);
 
-                    *ppOut = instance;
+                        *ppOut = instance;
 
-                    return S_OK;
+                        return S_OK;
+                    }
+
+                    arr_release(instance->Private);
                 }
 
                 arr_release(instance->Capture);
@@ -87,13 +92,25 @@ VOID DELTACALL deltasound_release(deltasound* self) {
     }
 
     {
-        const DWORD count = arr_get_count(self->Factories);
+        const DWORD count = arr_get_count(self->Create);
 
         for (DWORD i = count; i != 0; i--) {
             cf* instance = NULL;
 
-            if (SUCCEEDED(arr_remove_item(self->Factories, i - 1, &instance))) {
+            if (SUCCEEDED(arr_remove_item(self->Create, i - 1, &instance))) {
                 cf_release(instance);
+            }
+        }
+    }
+
+    {
+        const DWORD count = arr_get_count(self->Private);
+
+        for (DWORD i = count; i != 0; i--) {
+            prvt* instance = NULL;
+
+            if (SUCCEEDED(arr_remove_item(self->Private, i - 1, &instance))) {
+                prvt_release(instance);
             }
         }
     }
@@ -102,7 +119,8 @@ VOID DELTACALL deltasound_release(deltasound* self) {
 
     arr_release(self->Render);
     arr_release(self->Capture);
-    arr_release(self->Factories);
+    arr_release(self->Create);
+    arr_release(self->Private);
 
     allocator_free(self->Allocator, self);
 }
@@ -298,7 +316,7 @@ HRESULT DELTACALL deltasound_create_class_factory(deltasound* self,
         icf* intfc = NULL;
 
         if (SUCCEEDED(hr = cf_query_interface(instance, riid, &intfc))) {
-            if (SUCCEEDED(hr = arr_add_item(self->Factories, instance))) {
+            if (SUCCEEDED(hr = arr_add_item(self->Create, instance))) {
 
                 *ppOut = intfc;
 
@@ -316,12 +334,12 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL deltasound_remove_class_factory(deltasound* self, cf* pcF) {
+HRESULT DELTACALL deltasound_remove_class_factory(deltasound* self, cf* pCF) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pcF == NULL) {
+    if (pCF == NULL) {
         return E_INVALIDARG;
     }
 
@@ -329,14 +347,65 @@ HRESULT DELTACALL deltasound_remove_class_factory(deltasound* self, cf* pcF) {
 
     EnterCriticalSection(&self->Lock);
 
-    const DWORD count = arr_get_count(self->Factories);
+    const DWORD count = arr_get_count(self->Create);
 
     for (DWORD i = 0; i < count; i++) {
         cf* instance = NULL;
 
-        if (SUCCEEDED(hr = arr_get_item(self->Factories, i, &instance))) {
-            if (instance == pcF) {
-                hr = arr_remove_item(self->Factories, i, NULL);
+        if (SUCCEEDED(hr = arr_get_item(self->Create, i, &instance))) {
+            if (instance == pCF) {
+                hr = arr_remove_item(self->Create, i, NULL);
+                break;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
+}
+
+HRESULT DELTACALL deltasound_add_private(deltasound* self, prvt* pPrvt) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pPrvt == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&self->Lock);
+
+    hr = arr_add_item(self->Private, pPrvt);
+
+    LeaveCriticalSection(&self->Lock);
+
+    return hr;
+}
+
+HRESULT DELTACALL deltasound_remove_private(deltasound* self, prvt* pPrvt) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pPrvt == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&self->Lock);
+
+    const DWORD count = arr_get_count(self->Private);
+
+    for (DWORD i = 0; i < count; i++) {
+        prvt* instance = NULL;
+
+        if (SUCCEEDED(hr = arr_get_item(self->Private, i, &instance))) {
+            if (instance == pPrvt) {
+                hr = arr_remove_item(self->Private, i, NULL);
                 break;
             }
         }
@@ -354,7 +423,7 @@ HRESULT DELTACALL deltasound_can_unload(deltasound* self) {
 
     const BOOL result = arr_get_count(self->Render) == 0
         && arr_get_count(self->Capture) == 0
-        && arr_get_count(self->Factories) == 0;
+        && arr_get_count(self->Create) == 0;
 
     return result ? S_OK : S_FALSE;
 }
