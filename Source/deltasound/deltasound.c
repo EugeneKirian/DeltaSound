@@ -70,10 +70,10 @@ VOID DELTACALL deltasound_release(deltasound* self) {
     {
         const DWORD count = arr_get_count(self->Render);
 
-        for (DWORD i = count; i != 0; i--) {
+        for (DWORD i = 0; i < count; i++) {
             ds* instance = NULL;
 
-            if (SUCCEEDED(arr_remove_item(self->Render, i - 1, &instance))) {
+            if (SUCCEEDED(arr_get_item(self->Render, i, &instance))) {
                 ds_release(instance);
             }
         }
@@ -82,10 +82,10 @@ VOID DELTACALL deltasound_release(deltasound* self) {
     {
         const DWORD count = arr_get_count(self->Capture);
 
-        for (DWORD i = count; i != 0; i--) {
+        for (DWORD i = 0; i < count; i++) {
             dsc* instance = NULL;
 
-            if (SUCCEEDED(arr_remove_item(self->Capture, i - 1, &instance))) {
+            if (SUCCEEDED(arr_get_item(self->Capture, i, &instance))) {
                 dsc_release(instance);
             }
         }
@@ -94,10 +94,10 @@ VOID DELTACALL deltasound_release(deltasound* self) {
     {
         const DWORD count = arr_get_count(self->Create);
 
-        for (DWORD i = count; i != 0; i--) {
+        for (DWORD i = 0; i < count; i++) {
             cf* instance = NULL;
 
-            if (SUCCEEDED(arr_remove_item(self->Create, i - 1, &instance))) {
+            if (SUCCEEDED(arr_get_item(self->Create, i, &instance))) {
                 cf_release(instance);
             }
         }
@@ -106,10 +106,10 @@ VOID DELTACALL deltasound_release(deltasound* self) {
     {
         const DWORD count = arr_get_count(self->Private);
 
-        for (DWORD i = count; i != 0; i--) {
+        for (DWORD i = 0; i < count; i++) {
             prvt* instance = NULL;
 
-            if (SUCCEEDED(arr_remove_item(self->Private, i - 1, &instance))) {
+            if (SUCCEEDED(arr_get_item(self->Private, i, &instance))) {
                 prvt_release(instance);
             }
         }

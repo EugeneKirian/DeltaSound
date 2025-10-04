@@ -58,6 +58,18 @@ HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
 VOID DELTACALL cf_release(cf* self) {
     if (self == NULL) { return; }
 
+    {
+        const DWORD count = intfc_get_count(self->Interfaces);
+
+        for (DWORD i = 0; i < count; i++) {
+            icf* instance = NULL;
+
+            if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
+                icf_release(instance);
+            }
+        }
+    }
+
     if (self->Instance != NULL) {
         deltasound_remove_class_factory(self->Instance, self);
     }

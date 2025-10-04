@@ -96,10 +96,11 @@ VOID DELTACALL ds_release(ds* self) {
 
     {
         const DWORD count = arr_get_count(self->Buffers);
-        for (DWORD i = count; i != 0; i--) {
+
+        for (DWORD i = 0; i < count; i++) {
             dsb* instance = NULL;
 
-            if (SUCCEEDED(arr_remove_item(self->Buffers, i - 1, &instance))) {
+            if (SUCCEEDED(arr_get_item(self->Buffers, i, &instance))) {
                 dsb_release(instance);
             }
         }
