@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "dscbcb.h"
 #include "idscb.h"
 #include "intfc.h"
 
@@ -42,8 +43,7 @@ typedef struct dscb {
     CRITICAL_SECTION    Lock;
 
     DSCBCAPS            Caps;
-
-    // TODO
+    dscbcb*             Buffer;
 
     LPWAVEFORMATEX      Format;
 

@@ -23,35 +23,35 @@ SOFTWARE.
 */
 
 #include "cblc.h"
-#include "dsbcb.h"
-#include "rcm.h"
+#include "dscbcb.h"
 
-typedef struct dsbcb {
+typedef struct dscbcb {
     allocator*          Allocator;
     CRITICAL_SECTION    Lock;
 
-    rcm*                Buffer;
+    LPVOID              Buffer;
+    DWORD               Size;
 
+    DWORD               CapturePosition;
     DWORD               ReadPosition;
-    DWORD               WritePosition;
 
     cblc*               Locks;
-} dsbcb;
+} dscbcb;
 
-HRESULT DELTACALL dsbcb_locks_overlap(DWORD dwStart1, DWORD dwEnd1, DWORD dwStart2, DWORD dwEnd2);
+HRESULT DELTACALL dscbcb_locks_overlap(DWORD dwStart1, DWORD dwEnd1, DWORD dwStart2, DWORD dwEnd2);
 
-HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut) {
+HRESULT DELTACALL dscbcb_create(allocator* pAlloc, DWORD dwBytes, dscbcb** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    dsbcb* instance = NULL;
+    dscbcb* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsbcb), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dscbcb), &instance))) {
         instance->Allocator = pAlloc;
 
-        if (SUCCEEDED(hr = rcm_create(pAlloc, dwBytes, &instance->Buffer))) {
+        if (SUCCEEDED(hr = allocator_allocate(pAlloc, dwBytes, &instance->Buffer))) {
             if (SUCCEEDED(hr = cblc_create(pAlloc, &instance->Locks))) {
                 InitializeCriticalSection(&instance->Lock);
 
@@ -60,7 +60,7 @@ HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut) 
                 return S_OK;
             }
 
-            rcm_remove_ref(instance->Buffer);
+            allocator_free(pAlloc, instance->Buffer);
         }
 
         allocator_free(pAlloc, instance);
@@ -69,98 +69,61 @@ HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut) 
     return hr;
 }
 
-VOID DELTACALL dsbcb_release(dsbcb* self) {
+VOID DELTACALL dscbcb_release(dscbcb* self) {
     if (self == NULL) { return; }
 
     DeleteCriticalSection(&self->Lock);
 
     cblc_release(self->Locks);
 
-    rcm_remove_ref(self->Buffer);
+    allocator_free(self->Allocator, self->Buffer);
 
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsbcb_duplicate(dsbcb* self, dsbcb** ppOut) {
+HRESULT DELTACALL dscbcb_get_current_position(dscbcb* self,
+    LPDWORD pdwCaptureBytes, LPDWORD pdwReadBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (ppOut == NULL) {
+    if (pdwCaptureBytes == NULL && pdwReadBytes == NULL) {
         return E_INVALIDARG;
     }
 
-    HRESULT hr = S_OK;
-    dsbcb* instance = NULL;
-
-    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(dsbcb), &instance))) {
-        instance->Allocator = self->Allocator;
-
-        if (SUCCEEDED(hr = cblc_create(self->Allocator, &instance->Locks))) {
-            InitializeCriticalSection(&instance->Lock);
-
-            instance->Buffer = self->Buffer;
-            rcm_add_ref(instance->Buffer);
-
-            *ppOut = instance;
-
-            return S_OK;
-        }
-
-        allocator_free(self->Allocator, instance);
-    }
-
-    return hr;
-}
-
-HRESULT DELTACALL dsbcb_get_current_position(dsbcb* self,
-    LPDWORD pdwReadBytes, LPDWORD pdwWriteBytes) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    if (pdwReadBytes == NULL && pdwWriteBytes == NULL) {
-        return E_INVALIDARG;
+    if (pdwCaptureBytes != NULL) {
+        *pdwCaptureBytes = self->CapturePosition;
     }
 
     if (pdwReadBytes != NULL) {
         *pdwReadBytes = self->ReadPosition;
     }
 
-    if (pdwWriteBytes != NULL) {
-        *pdwWriteBytes = self->WritePosition;
+    return S_OK;
+}
+
+HRESULT DELTACALL dscbcb_set_current_position(dscbcb* self,
+    DWORD dwCaptureBytes, DWORD dwReadBytes, DWORD dwFlags) {
+    if (self == NULL) {
+        return E_POINTER;
     }
+
+    if (dwFlags & DSCBCB_SETPOSITION_LOOPING) {
+        dwCaptureBytes = dwCaptureBytes % self->Size;
+        dwReadBytes = dwReadBytes % self->Size;
+    }
+
+    if (self->Size < dwCaptureBytes || self->Size < dwReadBytes) {
+        return E_INVALIDARG;
+    }
+
+    self->CapturePosition = dwCaptureBytes;
+    self->ReadPosition = dwReadBytes;
 
     return S_OK;
 }
 
-HRESULT DELTACALL dsbcb_set_current_position(dsbcb* self,
-    DWORD dwReadBytes, DWORD dwWriteBytes, DWORD dwFlags) {
-    if (self == NULL) {
-        return E_POINTER;
-    }
-
-    HRESULT hr = S_OK;
-    DWORD size = 0;
-
-    if (SUCCEEDED(hr = rcm_get_length(self->Buffer, &size))) {
-        if (dwFlags & DSBCB_SETPOSITION_LOOPING) {
-            dwReadBytes = dwReadBytes % size;
-            dwWriteBytes = dwWriteBytes % size;
-        }
-
-        if (size < dwReadBytes || size < dwWriteBytes) {
-            return E_INVALIDARG;
-        }
-
-        self->ReadPosition = dwReadBytes;
-        self->WritePosition = dwWriteBytes;
-    }
-
-    return hr;
-}
-
-HRESULT DELTACALL dsbcb_get_length(dsbcb* self, LPDWORD pdwBytes) {
+HRESULT DELTACALL dscbcb_get_length(dscbcb* self, LPDWORD pdwBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -169,10 +132,12 @@ HRESULT DELTACALL dsbcb_get_length(dsbcb* self, LPDWORD pdwBytes) {
         return E_INVALIDARG;
     }
 
-    return rcm_get_length(self->Buffer, pdwBytes);
+    *pdwBytes = self->Size;
+
+    return S_OK;
 }
 
-HRESULT DELTACALL dsbcb_get_lockable_length(dsbcb* self, LPDWORD pdwBytes) {
+HRESULT DELTACALL dscbcb_get_lockable_length(dscbcb* self, LPDWORD pdwBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -181,38 +146,28 @@ HRESULT DELTACALL dsbcb_get_lockable_length(dsbcb* self, LPDWORD pdwBytes) {
         return E_INVALIDARG;
     }
 
-    HRESULT hr = S_OK;
-    DWORD size = 0;
+    *pdwBytes = self->CapturePosition < self->ReadPosition
+        ? self->Size + self->CapturePosition - self->ReadPosition
+        : self->Size - self->CapturePosition + self->ReadPosition;
 
-    if (SUCCEEDED(hr = rcm_get_length(self->Buffer, &size))) {
-        *pdwBytes = self->ReadPosition < self->WritePosition
-            ? size + self->ReadPosition - self->WritePosition
-            : size - self->ReadPosition + self->WritePosition;
-    }
-
-    return hr;
+    return S_OK;
 }
 
-HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
+
+HRESULT DELTACALL dscbcb_lock(dscbcb* self, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2) {
     if (self == NULL) {
         return E_POINTER;
     }
-
-    HRESULT hr = S_OK;
-    DWORD size = 0;
-
-    if (FAILED(hr = rcm_get_length(self->Buffer, &size))) {
-        return hr;
-    }
-
-    if (dwBytes == 0 || size < dwOffset || size < dwBytes) {
+    
+    if (dwBytes == 0 || self->Size < dwOffset || self->Size < dwBytes) {
         return E_INVALIDARG;
     }
 
+    HRESULT hr = S_OK;
     DWORD lockable = 0;
 
-    if (FAILED(hr = dsbcb_get_lockable_length(self, &lockable))) {
+    if (FAILED(hr = dscbcb_get_lockable_length(self, &lockable))) {
         return hr;
     }
 
@@ -220,25 +175,19 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
         return E_INVALIDARG;
     }
 
-    LPVOID buffer = NULL;
-
-    if (FAILED(hr = rcm_get_data(self->Buffer, &buffer))) {
-        return hr;
-    }
-
-    const DWORD wrapped = size < dwOffset + dwBytes
-        ? dwOffset + dwBytes - size : 0;
+    const DWORD wrapped = self->Size < dwOffset + dwBytes
+        ? dwOffset + dwBytes - self->Size : 0;
 
     cbl lock;
     ZeroMemory(&lock, sizeof(cbl));
 
     lock.Offset = dwOffset;
     lock.Size = dwBytes;
-    lock.Audio1 = (LPVOID)((size_t)buffer + dwOffset);
+    lock.Audio1 = (LPVOID)((size_t)self->Buffer + dwOffset);
     lock.AudioSize1 = dwBytes - wrapped;
 
     if (wrapped != 0) {
-        lock.Audio2 = buffer;
+        lock.Audio2 = self->Buffer;
 
         if (pdwAudioBytes2 != NULL) {
             lock.AudioSize2 = wrapped;
@@ -260,7 +209,7 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
             }
 
             // Overlap
-            if (SUCCEEDED(dsbcb_locks_overlap(l->Offset, l->Offset + l->Size, lock.Offset, lock.Offset + lock.Size))) {
+            if (SUCCEEDED(dscbcb_locks_overlap(l->Offset, l->Offset + l->Size, lock.Offset, lock.Offset + lock.Size))) {
                 LeaveCriticalSection(&self->Lock);
                 return E_INVALIDARG;
             }
@@ -285,7 +234,7 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
     return S_OK;
 }
 
-HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPtr2) {
+HRESULT DELTACALL dscbcb_unlock(dscbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPtr2) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -317,7 +266,7 @@ HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPt
     return E_INVALIDARG;
 }
 
-HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytes, DWORD dwFlags) {
+HRESULT DELTACALL dscbcb_read(dscbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytes, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -326,53 +275,42 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
         return E_INVALIDARG;
     }
 
-    HRESULT hr = S_OK;
-    DWORD size = 0;
-
-    if (FAILED(hr = rcm_get_length(self->Buffer, &size))) {
-        return hr;
+    if (!(dwFlags & DSCBCB_READ_LOOPING)) {
+        dwBytes = min(dwBytes, self->Size - self->CapturePosition);
     }
-
-    if (!(dwFlags & DSBCB_READ_LOOPING)) {
-        dwBytes = min(dwBytes, size - self->ReadPosition);
-    }
-
-    LPVOID buffer = NULL;
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = rcm_get_data(self->Buffer, &buffer))) {
-        if (pData != NULL) {
-            DWORD bytes = min(dwBytes, size - self->ReadPosition);
+    if (pData != NULL) {
+        DWORD bytes = min(dwBytes, self->Size - self->ReadPosition);
 
-            CopyMemory(pData, (LPVOID)((size_t)buffer + self->ReadPosition), bytes);
+        CopyMemory(pData, (LPVOID)((size_t)self->Buffer + self->ReadPosition), bytes);
 
-            DWORD offset = bytes;
-            DWORD pending = dwBytes - bytes;
+        DWORD offset = bytes;
+        DWORD pending = dwBytes - bytes;
 
-            while (pending != 0) {
-                bytes = min(pending, size);
+        while (pending != 0) {
+            bytes = min(pending, self->Size);
 
-                CopyMemory((LPVOID)((size_t)pData + offset), buffer, bytes);
+            CopyMemory((LPVOID)((size_t)pData + offset), self->Buffer, bytes);
 
-                pending -= bytes;
-                offset += bytes;
-            }
+            pending -= bytes;
+            offset += bytes;
         }
+    }
 
-        if (pdwBytes != NULL) {
-            *pdwBytes = dwBytes;
-        }
+    if (pdwBytes != NULL) {
+        *pdwBytes = dwBytes;
     }
 
     LeaveCriticalSection(&self->Lock);
 
-    return hr;
+    return S_OK;
 }
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL dsbcb_locks_overlap(DWORD dwStart1, DWORD dwEnd1, DWORD dwStart2, DWORD dwEnd2) {
+HRESULT DELTACALL dscbcb_locks_overlap(DWORD dwStart1, DWORD dwEnd1, DWORD dwStart2, DWORD dwEnd2) {
     const DWORD l1min = (dwStart1 < dwEnd1) ? dwStart1 : dwEnd1;
     const DWORD l1max = (dwStart1 > dwEnd1) ? dwStart1 : dwEnd1;
     const DWORD l2min = (dwStart2 < dwEnd2) ? dwStart2 : dwEnd2;

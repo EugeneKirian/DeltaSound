@@ -27,6 +27,7 @@
     <ClInclude Include="deltasound.h" />
     <ClInclude Include="dsc.h" />
     <ClInclude Include="dscb.h" />
+    <ClInclude Include="dscbcb.h" />
     <ClInclude Include="dscdevice.h" />
     <ClInclude Include="dsdevice.h" />
     <ClInclude Include="device_info.h" />
@@ -63,6 +64,7 @@
     <ClCompile Include="deltasound.c" />
     <ClCompile Include="dsc.c" />
     <ClCompile Include="dscb.c" />
+    <ClCompile Include="dscbcb.c" />
     <ClCompile Include="dscdevice.c" />
     <ClCompile Include="dsdevice.c" />
     <ClCompile Include="device_info.c" />

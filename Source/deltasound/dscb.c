@@ -83,9 +83,9 @@ VOID DELTACALL dscb_release(dscb* self) {
         dsc_remove_capture_buffer(self->Instance, self);
     }
 
-    // TODO if (self->Buffer != NULL) {
-    // TODO     dsbcb_release(self->Buffer);
-    // TODO }
+    if (self->Buffer != NULL) {
+        dscbcb_release(self->Buffer);
+    }
 
     allocator_free(self->Allocator, self->Format);
     allocator_free(self->Allocator, self);
@@ -185,9 +185,8 @@ HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDSC, LPCDSCBUFFERDESC pcDesc
     CopyMemory(self->Format, pcDesc->lpwfxFormat, SIZEOFFORMAT(pcDesc->lpwfxFormat));
 
     // TODO NOT IMPLEMENTED
-    //return dscbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
 
-    return S_OK;
+    return dscbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
 }
 
 HRESULT DELTACALL dscb_lock(dscb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
