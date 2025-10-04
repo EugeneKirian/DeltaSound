@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "cblc.h"
 #include "dsbcb.h"
-#include "dsbcblc.h"
 #include "rcm.h"
 
 typedef struct dsbcb {
@@ -35,7 +35,7 @@ typedef struct dsbcb {
     DWORD               ReadPosition;
     DWORD               WritePosition;
 
-    dsbcblc*            Locks;
+    cblc*               Locks;
 } dsbcb;
 
 HRESULT DELTACALL dsbcb_locks_overlap(DWORD dwStart1, DWORD dwEnd1, DWORD dwStart2, DWORD dwEnd2);
@@ -52,7 +52,7 @@ HRESULT DELTACALL dsbcb_create(allocator* pAlloc, DWORD dwBytes, dsbcb** ppOut) 
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = rcm_create(pAlloc, dwBytes, &instance->Buffer))) {
-            if (SUCCEEDED(hr = dsbcblc_create(pAlloc, &instance->Locks))) {
+            if (SUCCEEDED(hr = cblc_create(pAlloc, &instance->Locks))) {
                 InitializeCriticalSection(&instance->Lock);
 
                 *ppOut = instance;
@@ -74,7 +74,7 @@ VOID DELTACALL dsbcb_release(dsbcb* self) {
 
     DeleteCriticalSection(&self->Lock);
 
-    dsbcblc_release(self->Locks);
+    cblc_release(self->Locks);
 
     rcm_remove_ref(self->Buffer);
 
@@ -96,7 +96,7 @@ HRESULT DELTACALL dsbcb_duplicate(dsbcb* self, dsbcb** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(self->Allocator, sizeof(dsbcb), &instance))) {
         instance->Allocator = self->Allocator;
 
-        if (SUCCEEDED(hr = dsbcblc_create(self->Allocator, &instance->Locks))) {
+        if (SUCCEEDED(hr = cblc_create(self->Allocator, &instance->Locks))) {
             InitializeCriticalSection(&instance->Lock);
 
             instance->Buffer = self->Buffer;
@@ -229,8 +229,8 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
     const DWORD wrapped = size < dwOffset + dwBytes
         ? dwOffset + dwBytes - size : 0;
 
-    dsbcbl lock;
-    ZeroMemory(&lock, sizeof(dsbcbl));
+    cbl lock;
+    ZeroMemory(&lock, sizeof(cbl));
 
     lock.Offset = dwOffset;
     lock.Size = dwBytes;
@@ -247,12 +247,12 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
 
     EnterCriticalSection(&self->Lock);
 
-    const DWORD count = dsbcblc_get_count(self->Locks);
+    const DWORD count = cblc_get_count(self->Locks);
 
     for (DWORD i = 0; i < count; i++) {
-        dsbcbl* l = NULL;
+        cbl* l = NULL;
 
-        if (SUCCEEDED(dsbcblc_get_item(self->Locks, i, &l))) {
+        if (SUCCEEDED(cblc_get_item(self->Locks, i, &l))) {
             // Match
             if (l->Audio1 == lock.Audio1 && l->Audio2 == lock.Audio2) {
                 LeaveCriticalSection(&self->Lock);
@@ -267,7 +267,7 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
         }
     }
 
-    dsbcblc_add_item(self->Locks, &lock);
+    cblc_add_item(self->Locks, &lock);
 
     LeaveCriticalSection(&self->Lock);
 
@@ -296,14 +296,14 @@ HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPt
 
     EnterCriticalSection(&self->Lock);
 
-    const DWORD count = dsbcblc_get_count(self->Locks);
+    const DWORD count = cblc_get_count(self->Locks);
 
     for (DWORD i = 0; i < count; i++) {
-        dsbcbl* l = NULL;
+        cbl* l = NULL;
 
-        if (SUCCEEDED(dsbcblc_get_item(self->Locks, i, &l))) {
+        if (SUCCEEDED(cblc_get_item(self->Locks, i, &l))) {
             if (l->Audio1 == pvAudioPtr1 && l->Audio2 == pvAudioPtr2) {
-                dsbcblc_remove_item(self->Locks, i);
+                cblc_remove_item(self->Locks, i);
                 LeaveCriticalSection(&self->Lock);
                 return S_OK;
             }

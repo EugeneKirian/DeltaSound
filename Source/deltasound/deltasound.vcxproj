@@ -33,7 +33,7 @@
     <ClInclude Include="ds.h" />
     <ClInclude Include="dsb.h" />
     <ClInclude Include="dsbcb.h" />
-    <ClInclude Include="dsbcblc.h" />
+    <ClInclude Include="cblc.h" />
     <ClInclude Include="dsn.h" />
     <ClInclude Include="dssb.h" />
     <ClInclude Include="dssl.h" />
@@ -69,7 +69,7 @@
     <ClCompile Include="ds.c" />
     <ClCompile Include="dsb.c" />
     <ClCompile Include="dsbcb.c" />
-    <ClCompile Include="dsbcblc.c" />
+    <ClCompile Include="cblc.c" />
     <ClCompile Include="dsn.c" />
     <ClCompile Include="dssb.c" />
     <ClCompile Include="dssl.c" />
