@@ -150,8 +150,8 @@ HRESULT DELTACALL iprvt_set(iprvt* self,
         return E_INVALIDARG;
     }
 
-    // TODO NOT IMPLEMENTED
-    return E_NOTIMPL;
+    return prvt_set(self->Instance, rguidPropSet, ulId,
+        pInstanceData, ulInstanceLength, pPropertyData, ulDataLength);
 }
 
 HRESULT DELTACALL iprvt_query_support(iprvt* self,

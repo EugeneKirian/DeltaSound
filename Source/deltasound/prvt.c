@@ -32,6 +32,8 @@ SOFTWARE.
 
 #define MAX_INTERFACE_LENGTH    512
 
+#define DSPROPERTY_DIRECTSOUNDDEVICE_PRESENCE_1 ((DSPROPERTY_DIRECTSOUNDDEVICE)0)
+
 HRESULT DELTACALL prvt_get_device_interface(prvt* pPrvt, DWORD dwType,
     LPWSTR pszModule, LPWSTR pszInterface, DWORD dwLength, LPDWORD pdwBytes);
 HRESULT DELTACALL prvt_get_render_device_interface(prvt* pPrvt,
@@ -167,48 +169,59 @@ HRESULT DELTACALL prvt_get(prvt* self,
 
     if (IsEqualGUID(&DSPROPSETID_DirectSoundDevice, rguidPropSet)) {
         switch (ulId) {
-        case DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_PRESENCE_1:
+            // TODO NOT IMPLEMENTED
+            if (pPropertyData == NULL || ulDataLength == 0) {
+                return E_INVALIDARG;
+            }
+
+            return E_NOTIMPL;
+        case DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A:
             return prvt_get_wave_device_mapping_ansi(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA)pPropertyData, ulDataLength, pulBytesReturned);
-        }
-        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1:
             return prvt_get_description(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA)pPropertyData, ulDataLength, pulBytesReturned);
-        }
-        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1:
             return prvt_enumerate_devices(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1_DATA)pPropertyData, ulDataLength, pulBytesReturned);
-        }
-        case DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W:
             return prvt_get_wave_device_mapping_wide(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA)pPropertyData, ulDataLength, pulBytesReturned);
-        }
-        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A:
             return prvt_get_description_ansi(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA)pPropertyData, ulDataLength, pulBytesReturned);
-        }
-        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W:
             return prvt_get_description_wide(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA)pPropertyData, ulDataLength, pulBytesReturned);
-        }
-        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A:
             return prvt_enumerate_devices_ansi(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA)pPropertyData, ulDataLength, pulBytesReturned);
-        }
-        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W: {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W:
             return prvt_enumerate_devices_wide(self,
                 (PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA)pPropertyData, ulDataLength, pulBytesReturned);
         }
-        }
     }
 
-    return E_PROP_ID_UNSUPPORTED;
+    return E_INVALIDARG;
 }
 
 HRESULT DELTACALL prvt_set(prvt* self,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength) {
-    // TODO NOT IMPLEMENTED
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (IsEqualGUID(&DSPROPSETID_DirectSoundDevice, rguidPropSet)) {
+        if (ulId == DSPROPERTY_DIRECTSOUNDDEVICE_PRESENCE_1) {
+            // TODO NOT IMPLEMENTED
+            return E_INVALIDARG;
+        }
+
+        return E_NOTIMPL;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -219,16 +232,19 @@ HRESULT DELTACALL prvt_query_support(prvt* self,
     }
 
     if (IsEqualGUID(&DSPROPSETID_DirectSoundDevice, rguidPropSet)) {
-        if (ulId == DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A
-            || ulId == DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1
-            || ulId == DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1
-            || ulId == DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W
-            || ulId == DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A
-            || ulId == DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W
-            || ulId == DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A
-            || ulId == DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W) {
+        switch (ulId) {
+        case DSPROPERTY_DIRECTSOUNDDEVICE_PRESENCE_1:
+            *pulTypeSupport = KSPROPERTY_SUPPORT_SET | KSPROPERTY_SUPPORT_GET;
+            return S_OK;
+        case DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A:
+        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1:
+        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1:
+        case DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W:
+        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A:
+        case DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W:
+        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A:
+        case DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W:
             *pulTypeSupport = KSPROPERTY_SUPPORT_GET;
-
             return S_OK;
         }
 

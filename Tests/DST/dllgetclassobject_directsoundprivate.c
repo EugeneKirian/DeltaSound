@@ -63,9 +63,10 @@ typedef struct DeviceEnumerateContextW {
     DeviceDescriptionW* Items;
 } DeviceEnumerateContextW;
 
-#define DIRECTSOUND_DEVICE_PROPERTY_COUNT   8
+#define DIRECTSOUND_DEVICE_PROPERTY_COUNT   9
 
 static const DSPROPERTY_DIRECTSOUNDDEVICE DirectSoundDeviceProperties[DIRECTSOUND_DEVICE_PROPERTY_COUNT] = {
+    0,
     DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A,
     DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1,
     DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1,
@@ -139,32 +140,32 @@ static HRESULT CreateDescriptionW(DWORD dwSize, DIRECTSOUNDDEVICE_DATAFLOW dfDat
 static BOOL CompareDeviceData(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA a,
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (a->Type != b->Type || a->DataFlow != b->DataFlow
         || a->WaveDeviceId != b->WaveDeviceId || a->Devnode != b->Devnode) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (strcmp(a->DescriptionA, b->DescriptionA) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (strcmp(a->ModuleA, b->ModuleA) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (wcscmp(a->DescriptionW, b->DescriptionW) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (wcscmp(a->ModuleW, b->ModuleW) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -172,28 +173,28 @@ static BOOL CompareDeviceData(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA a
 
 static BOOL CompareDeviceDescriptionA(DeviceDescriptionA* a, DeviceDescriptionA* b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (a->Type != b->Type
         || a->DataFlow != b->DataFlow || a->WaveDeviceId != b->WaveDeviceId) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (strcmp(a->Description, b->Description) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (strcmp(a->Module, b->Module) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (stricmp(a->Interface, b->Interface) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -201,28 +202,28 @@ static BOOL CompareDeviceDescriptionA(DeviceDescriptionA* a, DeviceDescriptionA*
 
 static BOOL CompareDeviceDescriptionW(DeviceDescriptionW* a, DeviceDescriptionW* b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (a->Type != b->Type
         || a->DataFlow != b->DataFlow || a->WaveDeviceId != b->WaveDeviceId) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (wcscmp(a->Description, b->Description) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (wcscmp(a->Module, b->Module) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (wcsicmp(a->Interface, b->Interface) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -231,34 +232,34 @@ static BOOL CompareDeviceDescriptionW(DeviceDescriptionW* a, DeviceDescriptionW*
 static BOOL CompareDeviceDataA(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA a,
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (a->Type != b->Type || a->DataFlow != b->DataFlow
         || a->WaveDeviceId != b->WaveDeviceId) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (a->Description != NULL && b->Description != NULL) {
         if (strcmp(a->Description, b->Description) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
     if (a->Module != NULL && b->Module != NULL) {
         if (strcmp(a->Module, b->Module) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
     if (a->Interface != NULL && b->Interface != NULL) {
         // NOTE. DirectSound converts Interface value to uppercase for RENDER devices...
         if (stricmp(a->Interface, b->Interface) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -268,34 +269,34 @@ static BOOL CompareDeviceDataA(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA 
 static BOOL CompareDeviceDataW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA a,
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!IsEqualGUID(&a->DeviceId, &b->DeviceId)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (a->Type != b->Type || a->DataFlow != b->DataFlow
         || a->WaveDeviceId != b->WaveDeviceId) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (a->Description != NULL && b->Description != NULL) {
         if (wcscmp(a->Description, b->Description) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
     if (a->Module != NULL && b->Module != NULL) {
         if (wcscmp(a->Module, b->Module) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
     if (a->Interface != NULL && b->Interface != NULL) {
         // NOTE. DirectSound converts Interface value to uppercase for RENDER devices...
         if (wcsicmp(a->Interface, b->Interface) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -304,7 +305,7 @@ static BOOL CompareDeviceDataW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA 
 
 static BOOL TestDirectSoundPrivateKsPropertySetQuerySupport(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     HRESULT ra = S_OK, rb = S_OK;
@@ -314,7 +315,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetQuerySupport(LPKSPROPERTYSET a, L
         rb = IKsPropertySet_QuerySupport(b, NULL, 0, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -323,7 +324,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetQuerySupport(LPKSPROPERTYSET a, L
         rb = IKsPropertySet_QuerySupport(b, &DSPROPSETID_DirectSoundDevice, 0, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -336,7 +337,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetQuerySupport(LPKSPROPERTYSET a, L
             &DSPROPSETID_DirectSoundDevice, DirectSoundDeviceProperties[i], &sb);
 
         if (ra != rb || sa != sb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -345,7 +346,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetQuerySupport(LPKSPROPERTYSET a, L
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Invalid
@@ -356,7 +357,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, NULL, 0, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -369,7 +370,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, NULL, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -387,7 +388,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, &db, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -405,7 +406,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, &db, length - 4, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -426,11 +427,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
             &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (memcmp(&da, &db, length) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -456,11 +457,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
             &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (memcmp(&da, &db, length) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -494,11 +495,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
                     &db, length, &lb);
 
                 if (ra != rb || la != lb) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
 
                 if (memcmp(&da, &db, length) != 0) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
             }
         }
@@ -529,11 +530,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
                     DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, &db, length, &lb);
 
                 if (ra != rb || la != lb) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
 
                 if (memcmp(&da, &db, length) != 0) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
             }
         }
@@ -544,7 +545,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(LPKSPROPERT
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Invalid
@@ -555,7 +556,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W, NULL, 0, NULL, 0, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -568,7 +569,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W, NULL, 0, NULL, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -586,7 +587,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W, NULL, 0, &db, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -604,7 +605,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W, NULL, 0, &db, length - 4, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -633,11 +634,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
             &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (memcmp(&da, &db, length) != 0) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -671,11 +672,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
                     &db, length, &lb);
 
                 if (ra != rb || la != lb) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
 
                 if (memcmp(&da, &db, length) != 0) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
             }
         }
@@ -708,11 +709,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
                     &db, length, &lb);
 
                 if (ra != rb || la != lb) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
 
                 if (memcmp(&da, &db, length) != 0) {
-                    DebugBreak(); return FALSE;
+                    return FALSE;
                 }
             }
         }
@@ -723,7 +724,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(LPKSPROPERT
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Render(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     GUID valid;
@@ -747,11 +748,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Render(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -775,11 +776,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Render(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         CopyMemory(&valid, &da.DeviceId, sizeof(GUID));
@@ -806,15 +807,15 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Render(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
-    // TODO DIRECTSOUNDDEVICE_DATAFLOW_RENDER & DeviceID
+    // DIRECTSOUNDDEVICE_DATAFLOW_RENDER & DeviceID
     {
         ULONG la = 0, lb = 0;
         const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA);
@@ -835,11 +836,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Render(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -848,7 +849,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Render(LPKSPROPERT
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Capture(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     GUID valid;
@@ -872,11 +873,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Capture(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -900,11 +901,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Capture(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         CopyMemory(&valid, &da.DeviceId, sizeof(GUID));
@@ -931,11 +932,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Capture(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -960,11 +961,11 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Capture(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceData(&da, &db)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -973,7 +974,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Capture(LPKSPROPER
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Invalid
@@ -984,7 +985,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, NULL, 0, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -997,7 +998,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, NULL, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -1015,7 +1016,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -1033,16 +1034,16 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length - 4, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
     if (!TestDirectSoundPrivateKsPropertySetGetDescription1Render(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!TestDirectSoundPrivateKsPropertySetGetDescription1Capture(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -1050,7 +1051,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1(LPKSPROPERTYSET a
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     GUID valid;
@@ -1079,7 +1080,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1099,14 +1100,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1135,7 +1136,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1155,14 +1156,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         CopyMemory(&valid, &da->DeviceId, sizeof(GUID));
@@ -1192,14 +1193,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1229,7 +1230,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1249,14 +1250,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1268,7 +1269,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     GUID valid;
@@ -1297,7 +1298,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1317,14 +1318,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1353,7 +1354,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1373,14 +1374,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         CopyMemory(&valid, &da->DeviceId, sizeof(GUID));
@@ -1410,14 +1411,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1447,7 +1448,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1467,14 +1468,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataA(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1486,7 +1487,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionA(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Invalid
@@ -1497,7 +1498,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionA(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, NULL, 0, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -1510,7 +1511,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionA(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, NULL, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -1528,7 +1529,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionA(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, &db, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -1546,16 +1547,16 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionA(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A, NULL, 0, &db, length - 4, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
     if (!TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -1563,7 +1564,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionA(LPKSPROPERTYSET a
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     GUID valid;
@@ -1592,7 +1593,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1612,14 +1613,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1648,7 +1649,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1668,14 +1669,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         CopyMemory(&valid, &da->DeviceId, sizeof(GUID));
@@ -1705,14 +1706,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1742,7 +1743,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1762,14 +1763,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1781,7 +1782,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     GUID valid;
@@ -1810,7 +1811,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1830,14 +1831,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1866,7 +1867,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1886,14 +1887,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         CopyMemory(&valid, &da->DeviceId, sizeof(GUID));
@@ -1923,14 +1924,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, length, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1960,7 +1961,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
             if (ra != rb || la != lb) {
                 free(da);
                 free(db);
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             free(da);
@@ -1980,14 +1981,14 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, db, lb, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (!CompareDeviceDataW(da, db)) {
             free(da);
             free(db);
 
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         free(da);
@@ -1999,7 +2000,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
 
 static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Invalid
@@ -2010,7 +2011,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionW(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, NULL, 0, NULL);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -2023,7 +2024,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionW(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, NULL, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -2041,7 +2042,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionW(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, &db, 0, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -2059,16 +2060,16 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionW(LPKSPROPERTYSET a
             DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W, NULL, 0, &db, length - 4, &lb);
 
         if (ra != rb || la != lb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
     if (!TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -2094,7 +2095,7 @@ BOOL CALLBACK TestEnumerateCallback(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_
 
 static BOOL TestDirectSoundPrivateKsPropertySetEnumerate1(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
@@ -2135,18 +2136,18 @@ static BOOL TestDirectSoundPrivateKsPropertySetEnumerate1(LPKSPROPERTYSET a, LPK
 
     if (ra != rb || la != lb) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if (ca.Count != cb.Count) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     for (DWORD i = 0; i < ca.Count; i++) {
         if (!CompareDeviceData(&ca.Items[i], &cb.Items[i])) {
             result = FALSE;
-            DebugBreak(); goto exit;
+            goto exit;
         }
     }
 
@@ -2189,7 +2190,7 @@ BOOL CALLBACK TestEnumerateCallbackA(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A
 
 static BOOL TestDirectSoundPrivateKsPropertySetEnumerateA(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
@@ -2230,18 +2231,18 @@ static BOOL TestDirectSoundPrivateKsPropertySetEnumerateA(LPKSPROPERTYSET a, LPK
 
     if (ra != rb || la != lb) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if (ca.Count != cb.Count) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     for (DWORD i = 0; i < ca.Count; i++) {
         if (!CompareDeviceDescriptionA(&ca.Items[i], &cb.Items[i])) {
             result = FALSE;
-            DebugBreak(); goto exit;
+            goto exit;
         }
     }
 
@@ -2284,7 +2285,7 @@ BOOL CALLBACK TestEnumerateCallbackW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W
 
 static BOOL TestDirectSoundPrivateKsPropertySetEnumerateW(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
@@ -2325,18 +2326,18 @@ static BOOL TestDirectSoundPrivateKsPropertySetEnumerateW(LPKSPROPERTYSET a, LPK
 
     if (ra != rb || la != lb) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     if (ca.Count != cb.Count) {
         result = FALSE;
-        DebugBreak(); goto exit;
+        goto exit;
     }
 
     for (DWORD i = 0; i < ca.Count; i++) {
         if (!CompareDeviceDescriptionW(&ca.Items[i], &cb.Items[i])) {
             result = FALSE;
-            DebugBreak(); goto exit;
+            goto exit;
         }
     }
 
@@ -2355,47 +2356,179 @@ exit:
 
 static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
+    }
+
+    // Invalid
+    {
+        ULONG la = 0, lb = 0;
+        const HRESULT ra = IKsPropertySet_Get(a, &GUID_NULL, 0, NULL, 0, NULL, 0, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &GUID_NULL, 0, NULL, 0, NULL, 0, &lb);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+    {
+        ULONG la = 0, lb = 0;
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice, 99, NULL, 00, NULL, 0, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice, 99, NULL, 00, NULL, 0, &lb);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+    {
+        ULONG la = 0, lb = 0;
+        const HRESULT ra = IKsPropertySet_Get(a, &DSPROPSETID_DirectSoundDevice, 0, NULL, 0, NULL, 0, &la);
+        const HRESULT rb = IKsPropertySet_Get(b, &DSPROPSETID_DirectSoundDevice, 0, NULL, 0, NULL, 0, &lb);
+
+        if (ra != rb) {
+            return FALSE;
+        }
     }
 
     // DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A
     if (!TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingA(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1
     if (!TestDirectSoundPrivateKsPropertySetGetDescription1(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1
     if (!TestDirectSoundPrivateKsPropertySetEnumerate1(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     //DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W
     if (!TestDirectSoundPrivateKsPropertySetGetWaveDeviceMappingW(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A
     if (!TestDirectSoundPrivateKsPropertySetGetDescriptionA(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W
     if (!TestDirectSoundPrivateKsPropertySetGetDescriptionW(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A
     if (!TestDirectSoundPrivateKsPropertySetEnumerateA(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W
     if (!TestDirectSoundPrivateKsPropertySetEnumerateW(a, b)) {
-        DebugBreak(); return FALSE;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL TestDirectSoundPrivateKsPropertySetSet(LPKSPROPERTYSET a, LPKSPROPERTYSET b) {
+    if (a == NULL || b == NULL) {
+        return FALSE;
+    }
+
+    // Invalid
+    {
+        const HRESULT ra = IKsPropertySet_Set(a, &GUID_NULL, 0, NULL, 0, NULL, 0);
+        const HRESULT rb = IKsPropertySet_Set(b, &GUID_NULL, 0, NULL, 0, NULL, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+    {
+        const HRESULT ra = IKsPropertySet_Set(a, &GUID_NULL, 0, NULL, 1, NULL, 0);
+        const HRESULT rb = IKsPropertySet_Set(b, &GUID_NULL, 0, NULL, 1, NULL, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+    {
+        const HRESULT ra = IKsPropertySet_Set(a, &GUID_NULL, 1, NULL, 25, NULL, 0);
+        const HRESULT rb = IKsPropertySet_Set(b, &GUID_NULL, 1, NULL, 25, NULL, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        const HRESULT ra = IKsPropertySet_Set(a, &DSPROPSETID_DirectSoundDevice,
+            0, NULL, 0, NULL, 0);
+        const HRESULT rb = IKsPropertySet_Set(b, &DSPROPSETID_DirectSoundDevice,
+            0, NULL, 0, NULL, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        const HRESULT ra = IKsPropertySet_Set(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, NULL, 0);
+        const HRESULT rb = IKsPropertySet_Set(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, NULL, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    {
+        const HRESULT ra = IKsPropertySet_Set(a, &DSPROPSETID_DirectSoundDevice,
+            99, NULL, 0, NULL, 0);
+        const HRESULT rb = IKsPropertySet_Set(b, &DSPROPSETID_DirectSoundDevice,
+            99, NULL, 0, NULL, 0);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    // DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A
+    {
+        ULONG la = 0, lb = 0;
+        const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA);
+        DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA da, db;
+        ZeroMemory(&da, length);
+        ZeroMemory(&db, length);
+
+        HRESULT ra = IKsPropertySet_Set(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, &da, length);
+        HRESULT rb = IKsPropertySet_Set(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A, NULL, 0, &db, length);
+
+        if (ra != rb) {
+            return FALSE;
+        }
+    }
+
+    // DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1
+    {
+        ULONG la = 0, lb = 0;
+        const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA);
+        DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA da, db;
+        ZeroMemory(&da, length);
+        ZeroMemory(&db, length);
+
+        HRESULT ra = IKsPropertySet_Set(a, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &da, length);
+        HRESULT rb = IKsPropertySet_Set(b, &DSPROPSETID_DirectSoundDevice,
+            DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1, NULL, 0, &db, length);
+
+        if (ra != rb) {
+            return FALSE;
+        }
     }
 
     return TRUE;
@@ -2403,7 +2536,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGet(LPKSPROPERTYSET a, LPKSPROPER
 
 static BOOL TestDirectSoundPrivateKsPropertySet(LPCLASSFACTORY a, LPCLASSFACTORY b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
@@ -2427,13 +2560,10 @@ static BOOL TestDirectSoundPrivateKsPropertySet(LPCLASSFACTORY a, LPCLASSFACTORY
         goto exit;
     }
 
-    // TODO SET
-    // TODO SET
-    // TODO SET
-    // TODO SET
-    // TODO SET
-    // TODO SET
-    // TODO SET
+    if (!TestDirectSoundPrivateKsPropertySetSet(kspa, kspb)) {
+        result = FALSE;
+        goto exit;
+    }
 
 exit:
 
@@ -2445,7 +2575,7 @@ exit:
 
 static BOOL TestDirectSoundPrivateInstance(LPCLASSFACTORY a, LPCLASSFACTORY b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
@@ -2469,14 +2599,14 @@ exit:
 
 BOOL TestDllGetClassObjectDirectSoundPrivate(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     LPFNGETCLASSOBJECT gcoa = GetDllGetClassObject(a);
     LPFNGETCLASSOBJECT gcob = GetDllGetClassObject(b);
 
     if (gcoa == NULL || gcob == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
