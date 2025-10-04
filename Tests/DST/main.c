@@ -126,6 +126,7 @@ int main(int argc, char** argv) {
     TEST(DllGetClassObject);
     TEST(DllGetClassObjectDirectSound);
     TEST(DllGetClassObjectDirectSoundCapture);
+    TEST(DllGetClassObjectDirectSoundPrivate);
 
 exit:
 

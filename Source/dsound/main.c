@@ -361,17 +361,17 @@ HRESULT DELTACALL enumerate_devices(DWORD dwType, DWORD dwWide, LPDEVICEENUMERAT
                         }
                     }
                     else {
-                        CHAR name[MAX_DEVICE_ID_LENGTH];
-                        ZeroMemory(name, MAX_DEVICE_ID_LENGTH);
+                        CHAR name[MAX_DEVICE_NAME_LENGTH];
+                        ZeroMemory(name, MAX_DEVICE_NAME_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->Name, -1, name, MAX_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->Name, -1, name, MAX_DEVICE_NAME_LENGTH, NULL, NULL);
 
-                        CHAR module[MAX_DEVICE_ID_LENGTH];
-                        ZeroMemory(module, MAX_DEVICE_ID_LENGTH);
+                        CHAR module[MAX_DEVICE_NAME_LENGTH];
+                        ZeroMemory(module, MAX_DEVICE_NAME_LENGTH);
 
                         WideCharToMultiByte(CP_ACP, 0,
-                            dev->Module, -1, module, MAX_DEVICE_ID_LENGTH, NULL, NULL);
+                            dev->Module, -1, module, MAX_DEVICE_NAME_LENGTH, NULL, NULL);
 
                         if (!pCallback(&dev->ID, name, module, pContext)) {
                             break;

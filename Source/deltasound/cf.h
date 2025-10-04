@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "arr.h"
 #include "icf.h"
 #include "intfc.h"
 
@@ -45,4 +46,4 @@ HRESULT DELTACALL cf_query_interface(cf* pCF, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL cf_add_ref(cf* pCF, icf* pICF);
 HRESULT DELTACALL cf_remove_ref(cf* pCF, icf* pICF);
 
-HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL cf_create_instance(cf* pCF, REFIID riid, LPVOID* ppOut);

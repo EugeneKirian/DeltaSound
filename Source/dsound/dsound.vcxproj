@@ -111,7 +111,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>dsound.def</ModuleDefinitionFile>
       <AdditionalOptions>/IGNORE:4222</AdditionalOptions>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;winmm.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -137,7 +137,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>dsound.def</ModuleDefinitionFile>
       <AdditionalOptions>/IGNORE:4222</AdditionalOptions>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;winmm.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -161,7 +161,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>dsound.def</ModuleDefinitionFile>
       <AdditionalOptions>/IGNORE:4222</AdditionalOptions>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;winmm.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -187,7 +187,7 @@
       <EnableUAC>false</EnableUAC>
       <ModuleDefinitionFile>dsound.def</ModuleDefinitionFile>
       <AdditionalOptions>/IGNORE:4222</AdditionalOptions>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);dxguid.lib;winmm.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

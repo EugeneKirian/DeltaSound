@@ -27,6 +27,7 @@ SOFTWARE.
 #define COBJMACROS
 #include <windows.h>
 #include <dsound.h>
+#include <dsconf.h>
 #include <mmreg.h>
 
 #define RELEASE(X)  if((X) != NULL) { IUnknown_Release((X)); (X) = NULL;}
@@ -45,7 +46,7 @@ const extern DWORD CooperativeLevels[COOPERATIVE_LEVEL_COUNT];
 
 const extern DWORD BufferPlayFlags[BUFFER_PLAY_FLAGS_COUNT];
 
-const extern GUID IID_IDirectSoundPrivate;
+const extern IID IID_IDirectSoundPrivate;
 const extern GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
 typedef IReferenceClock* LPREFERENCECLOCK;

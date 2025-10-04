@@ -61,6 +61,7 @@ DWORD WINAPI device_info_get_default_device_thread(get_default_device_context* p
 HRESULT DELTACALL device_info_get_id(IMMDevice* pDevice, LPGUID pID);
 HRESULT DELTACALL device_info_get_module(IMMDevice* pDevice, LPWSTR pszId);
 HRESULT DELTACALL device_info_get_name(IMMDevice* pDevice, LPWSTR pszName);
+HRESULT DELTACALL device_info_get_type(IMMDevice* pDevice, LPDWORD pdwType);
 
 HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount) {
     return device_info_get_devices(dwType, pdwCount, NULL);
@@ -83,11 +84,10 @@ HRESULT DELTACALL device_info_get_device(DWORD dwType, LPCGUID pcGuidDevice, dev
     ctx.Device = pDevice;
 
     return device_info_thread_wait(CreateThread(NULL, 0,
-        (LPTHREAD_START_ROUTINE)device_info_get_device_thread, &ctx, 0, NULL));
+        device_info_get_device_thread, &ctx, 0, NULL));
 }
 
-HRESULT DELTACALL device_info_get_devices(
-    DWORD dwType, UINT* pdwCount, device_info* pDevices) {
+HRESULT DELTACALL device_info_get_devices(DWORD dwType, UINT* pdwCount, device_info* pDevices) {
     if (dwType != DEVICETYPE_RENDER
         && dwType != DEVICETYPE_CAPTURE && dwType != DEVICETYPE_ALL) {
         return E_INVALIDARG;
@@ -109,8 +109,7 @@ HRESULT DELTACALL device_info_get_devices(
         (LPTHREAD_START_ROUTINE)device_info_get_devices_thread, &ctx, 0, NULL));
 }
 
-HRESULT DELTACALL device_info_get_default_device(
-    DWORD dwType, DWORD dwKind, device_info* pDevice) {
+HRESULT DELTACALL device_info_get_default_device(DWORD dwType, DWORD dwKind, device_info* pDevice) {
     if (dwType != DEVICETYPE_RENDER && dwType != DEVICETYPE_CAPTURE) {
         return E_INVALIDARG;
     }
@@ -131,7 +130,7 @@ HRESULT DELTACALL device_info_get_default_device(
     ctx.Device = pDevice;
 
     return device_info_thread_wait(CreateThread(NULL, 0,
-        (LPTHREAD_START_ROUTINE)device_info_get_default_device_thread, &ctx, 0, NULL));
+        device_info_get_default_device_thread, &ctx, 0, NULL));
 }
 
 /* ---------------------------------------------------------------------- */
@@ -148,11 +147,12 @@ HRESULT DELTACALL device_info_thread_wait(HANDLE thread) {
         DWORD code = EXIT_SUCCESS;
 
         if (!GetExitCodeThread(thread, &code) || code != EXIT_SUCCESS) {
-            hr = E_FAIL;
+            hr = DSERR_NODRIVER;
         }
     }
 
     CloseHandle(thread);
+
     return hr;
 }
 
@@ -200,7 +200,7 @@ HRESULT DELTACALL device_info_get_module(IMMDevice* pDevice, LPWSTR pszId) {
     LPWSTR instance = NULL;
 
     if (SUCCEEDED(hr = IMMDevice_GetId(pDevice, &instance))) {
-        wcscpy_s(pszId, MAX_DEVICE_ID_LENGTH - 1, instance);
+        wcscpy_s(pszId, MAX_DEVICE_NAME_LENGTH - 1, instance);
         CoTaskMemFree(instance);
     }
 
@@ -226,13 +226,36 @@ HRESULT DELTACALL device_info_get_name(IMMDevice* pDevice, LPWSTR pszName) {
 
         if (SUCCEEDED(hr = IPropertyStore_GetValue(props, &PKEY_Device_FriendlyName, &name))) {
             if (name.vt != VT_EMPTY) {
-                wcscpy_s(pszName, MAX_DEVICE_ID_LENGTH - 1, name.pwszVal);
+                wcscpy_s(pszName, MAX_DEVICE_NAME_LENGTH - 1, name.pwszVal);
             }
         }
 
         PropVariantClear(&name);
 
         RELEASE(props);
+    }
+
+    return hr;
+}
+
+
+HRESULT DELTACALL device_info_get_type(IMMDevice* pDevice, LPDWORD pdwType) {
+    if (pDevice == NULL) {
+        return E_POINTER;
+    }
+
+    if (pdwType == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    IMMEndpoint* epoint = NULL;
+
+    if (SUCCEEDED(hr = IMMDevice_QueryInterface(pDevice, &IID_IMMEndpoint, &epoint))) {
+
+        hr = IMMEndpoint_GetDataFlow(epoint, (EDataFlow*)pdwType);
+
+        RELEASE(epoint);
     }
 
     return hr;
@@ -304,6 +327,7 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
     }
 
     HRESULT hr = S_OK;
+    UINT read = 0, written = 0;
     IMMDeviceEnumerator* enumerator = NULL;
     IMMDeviceCollection* collection = NULL;
 
@@ -313,11 +337,10 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
     }
 
     if (FAILED(hr = IMMDeviceEnumerator_EnumAudioEndpoints(enumerator,
-        (EDataFlow)ctx->Type, DEVICE_STATE_ACTIVE, &collection))) {
+        ctx->Type, DEVICE_STATE_ACTIVE, &collection))) {
         goto exit;
     }
 
-    UINT written = 0, read = 0;
     if (FAILED(hr = IMMDeviceCollection_GetCount(collection, &read))) {
         goto exit;
     }
@@ -336,8 +359,9 @@ DWORD WINAPI device_info_get_devices_thread(get_devices_context* ctx) {
             if (SUCCEEDED(hr = device_info_get_id(device, &ctx->Devices[written].ID))) {
                 if (SUCCEEDED(hr = device_info_get_module(device, ctx->Devices[written].Module))) {
                     if (SUCCEEDED(hr = device_info_get_name(device, ctx->Devices[written].Name))) {
-                        ctx->Devices[written].Type = ctx->Type;
-                        written++;
+                        if (SUCCEEDED(hr = device_info_get_type(device, &ctx->Devices[written].Type))) {
+                            written++;
+                        }
                     }
                 }
             }

@@ -26,6 +26,7 @@ SOFTWARE.
 #include "deltasound.h"
 #include "ds.h"
 #include "dsc.h"
+#include "prvt.h"
 
 HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
     if (pAlloc == NULL || rclsid == NULL || ppOut == NULL) {
@@ -56,6 +57,18 @@ HRESULT DELTACALL cf_create(allocator* pAlloc, REFCLSID rclsid, cf** ppOut) {
 
 VOID DELTACALL cf_release(cf* self) {
     if (self == NULL) { return; }
+
+    {
+        const DWORD count = intfc_get_count(self->Interfaces);
+
+        for (DWORD i = 0; i < count; i++) {
+            icf* instance = NULL;
+
+            if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
+                icf_release(instance);
+            }
+        }
+    }
 
     if (self->Instance != NULL) {
         deltasound_remove_class_factory(self->Instance, self);
@@ -133,7 +146,7 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
             ids* intfc = NULL;
 
             if (SUCCEEDED(hr = ds_query_interface(instance, riid, &intfc))) {
-                if (SUCCEEDED(hr = arr_add_item(self->Instance->Renderers, instance))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Instance->Render, instance))) {
 
                     *ppOut = intfc;
 
@@ -154,7 +167,7 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
             ids* intfc = NULL;
 
             if (SUCCEEDED(hr = dsc_query_interface(instance, riid, &intfc))) {
-                if (SUCCEEDED(hr = arr_add_item(self->Instance->Capturers, instance))) {
+                if (SUCCEEDED(hr = arr_add_item(self->Instance->Capture, instance))) {
 
                     *ppOut = intfc;
 
@@ -165,14 +178,28 @@ HRESULT DELTACALL cf_create_instance(cf* self, REFIID riid, LPVOID* ppOut) {
             dsc_release(instance);
         }
     }
-    else if (IsEqualCLSID(&CLSID_DirectSoundCapture8, &self->ID)) {
-        // TODO
-    }
     else if (IsEqualCLSID(&CLSID_DirectSoundFullDuplex, &self->ID)) {
-        // TODO
+        // TODO NOT IMPLEMENTED
     }
     else if (IsEqualCLSID(&CLSID_DirectSoundPrivate, &self->ID)) {
-        // TODO
+        prvt* instance = NULL;
+
+        if (SUCCEEDED(hr = prvt_create(self->Allocator, &self->ID, &instance))) {
+            instance->Instance = self->Instance;
+
+            iprvt* intfc = NULL;
+
+            if (SUCCEEDED(hr = prvt_query_interface(instance, riid, &intfc))) {
+                if (SUCCEEDED(hr = deltasound_add_private(self->Instance, instance))) {
+
+                    *ppOut = intfc;
+
+                    goto exit;
+                }
+            }
+
+            prvt_release(instance);
+        }
     }
 
 exit:

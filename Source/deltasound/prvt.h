@@ -24,29 +24,32 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "iprvt.h"
 
-#define DEVICETYPE_RENDER           0
-#define DEVICETYPE_CAPTURE          1
-#define DEVICETYPE_ALL              2
-#define DEVICETYPE_INVALID          (-1)
+typedef struct deltasound deltasound;
+typedef struct intfc intfc;
 
-#define DEVICEKIND_AUDIO            0
-#define DEVICEKIND_MULTIMEDIA       1
-#define DEVICEKIND_COMMUNICATION    2
-#define DEVICEKIND_INVALID          (-1)
+typedef struct prvt {
+    allocator*          Allocator;
+    IID                 ID;
+    deltasound*         Instance;
+    intfc*              Interfaces;
 
-#define MAX_DEVICE_NAME_LENGTH      256
-#define MAX_DEVICE_MODULE_LENGTH    MAX_PATH
+    CRITICAL_SECTION    Lock;
+} prvt;
 
-typedef struct device_info {
-    GUID    ID;
-    DWORD   Type;
-    WCHAR   Name[MAX_DEVICE_NAME_LENGTH];
-    WCHAR   Module[MAX_DEVICE_MODULE_LENGTH];
-} device_info;
+HRESULT DELTACALL prvt_create(allocator* pAlloc, REFIID riid, prvt** ppOut);
+VOID DELTACALL prvt_release(prvt* pPrvt);
 
-HRESULT DELTACALL device_info_get_count(DWORD dwType, UINT* pdwCount);
-HRESULT DELTACALL device_info_get_device(DWORD dwType, LPCGUID pcGuidDevice, device_info* pDevice);
-HRESULT DELTACALL device_info_get_devices(DWORD dwType, UINT* pdwCount, device_info* pDevices);
-HRESULT DELTACALL device_info_get_default_device(DWORD dwType, DWORD dwKind, device_info* pDevice);
+HRESULT DELTACALL prvt_query_interface(prvt* pPrvt, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL prvt_add_ref(prvt* pPrvt, iprvt* pIPrvt);
+HRESULT DELTACALL prvt_remove_ref(prvt* pPrvt, iprvt* pIPrvt);
+
+HRESULT DELTACALL prvt_get(prvt* pPrvt,
+    REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
+    ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength, PULONG pulBytesReturned);
+HRESULT DELTACALL prvt_set(prvt* pPrvt,
+    REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
+    ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength);
+HRESULT DELTACALL prvt_query_support(prvt* pPrvt,
+    REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport);

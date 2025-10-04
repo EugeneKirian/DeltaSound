@@ -29,3 +29,4 @@ SOFTWARE.
 BOOL TestDllGetClassObject(HMODULE a, HMODULE b);
 BOOL TestDllGetClassObjectDirectSound(HMODULE a, HMODULE b);
 BOOL TestDllGetClassObjectDirectSoundCapture(HMODULE a, HMODULE b);
+BOOL TestDllGetClassObjectDirectSoundPrivate(HMODULE a, HMODULE b);
