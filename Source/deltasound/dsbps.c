@@ -23,18 +23,18 @@ SOFTWARE.
 */
 
 #include "dsb.h"
+#include "dsbps.h"
 #include "intfc.h"
-#include "ksp.h"
 
-HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
+HRESULT DELTACALL dsbps_create(allocator* pAlloc, REFIID riid, dsbps** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    ksp* instance = NULL;
+    dsbps* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(ksp), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsbps), &instance))) {
         instance->Allocator = pAlloc;
 
         CopyMemory(&instance->ID, riid, sizeof(IID));
@@ -47,13 +47,13 @@ HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut) {
             return S_OK;
         }
 
-        ksp_release(instance);
+        dsbps_release(instance);
     }
 
     return hr;
 }
 
-VOID DELTACALL ksp_release(ksp* self) {
+VOID DELTACALL dsbps_release(dsbps* self) {
     if (self == NULL) { return; }
 
     DeleteCriticalSection(&self->Lock);
@@ -61,10 +61,10 @@ VOID DELTACALL ksp_release(ksp* self) {
     const DWORD count = intfc_get_count(self->Interfaces);
 
     for (DWORD i = 0; i < count; i++) {
-        iksp* instance = NULL;
+        idsbps* instance = NULL;
 
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
-            iksp_release(instance);
+            idsbps_release(instance);
         }
     }
 
@@ -73,16 +73,16 @@ VOID DELTACALL ksp_release(ksp* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
+HRESULT DELTACALL dsbps_query_interface(dsbps* self, REFIID riid, LPVOID* ppOut) {
     HRESULT hr = E_NOINTERFACE;
 
     EnterCriticalSection(&self->Lock);
 
     {
-        iksp* instance = NULL;
+        idsbps* instance = NULL;
 
         if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
-            iksp_add_ref(instance);
+            idsbps_add_ref(instance);
 
             *ppOut = instance;
 
@@ -92,10 +92,10 @@ HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IKsPropertySet, riid)) {
-        iksp* instance = NULL;
+        idsbps* instance = NULL;
 
-        if (SUCCEEDED(hr = iksp_create(self->Allocator, riid, &instance))) {
-            if (SUCCEEDED(hr = ksp_add_ref(self, instance))) {
+        if (SUCCEEDED(hr = idsbps_create(self->Allocator, riid, &instance))) {
+            if (SUCCEEDED(hr = dsbps_add_ref(self, instance))) {
                 instance->Instance = self;
 
                 *ppOut = instance;
@@ -103,7 +103,7 @@ HRESULT DELTACALL ksp_query_interface(ksp* self, REFIID riid, LPVOID* ppOut) {
                 goto exit;
             }
 
-            iksp_release(instance);
+            idsbps_release(instance);
         }
     }
 
@@ -114,12 +114,12 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL ksp_add_ref(ksp* self, iksp* pIKSP) {
-    return intfc_add_item(self->Interfaces, &pIKSP->ID, pIKSP);
+HRESULT DELTACALL dsbps_add_ref(dsbps* self, idsbps* pIPS) {
+    return intfc_add_item(self->Interfaces, &pIPS->ID, pIPS);
 }
 
-HRESULT DELTACALL ksp_remove_ref(ksp* self, iksp* pIKSP) {
-    intfc_remove_item(self->Interfaces, &pIKSP->ID);
+HRESULT DELTACALL dsbps_remove_ref(dsbps* self, idsbps* pIPS) {
+    intfc_remove_item(self->Interfaces, &pIPS->ID);
 
     // TODO NOT IMPLEMENTED
     // Release Property Set? Restore initial configuration?

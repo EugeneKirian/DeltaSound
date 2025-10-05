@@ -26,33 +26,33 @@ SOFTWARE.
 
 #include "allocator.h"
 
-typedef struct iksp_vft iksp_vft;
-typedef struct ksp ksp;
+typedef struct idsbps_vft idsbps_vft;
+typedef struct dsbps dsbps;
 
-typedef struct iksp {
-    const iksp_vft* Self;
-    allocator*      Allocator;
-    IID             ID;
-    LONG            RefCount;
-    ksp*            Instance;
-} iksp;
+typedef struct idsbps {
+    const idsbps_vft*   Self;
+    allocator*          Allocator;
+    IID                 ID;
+    LONG                RefCount;
+    dsbps*              Instance;
+} idsbps;
 
-typedef HRESULT(DELTACALL* LPIKSPQUERYINTERFACE)(iksp*, REFIID, LPVOID*);
-typedef ULONG(DELTACALL* LPIKSPADDREF)(iksp*);
-typedef ULONG(DELTACALL* LPIKSPRELEASE)(iksp*);
+typedef HRESULT(DELTACALL* LPIDSBPSQUERYINTERFACE)(idsbps*, REFIID, LPVOID*);
+typedef ULONG(DELTACALL* LPIDSBPSADDREF)(idsbps*);
+typedef ULONG(DELTACALL* LPIDSBPSRELEASE)(idsbps*);
 
-typedef HRESULT(DELTACALL* LPIKSPGET)(iksp*,
+typedef HRESULT(DELTACALL* LPIDSBPSGET)(idsbps*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData,
     ULONG ulDataLength, PULONG pulBytesReturned);
-typedef HRESULT(DELTACALL* LPIKSPSET)(iksp*,
+typedef HRESULT(DELTACALL* LPIDSBPSSET)(idsbps*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength);
-typedef HRESULT(DELTACALL* LPIKSPQUERYSUPPORT)(iksp*, REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport);
+typedef HRESULT(DELTACALL* LPIDSBPSQUERYSUPPORT)(idsbps*, REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport);
 
-HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut);
-VOID DELTACALL iksp_release(iksp* pIKSP);
+HRESULT DELTACALL idsbps_create(allocator* pAlloc, REFIID riid, idsbps** ppOut);
+VOID DELTACALL idsbps_release(idsbps* pIPS);
 
-HRESULT DELTACALL iksp_query_interface(iksp* pIKSP, REFIID riid, LPVOID* ppOut);
-ULONG DELTACALL iksp_add_ref(iksp* pIKSP);
-ULONG DELTACALL iksp_remove_ref(iksp* pIKSP);
+HRESULT DELTACALL idsbps_query_interface(idsbps* pIPS, REFIID riid, LPVOID* ppOut);
+ULONG DELTACALL idsbps_add_ref(idsbps* pIPS);
+ULONG DELTACALL idsbps_remove_ref(idsbps* pIPS);

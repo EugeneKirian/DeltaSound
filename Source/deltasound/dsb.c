@@ -24,11 +24,11 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
+#include "dsbps.h"
 #include "dsn.h"
 #include "dssb.h"
 #include "dssl.h"
 #include "ids.h"
-#include "ksp.h"
 #include "wave.h"
 
 #define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
@@ -95,7 +95,7 @@ VOID DELTACALL dsb_release(dsb* self) {
     }
 
     if (self->PropertySet != NULL) {
-        ksp_release(self->PropertySet);
+        dsbps_release(self->PropertySet);
     }
 
     if (self->Buffer != NULL) {
@@ -264,9 +264,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
     }
     else if (IsEqualIID(&IID_IKsPropertySet, riid)) {
         if (self->PropertySet == NULL) {
-            ksp* instance = NULL;
+            dsbps* instance = NULL;
 
-            if (FAILED(hr = ksp_create(self->Allocator, riid, &instance))) {
+            if (FAILED(hr = dsbps_create(self->Allocator, riid, &instance))) {
                 goto exit;
             }
 
@@ -274,7 +274,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
             self->PropertySet = instance;
         }
 
-        hr = ksp_query_interface(self->PropertySet, riid, ppOut);
+        hr = dsbps_query_interface(self->PropertySet, riid, ppOut);
     }
 
 exit:

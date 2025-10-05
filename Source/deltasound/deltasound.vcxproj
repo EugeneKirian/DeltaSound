@@ -46,10 +46,10 @@
     <ClInclude Include="idsn.h" />
     <ClInclude Include="idssb.h" />
     <ClInclude Include="idssl.h" />
-    <ClInclude Include="iksp.h" />
+    <ClInclude Include="idsbps.h" />
     <ClInclude Include="intfc.h" />
     <ClInclude Include="iprvt.h" />
-    <ClInclude Include="ksp.h" />
+    <ClInclude Include="dsbps.h" />
     <ClInclude Include="mixer.h" />
     <ClInclude Include="prvt.h" />
     <ClInclude Include="rcm.h" />
@@ -83,10 +83,10 @@
     <ClCompile Include="idsn.c" />
     <ClCompile Include="idssb.c" />
     <ClCompile Include="idssl.c" />
-    <ClCompile Include="iksp.c" />
+    <ClCompile Include="idsbps.c" />
     <ClCompile Include="intfc.c" />
     <ClCompile Include="iprvt.c" />
-    <ClCompile Include="ksp.c" />
+    <ClCompile Include="dsbps.c" />
     <ClCompile Include="mixer.c" />
     <ClCompile Include="prvt.c" />
     <ClCompile Include="rcm.c" />

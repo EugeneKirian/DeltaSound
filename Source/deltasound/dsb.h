@@ -41,7 +41,7 @@ SOFTWARE.
 #define DSB_DEFAULT_PRIMARY_BUFFER_SIZE     32768
 
 typedef struct ds ds;
-typedef struct ksp ksp;
+typedef struct dsbps dsbps;
 typedef struct dsn dsn;
 typedef struct dssl dssl;
 typedef struct dssb dssb;
@@ -51,7 +51,7 @@ typedef struct dsb {
     IID                 ID;
     ds*                 Instance;
     intfc*              Interfaces;
-    ksp*                PropertySet;
+    dsbps*                PropertySet;
     dssl*               SpatialListener;
     dssb*               SpatialBuffer;
     dsn*                Notifications;
