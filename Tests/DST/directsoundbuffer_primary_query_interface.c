@@ -406,11 +406,11 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
                 return FALSE;
             }
 
-            IDirectSound_AddRef(dsa);
-            IDirectSound_AddRef(dsb);
+            IDirectSoundBuffer_AddRef(dsa);
+            IDirectSoundBuffer_AddRef(dsb);
 
-            const ULONG rcda = IDirectSound_Release(dsa);
-            const ULONG rcdb = IDirectSound_Release(dsb);
+            const ULONG rcda = IDirectSoundBuffer_Release(dsa);
+            const ULONG rcdb = IDirectSoundBuffer_Release(dsb);
 
             if (rcda != rcdb) {
                 return FALSE;
@@ -427,7 +427,7 @@ static BOOL TestDirectSoundBufferQueryInterfaces(LPDIRECTSOUNDBUFFER a, LPDIRECT
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(
+static BOOL TestDirectSoundBufferSecondaryQueryInterfaces(
     LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dsFlags, DWORD dwLevel) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
@@ -512,7 +512,7 @@ BOOL TestDirectSoundBufferPrimaryQueryInterface(HMODULE a, HMODULE b) {
 
     for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
         for (int k = 0; k < BUFFER_FLAG_COUNT; k++) {
-            if (!TestDirectSoundBufferPrimaryQueryInterfaces(dsca, wa, dscb, wb,
+            if (!TestDirectSoundBufferSecondaryQueryInterfaces(dsca, wa, dscb, wb,
                 BufferFlags[k], CooperativeLevels[i])) {
                 result = FALSE;
                 goto exit;

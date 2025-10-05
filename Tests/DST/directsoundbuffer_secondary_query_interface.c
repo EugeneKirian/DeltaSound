@@ -407,11 +407,11 @@ static BOOL TestDirectSoundBufferQueryInterface(LPDIRECTSOUNDBUFFER a, LPDIRECTS
                 return FALSE;
             }
 
-            IDirectSound_AddRef(dsa);
-            IDirectSound_AddRef(dsb);
+            IDirectSoundBuffer_AddRef(dsa);
+            IDirectSoundBuffer_AddRef(dsb);
 
-            ULONG rcda = IDirectSound_Release(dsa);
-            ULONG rcdb = IDirectSound_Release(dsb);
+            ULONG rcda = IDirectSoundBuffer_Release(dsa);
+            ULONG rcdb = IDirectSoundBuffer_Release(dsb);
 
             if (rcda != rcdb) {
                 return FALSE;
@@ -428,7 +428,7 @@ static BOOL TestDirectSoundBufferQueryInterface(LPDIRECTSOUNDBUFFER a, LPDIRECTS
     return TRUE;
 }
 
-static BOOL TestDirectSoundBufferPrimaryQueryInterfaces(LPDIRECTSOUNDCREATE a, LPDIRECTSOUNDCREATE b, DWORD dwFlags) {
+static BOOL TestDirectSoundBufferSecondaryQueryInterfaces(LPDIRECTSOUNDCREATE a, LPDIRECTSOUNDCREATE b, DWORD dwFlags) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -492,7 +492,7 @@ BOOL TestDirectSoundBufferSecondaryQueryInterface(HMODULE a, HMODULE b) {
     }
 
     for (int i = 0; i < MAX_SECONDARY_BUFFER_SUCCESS_FLAG_COUNT; i++) {
-        if (!TestDirectSoundBufferPrimaryQueryInterfaces(dsca, dscb,
+        if (!TestDirectSoundBufferSecondaryQueryInterfaces(dsca, dscb,
             CreateSecondaryBufferSuccessFlags[i])) {
             return FALSE;
         }
