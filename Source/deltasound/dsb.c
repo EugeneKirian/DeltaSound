@@ -467,11 +467,12 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     }
 
     HRESULT hr = S_OK;
+    DWORD lockable = 0;
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
             hr = DSERR_PRIOLEVELNEEDED;
-            goto fail;
+            goto exit;
         }
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
@@ -479,25 +480,24 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         self->Status = DSBSTATUS_BUFFERLOST;
 
         hr = DSERR_BUFFERLOST;
-        
-        goto fail;
+
+        goto exit;
     }
 
     if (self->Status & DSBSTATUS_BUFFERLOST) {
         hr = DSERR_BUFFERLOST;
 
-        goto fail;
+        goto exit;
     }
 
     if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
         if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
-            goto fail;
+            goto exit;
         }
     }
 
-    DWORD lockable = 0;
     if (FAILED(hr = dsbcb_get_lockable_length(self->Buffer, &lockable))) {
-        goto fail;
+        goto exit;
     }
 
     if (dwFlags & DSBLOCK_ENTIREBUFFER) {
@@ -507,7 +507,7 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     if (dwBytes == 0
         || self->Caps.dwBufferBytes < dwOffset || lockable < dwBytes) {
         hr = E_INVALIDARG;
-        goto fail;
+        goto exit;
     }
 
     if (SUCCEEDED(hr = dsbcb_lock(self->Buffer, dwOffset, dwBytes,
@@ -515,7 +515,8 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         return hr;
     }
 
-fail:
+exit:
+
     if (ppvAudioPtr1 != NULL) {
         *ppvAudioPtr1 = NULL;
     }

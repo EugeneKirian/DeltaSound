@@ -52,6 +52,8 @@ HRESULT DELTACALL dscbcb_create(allocator* pAlloc, DWORD dwBytes, dscbcb** ppOut
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = allocator_allocate(pAlloc, dwBytes, &instance->Buffer))) {
+            instance->Size = dwBytes;
+
             if (SUCCEEDED(hr = cblc_create(pAlloc, &instance->Locks))) {
                 InitializeCriticalSection(&instance->Lock);
 

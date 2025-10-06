@@ -234,13 +234,55 @@ HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDSC, LPCDSCBUFFERDESC pcDesc
     self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
     CopyMemory(self->Format, pcDesc->lpwfxFormat, SIZEOFFORMAT(pcDesc->lpwfxFormat));
 
-    // TODO NOT IMPLEMENTED
-
     return dscbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
 }
 
 HRESULT DELTACALL dscb_lock(dscb* self, DWORD dwOffset, DWORD dwBytes, LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) {
-    return E_NOTIMPL;
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    HRESULT hr = S_OK;
+    DWORD lockable = 0;
+
+    if (FAILED(hr = dscbcb_get_lockable_length(self->Buffer, &lockable))) {
+        goto exit;
+    }
+
+    if (dwFlags & DSCBLOCK_ENTIREBUFFER) {
+        dwBytes = lockable;
+    }
+
+    if (dwBytes == 0
+        || self->Caps.dwBufferBytes < dwOffset || lockable < dwBytes) {
+        hr = E_INVALIDARG;
+        goto exit;
+    }
+
+    if (SUCCEEDED(hr = dscbcb_lock(self->Buffer, dwOffset, dwBytes,
+        ppvAudioPtr1, pdwAudioBytes1, ppvAudioPtr2, pdwAudioBytes2))) {
+        return hr;
+    }
+
+exit:
+
+    if (ppvAudioPtr1 != NULL) {
+        *ppvAudioPtr1 = NULL;
+    }
+
+    if (pdwAudioBytes1 != NULL) {
+        *pdwAudioBytes1 = 0;
+    }
+
+    if (ppvAudioPtr2 != NULL) {
+        *ppvAudioPtr2 = NULL;
+    }
+
+    if (pdwAudioBytes2 != NULL) {
+        *pdwAudioBytes2 = 0;
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dscb_start(dscb* self, DWORD dwFlags) {
@@ -252,5 +294,21 @@ HRESULT DELTACALL dscb_stop(dscb* self) {
 }
 
 HRESULT DELTACALL dscb_unlock(dscb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
-    return E_NOTIMPL;
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (pvAudioPtr1 == NULL && pvAudioPtr2 == NULL) {
+        return S_OK;
+    }
+
+    if (pvAudioPtr1 == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (pvAudioPtr2 == NULL && dwAudioBytes2 != 0) {
+        return E_INVALIDARG;
+    }
+
+    return dscbcb_unlock(self->Buffer, pvAudioPtr1, pvAudioPtr2);
 }

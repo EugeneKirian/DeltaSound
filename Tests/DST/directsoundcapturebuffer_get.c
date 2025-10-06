@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #include "directsoundcapturebuffer.h"
-#include "wnd.h"
 
 #define BUFFER_FLAG_COUNT       2
 
