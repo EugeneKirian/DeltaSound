@@ -22,43 +22,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "dsc.h"
-#include "dscb.h"
-#include "dscdevice.h"
-#include "uuid.h"
+#pragma once
 
-HRESULT DELTACALL dscdevice_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, dscdevice** ppOut) {
-    if (pAlloc == NULL) {
-        return E_INVALIDARG;
-    }
+#include "arena.h"
+#include "device_info.h"
+#include "mixer.h"
 
-    if (pInfo == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
+typedef struct ds ds;
 
-    HRESULT hr = S_OK;
-    dscdevice* instance = NULL;
+#define RENDER_AUDIO_EVENT_INDEX        0
+#define RENDER_CLOSE_EVENT_INDEX        1
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dscdevice), &instance))) {
-        instance->Allocator = pAlloc;
-        instance->Instance = pDSC;
+#define RENDER_MAX_EVENT_COUNT          2
 
-        CopyMemory(&instance->Info, pInfo, sizeof(device_info));
+typedef struct render {
+    allocator*              Allocator;
+    ds*                     Instance;
+    arena*                  Arena;
+    mixer*                  Mixer;
 
-        // TODO NOT IMPLEMENTED
+    device_info             Info;
 
-        *ppOut = instance;
+    IMMDevice*              Device;
+    IAudioClient*           AudioClient;
+    IAudioRenderClient*     AudioRenderer;
 
-        return S_OK;
-    }
+    UINT32                  AudioClientBufferSize;  // In frames
 
-    return hr;
-}
+    PWAVEFORMATEXTENSIBLE   Format;
 
-VOID DELTACALL dscdevice_release(dscdevice* self) {
-    if (self == NULL) { return; }
+    HANDLE                  Events[RENDER_MAX_EVENT_COUNT];
 
-    // TODO NOT IMPLEMENTED
+    HANDLE                  Thread;
+    HANDLE                  ThreadEvent;
+} render;
 
-    allocator_free(self->Allocator, self);
-}
+HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, render** ppOut);
+VOID DELTACALL render_release(render* pDev);

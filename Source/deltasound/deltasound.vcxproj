@@ -23,6 +23,7 @@
     <ClInclude Include="arena.h" />
     <ClInclude Include="arr.h" />
     <ClInclude Include="base.h" />
+    <ClInclude Include="capture.h" />
     <ClInclude Include="cblc.h" />
     <ClInclude Include="cf.h" />
     <ClInclude Include="deltasound.h" />
@@ -36,8 +37,6 @@
     <ClInclude Include="dscb.h" />
     <ClInclude Include="dscbcb.h" />
     <ClInclude Include="dscbn.h" />
-    <ClInclude Include="dscdevice.h" />
-    <ClInclude Include="dsdevice.h" />
     <ClInclude Include="dssb.h" />
     <ClInclude Include="dssl.h" />
     <ClInclude Include="icf.h" />
@@ -55,6 +54,7 @@
     <ClInclude Include="mixer.h" />
     <ClInclude Include="prvt.h" />
     <ClInclude Include="rcm.h" />
+    <ClInclude Include="render.h" />
     <ClInclude Include="uuid.h" />
     <ClInclude Include="wave.h" />
   </ItemGroup>
@@ -62,6 +62,7 @@
     <ClCompile Include="allocator.c" />
     <ClCompile Include="arena.c" />
     <ClCompile Include="arr.c" />
+    <ClCompile Include="capture.c" />
     <ClCompile Include="cblc.c" />
     <ClCompile Include="cf.c" />
     <ClCompile Include="deltasound.c" />
@@ -75,8 +76,6 @@
     <ClCompile Include="dscb.c" />
     <ClCompile Include="dscbcb.c" />
     <ClCompile Include="dscbn.c" />
-    <ClCompile Include="dscdevice.c" />
-    <ClCompile Include="dsdevice.c" />
     <ClCompile Include="dssb.c" />
     <ClCompile Include="dssl.c" />
     <ClCompile Include="icf.c" />
@@ -94,6 +93,7 @@
     <ClCompile Include="mixer.c" />
     <ClCompile Include="prvt.c" />
     <ClCompile Include="rcm.c" />
+    <ClCompile Include="render.c" />
     <ClCompile Include="uuid.c" />
     <ClCompile Include="wave.c" />
   </ItemGroup>

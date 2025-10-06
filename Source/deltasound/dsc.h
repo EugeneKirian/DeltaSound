@@ -27,7 +27,7 @@ SOFTWARE.
 #include "intfc.h"
 
 typedef struct deltasound deltasound;
-typedef struct dscdevice dscdevice;
+typedef struct capture capture;
 typedef struct dscb dscb;
 typedef struct idsc idsc;
 
@@ -39,7 +39,7 @@ typedef struct dsc {
 
     CRITICAL_SECTION    Lock;
 
-    dscdevice*          Device;
+    capture*            Device;
 
     dscb*               Buffer;
 } dsc;

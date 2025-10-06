@@ -28,34 +28,34 @@ SOFTWARE.
 #include "device_info.h"
 #include "mixer.h"
 
-typedef struct ds ds;
+typedef struct dsc dsc;
 
-#define DSDEVICE_AUDIO_EVENT_INDEX      0
-#define DSDEVICE_CLOSE_EVENT_INDEX      1
+#define CAPTURE_AUDIO_EVENT_INDEX       0
+#define CAPTURE_CLOSE_EVENT_INDEX       1
 
-#define DSDEVICE_MAX_EVENT_COUNT        2
+#define CAPTURE_MAX_EVENT_COUNT         2
 
-typedef struct dsdevice {
+typedef struct capture {
     allocator*              Allocator;
-    ds*                     Instance;
-    arena*                  Arena;
-    mixer*                  Mixer;
+    dsc*                    Instance;
+    // arena* Arena; // TODO
+    // mixer* Mixer; // TODO
 
     device_info             Info;
 
     IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
+    // IAudioClient*           AudioClient; // TODO
+    //IAudioRenderClient*     AudioRenderer; // TODO
 
-    UINT32                  AudioClientBufferSize;  // In frames
+    //UINT32                  AudioClientBufferSize;  // In frames
 
     PWAVEFORMATEXTENSIBLE   Format;
 
-    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
+    HANDLE                  Events[CAPTURE_MAX_EVENT_COUNT];
 
     HANDLE                  Thread;
     HANDLE                  ThreadEvent;
-} dsdevice;
+} capture;
 
-HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo, dsdevice** ppOut);
-VOID DELTACALL dsdevice_release(dsdevice* pDev);
+HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, capture** ppOut);
+VOID DELTACALL capture_release(capture* pDev);

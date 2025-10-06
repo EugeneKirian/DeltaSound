@@ -31,7 +31,7 @@ SOFTWARE.
 #define DS_STATUS_PLAYING   1
 
 typedef struct deltasound deltasound;
-typedef struct dsdevice dsdevice;
+typedef struct render render;
 typedef struct dsb dsb;
 typedef struct ids ids;
 
@@ -45,7 +45,7 @@ typedef struct ds {
 
     HWND                HWND;
     DWORD               Level;
-    dsdevice*           Device;
+    render*             Device;
 
     dsb*                Main;       // Primary Buffer
     arr*                Buffers;    // Secondary Buffers

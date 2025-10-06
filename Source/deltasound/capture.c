@@ -22,40 +22,43 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "capture.h"
+#include "dsc.h"
+#include "dscb.h"
+#include "uuid.h"
 
-#include "arena.h"
-#include "device_info.h"
-#include "mixer.h"
+HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, capture** ppOut) {
+    if (pAlloc == NULL) {
+        return E_INVALIDARG;
+    }
 
-typedef struct dsc dsc;
+    if (pInfo == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
 
-#define DSCDEVICE_AUDIO_EVENT_INDEX      0
-#define DSCDEVICE_CLOSE_EVENT_INDEX      1
+    HRESULT hr = S_OK;
+    capture* instance = NULL;
 
-#define DSCDEVICE_MAX_EVENT_COUNT        2
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(capture), &instance))) {
+        instance->Allocator = pAlloc;
+        instance->Instance = pDSC;
 
-typedef struct dscdevice {
-    allocator* Allocator;
-    dsc* Instance;
-    // arena* Arena; // TODO
-    // mixer* Mixer; // TODO
+        CopyMemory(&instance->Info, pInfo, sizeof(device_info));
 
-    device_info             Info;
+        // TODO NOT IMPLEMENTED
 
-    IMMDevice*              Device;
-    // IAudioClient*           AudioClient; // TODO
-    //IAudioRenderClient*     AudioRenderer; // TODO
+        *ppOut = instance;
 
-    //UINT32                  AudioClientBufferSize;  // In frames
+        return S_OK;
+    }
 
-    PWAVEFORMATEXTENSIBLE   Format;
+    return hr;
+}
 
-    HANDLE                  Events[DSCDEVICE_MAX_EVENT_COUNT];
+VOID DELTACALL capture_release(capture* self) {
+    if (self == NULL) { return; }
 
-    HANDLE                  Thread;
-    HANDLE                  ThreadEvent;
-} dscdevice;
+    // TODO NOT IMPLEMENTED
 
-HRESULT DELTACALL dscdevice_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, dscdevice** ppOut);
-VOID DELTACALL dscdevice_release(dscdevice* pDev);
+    allocator_free(self->Allocator, self);
+}

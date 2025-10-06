@@ -126,7 +126,11 @@ int main(int argc, char** argv) {
 
     TEST(DirectSoundCaptureBufferBasics);
     TEST(DirectSoundCaptureBufferQueryInterface);
-    // TODO Other tests
+    TODO GET
+    // TODO Lock & Unlock
+    // TODO Start
+    // TODO Stop
+    // TODO Notifications
 
     TEST(DllGetClassObject);
     TEST(DllGetClassObjectDirectSound);

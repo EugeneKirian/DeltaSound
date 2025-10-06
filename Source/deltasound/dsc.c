@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "capture.h"
 #include "deltasound.h"
 #include "device_info.h"
 #include "dsc.h"
 #include "dscb.h"
-#include "dscdevice.h"
 #include "idsc.h"
 
 HRESULT DELTACALL dsc_create(allocator* pAlloc, REFCLSID rclsid, dsc** ppOut) {
@@ -60,7 +60,7 @@ VOID DELTACALL dsc_release(dsc* self) {
     if (self == NULL) { return; }
 
     if (self->Device != NULL) {
-        dscdevice_release(self->Device);
+        capture_release(self->Device);
     }
 
     DeleteCriticalSection(&self->Lock);
@@ -244,7 +244,7 @@ HRESULT DELTACALL dsc_initialize(dsc* self, LPCGUID pcGuidDevice) {
 
     EnterCriticalSection(&self->Lock);
 
-    hr = dscdevice_create(self->Allocator, self, &info, &self->Device);
+    hr = capture_create(self->Allocator, self, &info, &self->Device);
 
     LeaveCriticalSection(&self->Lock);
 

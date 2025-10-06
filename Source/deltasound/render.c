@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
-#include "dsdevice.h"
+#include "render.h"
 #include "uuid.h"
 #include "wave.h"
 
@@ -36,20 +36,20 @@ SOFTWARE.
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 #define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
 
-typedef struct dsdevice_thread_context {
-    dsdevice*   Device;
+typedef struct render_thread_context {
+    render*     Device;
     HANDLE      Init;
-} dsdevice_thread_context;
+} render_thread_context;
 
-DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx);
+DWORD WINAPI render_thread(render_thread_context* ctx);
 
-HRESULT DELTACALL dsdevice_initialize(dsdevice* pDev);
-HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* pDev, LPWAVEFORMATEX* ppFormat);
+HRESULT DELTACALL render_initialize(render* pRender);
+HRESULT DELTACALL render_get_mix_format(render* pRender, LPWAVEFORMATEX* ppFormat);
 
-HRESULT DELTACALL dsdevice_render(dsdevice* pDev, DWORD dwBuffers, dsb** ppBuffers);
-HRESULT DELTACALL dsdevice_get_active_buffers(dsdevice* self, LPDWORD pdwCount, dsb*** ppBuffers);
+HRESULT DELTACALL render_render(render* pRender, DWORD dwBuffers, dsb** ppBuffers);
+HRESULT DELTACALL render_get_active_buffers(render* pRender, LPDWORD pdwCount, dsb*** ppBuffers);
 
-HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo, dsdevice** ppOut) {
+HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, render** ppOut) {
     if (pAlloc == NULL) {
         return E_INVALIDARG;
     }
@@ -59,9 +59,9 @@ HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo
     }
 
     HRESULT hr = S_OK;
-    dsdevice* instance = NULL;
+    render* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsdevice), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(render), &instance))) {
         instance->Allocator = pAlloc;
         instance->Instance = pDS;
 
@@ -69,40 +69,40 @@ HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo
 
         if (SUCCEEDED(hr = arena_create(pAlloc, &instance->Arena))) {
             if (SUCCEEDED(hr = mixer_create(pAlloc, &instance->Mixer))) {
-                dsdevice_thread_context* ctx;
+                render_thread_context* ctx;
 
-                if (FAILED(hr = allocator_allocate(pAlloc, sizeof(dsdevice_thread_context), &ctx))) {
-                    dsdevice_release(instance);
+                if (FAILED(hr = allocator_allocate(pAlloc, sizeof(render_thread_context), &ctx))) {
+                    render_release(instance);
                     return hr;
                 }
 
                 ctx->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
                 if (ctx->Init == NULL) {
-                    dsdevice_release(instance);
+                    render_release(instance);
                     return E_FAIL;
                 }
 
-                for (DWORD i = 0; i < DSDEVICE_MAX_EVENT_COUNT; i++) {
+                for (DWORD i = 0; i < RENDER_MAX_EVENT_COUNT; i++) {
                     instance->Events[i] = CreateEventA(NULL, FALSE, FALSE, NULL);
 
                     if (instance->Events[i] == NULL) {
-                        dsdevice_release(instance);
+                        render_release(instance);
                         return E_FAIL;
                     }
                 }
 
                 instance->ThreadEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
                 if (instance->ThreadEvent == NULL) {
-                    dsdevice_release(instance);
+                    render_release(instance);
                     return E_FAIL;
                 }
 
                 ctx->Device = instance;
 
-                instance->Thread = CreateThread(NULL, 0, dsdevice_thread, ctx, 0, NULL);
+                instance->Thread = CreateThread(NULL, 0, render_thread, ctx, 0, NULL);
 
                 if (instance->Thread == NULL) {
-                    dsdevice_release(instance);
+                    render_release(instance);
                     return E_FAIL;
                 }
 
@@ -127,11 +127,11 @@ HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo
     return hr;
 }
 
-VOID DELTACALL dsdevice_release(dsdevice* self) {
+VOID DELTACALL render_release(render* self) {
     if (self == NULL) { return; }
 
     if (self->Thread != NULL) {
-        SetEvent(self->Events[DSDEVICE_CLOSE_EVENT_INDEX]);
+        SetEvent(self->Events[RENDER_CLOSE_EVENT_INDEX]);
 
         // NOTE. Cannot wait for thread handle,
         // because it does not fire when thread is being
@@ -149,7 +149,7 @@ VOID DELTACALL dsdevice_release(dsdevice* self) {
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
+HRESULT DELTACALL render_initialize(render* self) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -173,7 +173,7 @@ HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
         goto exit;
     }
 
-    if (FAILED(hr = dsdevice_get_mix_format(self, &wfx))) {
+    if (FAILED(hr = render_get_mix_format(self, &wfx))) {
         goto exit;
     }
 
@@ -193,7 +193,7 @@ HRESULT DELTACALL dsdevice_initialize(dsdevice* self) {
     CoTaskMemFree(wfx);
 
     if (FAILED(hr = IAudioClient_SetEventHandle(self->AudioClient,
-        self->Events[DSDEVICE_AUDIO_EVENT_INDEX]))) {
+        self->Events[RENDER_AUDIO_EVENT_INDEX]))) {
         goto exit;
     }
 
@@ -228,7 +228,7 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppFormat) {
+HRESULT DELTACALL render_get_mix_format(render* self, LPWAVEFORMATEX* ppFormat) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -240,7 +240,7 @@ HRESULT DELTACALL dsdevice_get_mix_format(dsdevice* self, LPWAVEFORMATEX* ppForm
     return IAudioClient_GetMixFormat(self->AudioClient, ppFormat);
 }
 
-HRESULT DELTACALL dsdevice_render(dsdevice* self, DWORD dwBuffers, dsb** ppBuffers) {
+HRESULT DELTACALL render_render(render* self, DWORD dwBuffers, dsb** ppBuffers) {
     if (self->Instance == NULL) {
         return E_FAIL;
     }
@@ -275,7 +275,7 @@ HRESULT DELTACALL dsdevice_render(dsdevice* self, DWORD dwBuffers, dsb** ppBuffe
     return hr;
 }
 
-HRESULT DELTACALL dsdevice_get_active_buffers(dsdevice* self, LPDWORD pdwCount, dsb*** ppBuffers) {
+HRESULT DELTACALL render_get_active_buffers(render* self, LPDWORD pdwCount, dsb*** ppBuffers) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -335,15 +335,15 @@ HRESULT DELTACALL dsdevice_get_active_buffers(dsdevice* self, LPDWORD pdwCount, 
     return hr;
 }
 
-DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx) {
+DWORD WINAPI render_thread(render_thread_context* ctx) {
     if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
         return EXIT_FAILURE;
     }
 
     HRESULT hr = S_OK;
-    dsdevice* device = ctx->Device;
+    render* device = ctx->Device;
 
-    if (FAILED(hr = dsdevice_initialize(device))) {
+    if (FAILED(hr = render_initialize(device))) {
         goto exit;
     }
 
@@ -351,19 +351,19 @@ DWORD WINAPI dsdevice_thread(dsdevice_thread_context* ctx) {
 
     while (TRUE) {
         const DWORD result =
-            WaitForMultipleObjects(DSDEVICE_MAX_EVENT_COUNT, device->Events, FALSE, INFINITE);
+            WaitForMultipleObjects(RENDER_MAX_EVENT_COUNT, device->Events, FALSE, INFINITE);
 
-        if (result == DSDEVICE_CLOSE_EVENT_INDEX
-            || result == DSDEVICE_MAX_EVENT_COUNT) {
+        if (result == RENDER_CLOSE_EVENT_INDEX
+            || result == RENDER_MAX_EVENT_COUNT) {
             break;
         }
-        else if (result == DSDEVICE_AUDIO_EVENT_INDEX) {
+        else if (result == RENDER_AUDIO_EVENT_INDEX) {
             dsb** buffers = NULL;
             DWORD count = 0;
 
-            if (SUCCEEDED(hr = dsdevice_get_active_buffers(device, &count, &buffers))) {
+            if (SUCCEEDED(hr = render_get_active_buffers(device, &count, &buffers))) {
                 if (count != 0) {
-                    hr = dsdevice_render(device, count, buffers);
+                    hr = render_render(device, count, buffers);
                 }
             }
         }
