@@ -176,16 +176,48 @@ HRESULT DELTACALL dscb_get_caps(dscb* self, LPDSCBCAPS pCaps) {
     return S_OK;
 }
 
-HRESULT DELTACALL dscb_get_current_position(dscb* self, LPDWORD pdwCapturePosition, LPDWORD pdwReadPosition) {
-    return E_NOTIMPL;
+HRESULT DELTACALL dscb_get_current_position(dscb* self,
+    LPDWORD pdwCapturePosition, LPDWORD pdwReadPosition) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    return dscbcb_get_current_position(self->Buffer, pdwCapturePosition, pdwReadPosition);
 }
 
-HRESULT DELTACALL dscb_get_format(dscb* self, LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten) {
-    return E_NOTIMPL;
+HRESULT DELTACALL dscb_get_format(dscb* self,
+    LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated, LPDWORD pdwSizeWritten) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    HRESULT hr = S_OK;
+    const DWORD size = SIZEOFFORMATEX(self->Format);
+
+    if (pwfxFormat != NULL) {
+        if (size <= dwSizeAllocated) {
+            CopyMemory(pwfxFormat, self->Format, min(size, dwSizeAllocated));
+        }
+        else {
+            hr = E_INVALIDARG;
+        }
+    }
+
+    if (pdwSizeWritten != NULL) {
+        *pdwSizeWritten = size;
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dscb_get_status(dscb* self, LPDWORD pdwStatus) {
-    return E_NOTIMPL;
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    *pdwStatus = self->Status;
+
+    return S_OK;
 }
 
 HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDSC, LPCDSCBUFFERDESC pcDesc) {
