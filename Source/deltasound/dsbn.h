@@ -45,8 +45,8 @@ HRESULT DELTACALL dsbn_create(allocator* pAlloc, REFIID riid, dsbn** ppOut);
 VOID DELTACALL dsbn_release(dsbn* pDSBN);
 
 HRESULT DELTACALL dsbn_query_interface(dsbn* pDSBN, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL dsbn_add_ref(dsbn* pDSBN, idsn* pIDSBN);
-HRESULT DELTACALL dsbn_remove_ref(dsbn* pDSBN, idsn* pIDSBN);
+HRESULT DELTACALL dsbn_add_ref(dsbn* pDSBN, idsbn* pIDSBN);
+HRESULT DELTACALL dsbn_remove_ref(dsbn* pDSBN, idsbn* pIDSBN);
 
 HRESULT DELTACALL dsbn_get_notification_positions(dsbn* pDSBN, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies);
 HRESULT DELTACALL dsbn_set_notification_positions(dsbn* pDSBN, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);

@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "dsc.h"
 #include "dscb.h"
+#include "dscbn.h"
 #include "wave.h"
 
 HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut) {
@@ -87,6 +88,10 @@ VOID DELTACALL dscb_release(dscb* self) {
         dscbcb_release(self->Buffer);
     }
 
+    if (self->Notifications != NULL) {
+        dscbn_release(self->Notifications);
+    }
+
     allocator_free(self->Allocator, self->Format);
     allocator_free(self->Allocator, self);
 }
@@ -110,7 +115,6 @@ HRESULT DELTACALL dscb_query_interface(dscb* self, REFIID riid, LPVOID* ppOut) {
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSoundCaptureBuffer, riid)
-        // TODO CLSID
         || (IsEqualIID(&IID_IDirectSoundCaptureBuffer8, &self->ID) && IsEqualIID(&IID_IDirectSoundCaptureBuffer8, riid))) {
         idscb* instance = NULL;
 
@@ -125,6 +129,20 @@ HRESULT DELTACALL dscb_query_interface(dscb* self, REFIID riid, LPVOID* ppOut) {
 
             idscb_release(instance);
         }
+    }
+    else if (IsEqualIID(&IID_IDirectSoundNotify, riid)) {
+        if (self->Notifications == NULL) {
+            dscbn* instance = NULL;
+
+            if (FAILED(hr = dscbn_create(self->Allocator, riid, &instance))) {
+                goto exit;
+            }
+
+            instance->Instance = self;
+            self->Notifications = instance;
+        }
+
+        hr = dscbn_query_interface(self->Notifications, riid, ppOut);
     }
 
 exit:

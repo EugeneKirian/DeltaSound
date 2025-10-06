@@ -32,13 +32,14 @@ SOFTWARE.
 #define DSCBSTATUS_NONE     0
 
 typedef struct dsc dsc;
+typedef struct dscbn dscbn;
 
 typedef struct dscb {
     allocator*          Allocator;
     IID                 ID;
     dsc*                Instance;
     intfc*              Interfaces;
-    // TODO Notifications
+    dscbn*              Notifications;
 
     CRITICAL_SECTION    Lock;
 

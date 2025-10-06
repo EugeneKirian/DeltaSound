@@ -102,6 +102,10 @@ VOID DELTACALL dsb_release(dsb* self) {
         dsbcb_release(self->Buffer);
     }
 
+    if (self->Notifications != NULL) {
+        dsbn_release(self->Notifications);
+    }
+
     allocator_free(self->Allocator, self->Format);
     allocator_free(self->Allocator, self);
 }
