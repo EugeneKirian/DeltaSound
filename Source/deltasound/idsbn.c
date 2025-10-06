@@ -22,26 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "dsn.h"
-#include "idsn.h"
+#include "dsbn.h"
+#include "idsbn.h"
 
-HRESULT DELTACALL idsn_set_notification_positions(idsn*, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
+HRESULT DELTACALL idsbn_set_notification_positions(idsn*, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
 
-typedef struct idsn_vft {
-    LPIDSNQUERYINTERFACE            QueryInterface;
-    LPIDSNADDREF                    AddRef;
-    LPIDSNRELEASE                   Release;
-    LPIDSNSETNOTIFICATIONPOSITIONS  SetNotificationPositions;
-} idsn_vft;
+typedef struct idsbn_vft {
+    LPIDSBNQUERYINTERFACE            QueryInterface;
+    LPIDSBNADDREF                    AddRef;
+    LPIDSBNRELEASE                   Release;
+    LPIDSBNSETNOTIFICATIONPOSITIONS  SetNotificationPositions;
+} idsbn_vft;
 
-const static idsn_vft idsn_self = {
-    idsn_query_interface,
-    idsn_add_ref,
-    idsn_remove_ref,
-    idsn_set_notification_positions
+const static idsbn_vft idsbn_self = {
+    idsbn_query_interface,
+    idsbn_add_ref,
+    idsbn_remove_ref,
+    idsbn_set_notification_positions
 };
 
-HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
+HRESULT DELTACALL idsbn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
@@ -53,7 +53,7 @@ HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
     if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsn), &instance))) {
         instance->Allocator = pAlloc;
 
-        instance->Self = &idsn_self;
+        instance->Self = &idsbn_self;
         CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
@@ -63,13 +63,13 @@ HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
     return hr;
 }
 
-VOID DELTACALL idsn_release(idsn* self) {
+VOID DELTACALL idsbn_release(idsn* self) {
     if (self == NULL) { return; }
 
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL idsn_query_interface(idsn* self, REFIID riid, LPVOID* ppOut) {
+HRESULT DELTACALL idsbn_query_interface(idsn* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -78,10 +78,10 @@ HRESULT DELTACALL idsn_query_interface(idsn* self, REFIID riid, LPVOID* ppOut) {
         return E_INVALIDARG;
     }
 
-    return dsn_query_interface(self->Instance, riid, ppOut);
+    return dsbn_query_interface(self->Instance, riid, ppOut);
 }
 
-ULONG DELTACALL idsn_add_ref(idsn* self) {
+ULONG DELTACALL idsbn_add_ref(idsn* self) {
     if (self == NULL) {
         return 0;
     }
@@ -89,7 +89,7 @@ ULONG DELTACALL idsn_add_ref(idsn* self) {
     return InterlockedIncrement(&self->RefCount);
 }
 
-ULONG DELTACALL idsn_remove_ref(idsn* self) {
+ULONG DELTACALL idsbn_remove_ref(idsn* self) {
     if (self == NULL) {
         return 0;
     }
@@ -104,16 +104,16 @@ ULONG DELTACALL idsn_remove_ref(idsn* self) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
-            dsn_remove_ref(self->Instance, self);
+            dsbn_remove_ref(self->Instance, self);
         }
 
-        idsn_release(self);
+        idsbn_release(self);
     }
 
     return result;
 }
 
-HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
+HRESULT DELTACALL idsbn_set_notification_positions(idsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -122,5 +122,5 @@ HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNo
         return E_INVALIDARG;
     }
 
-    return dsn_set_notification_positions(self->Instance, dwPositionNotifies, pcPositionNotifies);
+    return dsbn_set_notification_positions(self->Instance, dwPositionNotifies, pcPositionNotifies);
 }

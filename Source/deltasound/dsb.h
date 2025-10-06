@@ -42,7 +42,7 @@ SOFTWARE.
 
 typedef struct ds ds;
 typedef struct dsbps dsbps;
-typedef struct dsn dsn;
+typedef struct dsbn dsbn;
 typedef struct dssl dssl;
 typedef struct dssb dssb;
 
@@ -51,10 +51,10 @@ typedef struct dsb {
     IID                 ID;
     ds*                 Instance;
     intfc*              Interfaces;
-    dsbps*                PropertySet;
+    dsbps*              PropertySet;
     dssl*               SpatialListener;
     dssb*               SpatialBuffer;
-    dsn*                Notifications;
+    dsbn*               Notifications;
 
     CRITICAL_SECTION    Lock;
 

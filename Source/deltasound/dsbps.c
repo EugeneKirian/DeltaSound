@@ -122,7 +122,6 @@ HRESULT DELTACALL dsbps_remove_ref(dsbps* self, idsbps* pIPS) {
     intfc_remove_item(self->Interfaces, &pIPS->ID);
 
     // TODO NOT IMPLEMENTED
-    // Release Property Set? Restore initial configuration?
 
     return S_OK;
 }

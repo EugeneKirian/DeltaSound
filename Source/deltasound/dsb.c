@@ -24,8 +24,8 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
+#include "dsbn.h"
 #include "dsbps.h"
-#include "dsn.h"
 #include "dssb.h"
 #include "dssl.h"
 #include "ids.h"
@@ -248,9 +248,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
                 if (self->Notifications == NULL) {
-                    dsn* instance = NULL;
+                    dsbn* instance = NULL;
 
-                    if (FAILED(hr = dsn_create(self->Allocator, riid, &instance))) {
+                    if (FAILED(hr = dsbn_create(self->Allocator, riid, &instance))) {
                         goto exit;
                     }
 
@@ -258,7 +258,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
                     self->Notifications = instance;
                 }
 
-                hr = dsn_query_interface(self->Notifications, riid, ppOut);
+                hr = dsbn_query_interface(self->Notifications, riid, ppOut);
             }
         }
     }
@@ -896,7 +896,7 @@ HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwPosition, DWORD d
         DWORD count = 0;
         LPDSBPOSITIONNOTIFY notes = NULL;
 
-        if (SUCCEEDED(hr = dsn_get_notification_positions(self->Notifications, &count, &notes))) {
+        if (SUCCEEDED(hr = dsbn_get_notification_positions(self->Notifications, &count, &notes))) {
             if (count != 0) {
                 if (self->Status & DSBSTATUS_LOOPING) {
                     DWORD length = self->Caps.dwBufferBytes < dwPosition + dwAdvance
