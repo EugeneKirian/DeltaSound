@@ -27,6 +27,12 @@ SOFTWARE.
 #include "dscbn.h"
 #include "wave.h"
 
+#define DSCB_START_READ_CURSOR_FRAME_COUNT  800
+
+#define ADVANCEREADPOSITION(X, ALIGN) (X + DSCB_START_READ_CURSOR_FRAME_COUNT * ALIGN)
+
+HRESULT DELTACALL dscb_trigger_notifications(dscb* pDSCB, DWORD dwPosition, DWORD dwAdvance);
+
 HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
@@ -286,11 +292,62 @@ exit:
 }
 
 HRESULT DELTACALL dscb_start(dscb* self, DWORD dwFlags) {
-    return E_NOTIMPL;
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (self->Status & DSCBSTATUS_CAPTURING) {
+        self->Start = dwFlags;
+
+        self->Status = DSCBSTATUS_CAPTURING;
+
+        if (dwFlags & DSCBSTART_LOOPING) {
+            self->Status = self->Status | DSCBSTATUS_LOOPING;
+        }
+
+        return S_OK;
+    }
+
+    HRESULT hr = S_OK;
+    DWORD capture = 0, read = 0;
+
+    if (SUCCEEDED(hr = dscbcb_get_current_position(self->Buffer, &capture, &read))) {
+        const DWORD advance = min(self->Caps.dwBufferBytes,
+            ADVANCEREADPOSITION(read, self->Format->nBlockAlign));
+
+        if (SUCCEEDED(hr = dscbcb_set_current_position(self->Buffer,
+            capture, advance, DSCBCB_SETPOSITION_NONE))) {
+
+            self->Start = dwFlags;
+
+            self->Status = DSCBSTATUS_CAPTURING;
+
+            if (dwFlags & DSCBSTART_LOOPING) {
+                self->Status = self->Status | DSCBSTART_LOOPING;
+            }
+        }
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dscb_stop(dscb* self) {
-    return E_NOTIMPL;
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    HRESULT hr = S_OK;
+
+    if (self->Status & DSCBSTATUS_CAPTURING) {
+        self->Start = DSCBSTART_NONE;
+        self->Status = DSCBSTATUS_NONE;
+
+        if (SUCCEEDED(hr = dscbcb_set_current_position(self->Buffer, 0, 0, DSCBCB_SETPOSITION_NONE))) {
+            hr = dscb_trigger_notifications(self, self->Caps.dwBufferBytes, 0);
+        }
+    }
+
+    return hr;
 }
 
 HRESULT DELTACALL dscb_unlock(dscb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2) {
@@ -311,4 +368,78 @@ HRESULT DELTACALL dscb_unlock(dscb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes
     }
 
     return dscbcb_unlock(self->Buffer, pvAudioPtr1, pvAudioPtr2);
+}
+
+/* ---------------------------------------------------------------------- */
+
+HRESULT DELTACALL dscb_trigger_notifications(dscb* self, DWORD dwPosition, DWORD dwAdvance) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (self->Caps.dwBufferBytes < dwPosition) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    if (self->Notifications != NULL) {
+        DWORD count = 0;
+        LPDSBPOSITIONNOTIFY notes = NULL;
+
+        if (SUCCEEDED(hr = dscbn_get_notification_positions(self->Notifications, &count, &notes))) {
+            if (count != 0) {
+                if (self->Status & DSCBSTATUS_LOOPING) {
+                    DWORD length = self->Caps.dwBufferBytes < dwPosition + dwAdvance
+                        ? self->Caps.dwBufferBytes - dwPosition : dwAdvance;
+                    DWORD pending = dwAdvance - length;
+                    DWORD position = dwPosition;
+
+                loop:
+
+                    for (DWORD i = 0; i < count; i++) {
+                        if (notes[i].dwOffset < position) {
+                            continue;
+                        }
+
+                        if (position + length < notes[i].dwOffset) {
+                            break;
+                        }
+
+                        SetEvent(notes[i].hEventNotify);
+                    }
+
+                    if (pending != 0) {
+                        position = 0;
+                        length = self->Caps.dwBufferBytes < pending
+                            ? self->Caps.dwBufferBytes : pending;
+                        pending -= length;
+
+                        goto loop;
+                    }
+                }
+                else {
+                    for (DWORD i = 0; i < count; i++) {
+                        if (notes[i].dwOffset < dwPosition) {
+                            continue;
+                        }
+
+                        if (dwPosition + dwAdvance < notes[i].dwOffset) {
+                            break;
+                        }
+
+                        SetEvent(notes[i].hEventNotify);
+                    }
+
+                    if (self->Caps.dwBufferBytes <= dwPosition + dwAdvance) {
+                        if (notes[count - 1].dwOffset == DSBPN_OFFSETSTOP) {
+                            SetEvent(notes[count - 1].hEventNotify);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return hr;
 }

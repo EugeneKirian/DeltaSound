@@ -612,6 +612,23 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         }
     }
 
+    if (self->Status & DSBSTATUS_PLAYING) {
+        self->Play = dwFlags;
+        self->Priority = dwPriority;
+
+        self->Status = DSBSTATUS_PLAYING;
+
+        if (dwFlags & DSBPLAY_LOOPING) {
+            self->Status = self->Status | DSBSTATUS_LOOPING;
+        }
+
+        if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
+            self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
+        }
+
+        return S_OK;
+    }
+
     HRESULT hr = S_OK;
     DWORD read = 0, write = 0;
 
@@ -619,7 +636,8 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         const DWORD advance = min(self->Caps.dwBufferBytes,
             ADVANCEWRITEPOSITION(write, self->Format->nBlockAlign));
 
-        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, read, advance, DSBCB_SETPOSITION_NONE))) {
+        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
+            read, advance, DSBCB_SETPOSITION_NONE))) {
 
             self->Play = dwFlags;
             self->Priority = dwPriority;
@@ -770,7 +788,6 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
     HRESULT hr = S_OK;
 
     if (self->Status & DSBSTATUS_PLAYING) {
-
         self->Play = DSBPLAY_NONE;
         self->Status = DSBSTATUS_NONE;
 
