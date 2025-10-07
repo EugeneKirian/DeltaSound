@@ -30,3 +30,5 @@ BOOL TestDirectSoundCaptureBufferBasics(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCaptureBufferQueryInterface(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCaptureBufferGet(HMODULE a, HMODULE b);
 BOOL TestDirectSoundCaptureBufferLock(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCaptureBufferStart(HMODULE a, HMODULE b);
+BOOL TestDirectSoundCaptureBufferStop(HMODULE a, HMODULE b);

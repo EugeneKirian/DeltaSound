@@ -24,26 +24,22 @@ SOFTWARE.
 
 #pragma once
 
-#include "directsoundbuffer_secondary.h"
-#include "wnd.h"
+#include "directsoundcapturebuffer.h"
 
-#define WINDOW_NAME "DirectSound Secondary Buffer Stop"
-
-static BOOL TestDirectSoundBufferSecondaryBufferStop(
-    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dwLevel) {
-    if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
+static BOOL TestDirectSoundCaptureBufferStopMethod(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b) {
+    if (a == NULL || b == NULL) {
         return FALSE;
     }
 
     BOOL result = TRUE;
-    LPDIRECTSOUND dsa = NULL, dsb = NULL;
-    LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
+    LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
+    LPDIRECTSOUNDCAPTUREBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
     InitializeWaveFormat(&format, 2, 22050, 8);
 
-    DSBUFFERDESC desc;
-    InitializeDirectSoundBufferDesc(&desc, 0, 132300, &format);
+    DSCBUFFERDESC desc;
+    InitializeDirectSoundCaptureBufferDesc(&desc, 0, 132300, &format);
 
     WAVEFORMATEX fa, fb;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
@@ -51,13 +47,13 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
 
     DWORD fas = 0, fbs = 0;
 
-    DSBCAPS capsa;
-    ZeroMemory(&capsa, sizeof(DSBCAPS));
-    capsa.dwSize = sizeof(DSBCAPS);
+    DSCBCAPS capsa;
+    ZeroMemory(&capsa, sizeof(DSCBCAPS));
+    capsa.dwSize = sizeof(DSCBCAPS);
 
-    DSBCAPS capsb;
-    ZeroMemory(&capsb, sizeof(DSBCAPS));
-    capsb.dwSize = sizeof(DSBCAPS);
+    DSCBCAPS capsb;
+    ZeroMemory(&capsb, sizeof(DSCBCAPS));
+    capsb.dwSize = sizeof(DSCBCAPS);
 
     DWORD cpa = 0, cpb = 0, cwa = 0, cwb = 0;
 
@@ -72,16 +68,8 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, dwLevel);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, dwLevel);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
-    ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
-    rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
+    ra = IDirectSoundCapture_CreateCaptureBuffer(dsa, &desc, &dsba, NULL);
+    rb = IDirectSoundCapture_CreateCaptureBuffer(dsb, &desc, &dsbb, NULL);
 
     if (ra != rb) {
         result = FALSE;
@@ -95,15 +83,15 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
 
     // GetCaps
 
-    if (FAILED(CompareDirectSoundBufferCaps(dsba, dsbb))) {
+    if (FAILED(CompareDirectSoundCaptureBufferCaps(dsba, dsbb))) {
         result = FALSE;
         goto exit;
     }
 
     // GetFormat
 
-    ra = IDirectSoundBuffer_GetFormat(dsba, &fa, sizeof(WAVEFORMATEX), &fas);
-    rb = IDirectSoundBuffer_GetFormat(dsbb, &fb, sizeof(WAVEFORMATEX), &fbs);
+    ra = IDirectSoundCaptureBuffer_GetFormat(dsba, &fa, sizeof(WAVEFORMATEX), &fas);
+    rb = IDirectSoundCaptureBuffer_GetFormat(dsbb, &fb, sizeof(WAVEFORMATEX), &fbs);
 
     if (ra != rb || fas != fbs) {
         result = FALSE;
@@ -115,20 +103,10 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
         goto exit;
     }
 
-    // SetCurrentPosition
-
-    ra = IDirectSoundBuffer_SetCurrentPosition(dsba, 1000);
-    rb = IDirectSoundBuffer_SetCurrentPosition(dsbb, 1000);
-
-    if (ra != rb) {
-        result = FALSE;
-        goto exit;
-    }
-
     // GetCurrentPosition
 
-    ra = IDirectSoundBuffer_GetCurrentPosition(dsba, &cpa, &cwa);
-    rb = IDirectSoundBuffer_GetCurrentPosition(dsbb, &cpb, &cwb);
+    ra = IDirectSoundCaptureBuffer_GetCurrentPosition(dsba, &cpa, &cwa);
+    rb = IDirectSoundCaptureBuffer_GetCurrentPosition(dsbb, &cpb, &cwb);
 
     if (ra != rb) {
         result = FALSE;
@@ -137,8 +115,8 @@ static BOOL TestDirectSoundBufferSecondaryBufferStop(
 
     // Stop 
 
-    ra = IDirectSoundBuffer_Stop(dsba);
-    rb = IDirectSoundBuffer_Stop(dsbb);
+    ra = IDirectSoundCaptureBuffer_Stop(dsba);
+    rb = IDirectSoundCaptureBuffer_Stop(dsbb);
 
     if (ra != rb) {
         result = FALSE;
@@ -165,50 +143,21 @@ exit:
     return result;
 }
 
-BOOL TestDirectSoundBufferSecondaryStop(HMODULE a, HMODULE b) {
+BOOL TestDirectSoundCaptureBufferStop(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
 
-    if (!RegisterWindowClass(WINDOW_NAME)) {
-        return FALSE;
-    }
-
-    LPDIRECTSOUNDCREATE dsca = GetDirectSoundCreate(a);
-    LPDIRECTSOUNDCREATE dscb = GetDirectSoundCreate(b);
+    LPDIRECTSOUNDCAPTURECREATE dsca = GetDirectSoundCaptureCreate(a);
+    LPDIRECTSOUNDCAPTURECREATE dscb = GetDirectSoundCaptureCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
         return FALSE;
     }
 
-    BOOL result = TRUE;
-
-    HWND wa = InitWindow(WINDOW_NAME);
-    HWND wb = InitWindow(WINDOW_NAME);
-
-    if (wa == NULL || wb == NULL) {
-        result = FALSE;
-        goto exit;
+    if (!TestDirectSoundCaptureBufferStopMethod(dsca, dscb)) {
+        return FALSE;
     }
 
-    for (int i = 0; i < COOPERATIVE_LEVEL_COUNT; i++) {
-        if (!TestDirectSoundBufferSecondaryBufferStop(dsca, wa, dscb, wb, CooperativeLevels[i])) {
-            result = FALSE;
-            goto exit;
-        }
-    }
-
-exit:
-
-    if (wa != NULL) {
-        DestroyWindow(wa);
-    }
-
-    if (wb != NULL) {
-        DestroyWindow(wb);
-    }
-
-    UnregisterClassA(WINDOW_NAME, GetModuleHandleA(NULL));
-
-    return result;
+    return TRUE;
 }
