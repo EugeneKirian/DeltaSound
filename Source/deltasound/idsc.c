@@ -140,9 +140,19 @@ HRESULT DELTACALL idsc_create_capture_buffer(idsc* self,
 
     // dwFlags
 
-    if (pcDesc->dwFlags != DSCBCAPS_NONE
-        && pcDesc->dwFlags != DSCBCAPS_WAVEMAPPED) {
-        return E_INVALIDARG;
+    if (pcDesc->dwFlags != DSCBCAPS_NONE) {
+        if (IsEqualIID(&IID_IDirectSoundBuffer8, &self->ID)) {
+            if (pcDesc->dwFlags & DSCBCAPS_CTRLFX) {
+                return DSERR_DS8_REQUIRED;
+            }
+
+            if (!(pcDesc->dwFlags & (DSCBCAPS_WAVEMAPPED | DSCBCAPS_CTRLFX))) {
+                return E_INVALIDARG;
+            }
+        }
+        else if (pcDesc->dwFlags != DSCBCAPS_WAVEMAPPED) {
+            return E_INVALIDARG;
+        }
     }
 
     // dwBufferBytes

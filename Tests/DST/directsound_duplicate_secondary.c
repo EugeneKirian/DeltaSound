@@ -50,7 +50,7 @@ const static DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
     DSBCAPS_TRUEPLAYPOSITION
 };
 
-static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b, DWORD flags) {
+static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b, DWORD dwFlags) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
@@ -63,7 +63,7 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
     InitializeWaveFormat(&format, 2, 22050, 8);
 
     DSBUFFERDESC desc;
-    InitializeDirectSoundBufferDesc(&desc, flags, 4 * format.nAvgBytesPerSec, &format);
+    InitializeDirectSoundBufferDesc(&desc, dwFlags, 4 * format.nAvgBytesPerSec, &format);
 
     DSBCAPS capsa;
     ZeroMemory(&capsa, sizeof(DSBCAPS));
@@ -83,7 +83,7 @@ static BOOL TestDirectSoundDuplicateSoundBuffer(LPDIRECTSOUND a, LPDIRECTSOUND b
     HRESULT rb = IDirectSound_CreateSoundBuffer(b, &desc, &dsbb, NULL);
 
     if (dsba == NULL || dsbb == NULL) {
-        if (flags & DSBCAPS_LOCHARDWARE) {
+        if (dwFlags & DSBCAPS_LOCHARDWARE) {
             goto exit;
         }
 
@@ -263,7 +263,7 @@ static BOOL TestDirectSoundBufferSingleWave(
     LPDIRECTSOUND dsa, LPDIRECTSOUND dsb,
     LPDIRECTSOUNDBUFFER a, HWND wa,
     LPDIRECTSOUNDBUFFER b, HWND wb,
-    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
+    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD dwPriority, DWORD dwFlags) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
@@ -360,7 +360,7 @@ static BOOL TestDirectSoundBufferSingleWave(
     ShowWindow(wa, SW_SHOW);
     UpdateWindow(wa);
 
-    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, priority, flags))) {
+    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, dwPriority, dwFlags))) {
         Sleep(100);
         IDirectSoundBuffer_GetStatus(a, &stata);
         IDirectSoundBuffer_GetCurrentPosition(a, &pcpa, &pcwa);
@@ -383,7 +383,7 @@ static BOOL TestDirectSoundBufferSingleWave(
     ShowWindow(wb, SW_SHOW);
     UpdateWindow(wb);
 
-    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, priority, flags))) {
+    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, dwPriority, dwFlags))) {
         Sleep(100);
         IDirectSoundBuffer_GetStatus(b, &statb);
         IDirectSoundBuffer_GetCurrentPosition(b, &pcpb, &pcwb);

@@ -54,7 +54,7 @@ const static DWORD PlayPriority[PLAY_PRIORITY_COUNT] = {
 };
 
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
-    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
+    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD dwPriority, DWORD dwFlags) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
@@ -142,6 +142,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     }
 
     // GetFormat
+
     ra = IDirectSoundBuffer_GetFormat(a, &fa, sizeof(WAVEFORMATEX), &fas);
     rb = IDirectSoundBuffer_GetFormat(b, &fb, sizeof(WAVEFORMATEX), &fbs);
 
@@ -154,7 +155,8 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     }
 
     // Play A
-    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, priority, flags))) {
+
+    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, dwPriority, dwFlags))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_GetStatus(a, &statuspa);
         sfa = IDirectSoundBuffer_SetFormat(a, &nf);
@@ -167,7 +169,8 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     IDirectSoundBuffer_SetFormat(a, &fa);
 
     // Play B
-    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, priority, flags))) {
+
+    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, dwPriority, dwFlags))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_GetStatus(b, &statuspb);
         sfb = IDirectSoundBuffer_SetFormat(b, &nf);
@@ -305,7 +308,7 @@ static HRESULT TestPlayBufferStream(LPDIRECTSOUNDBUFFER buff, LPDSBCAPS caps,
 }
 
 static BOOL TestDirectSoundBufferStreamWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
-    LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
+    LPVOID wave, DWORD wave_length, DWORD dwPriority, DWORD dwFlags) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
@@ -395,10 +398,10 @@ static BOOL TestDirectSoundBufferStreamWave(LPDIRECTSOUNDBUFFER a, LPDIRECTSOUND
     }
 
     // Play A
-    ra = TestPlayBufferStream(a, &capsa, wave, wave_length, al11 * 2 / 3, priority, flags);
+    ra = TestPlayBufferStream(a, &capsa, wave, wave_length, al11 * 2 / 3, dwPriority, dwFlags);
 
     // Play B
-    rb = TestPlayBufferStream(b, &capsb, wave, wave_length, al12 * 2 / 3, priority, flags);
+    rb = TestPlayBufferStream(b, &capsb, wave, wave_length, al12 * 2 / 3, dwPriority, dwFlags);
 
     if (ra != rb) {
         return FALSE;
