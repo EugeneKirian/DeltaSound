@@ -33,7 +33,7 @@ const static DWORD CreateBufferFlags[MAX_BUFFER_FLAG_COUNT] = {
 
 static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a, LPDIRECTSOUNDCAPTUREBUFFER b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     {
@@ -43,7 +43,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, NULL, &dsb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -54,7 +54,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &GUID_NULL, &dsb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -65,7 +65,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSound, &dsb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -76,7 +76,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSound3DBuffer, &ds3dbb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -87,7 +87,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSound3DListener, &ds3dlb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -98,7 +98,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSound8, &ds8b);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -109,7 +109,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundBuffer, &dsbb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -120,7 +120,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundBuffer8, &dsbb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -131,7 +131,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundCapture, &dscb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -142,15 +142,15 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundCaptureBuffer, &dscbb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (dscba == NULL || dscbb == NULL) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (a != dscba || b != dscbb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         RELEASE(dscba);
@@ -164,7 +164,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundCaptureBuffer8, &dscbb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -175,7 +175,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundCaptureFXAec, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -186,7 +186,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundCaptureFXNoiseSuppress, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -197,7 +197,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXChorus, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -208,7 +208,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXCompressor, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -219,7 +219,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXDistortion, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -230,7 +230,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXEcho, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -241,7 +241,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXFlanger, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -252,7 +252,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXGargle, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -263,7 +263,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXI3DL2Reverb, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -274,7 +274,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXParamEq, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -285,7 +285,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFXWavesReverb, &fxb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -296,7 +296,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundFullDuplex, &fdb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -307,11 +307,11 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IDirectSoundNotify, &snb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (sna == NULL || snb == NULL) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         RELEASE(sna);
@@ -325,7 +325,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         const HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IKsPropertySet, &pb1);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -336,7 +336,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IReferenceClock, &cb);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
@@ -347,7 +347,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         HRESULT rb = IDirectSoundCaptureBuffer_QueryInterface(b, &IID_IUnknown, &ub);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         IUnknown_AddRef(ua);
@@ -357,7 +357,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
         ULONG rcub = IUnknown_Release(ub);
 
         if (rcua != rcub) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         {
@@ -367,11 +367,11 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
             HRESULT rib = IUnknown_QueryInterface(ub, &IID_IDirectSoundCaptureBuffer, &dsb);
 
             if (ria != rib) {
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             if (a != dsa || b != dsb) {
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             IDirectSoundCaptureBuffer_AddRef(dsa);
@@ -381,7 +381,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
             ULONG rcdb = IDirectSoundCapture_Release(dsb);
 
             if (rcda != rcdb) {
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
 
             RELEASE(dsa);
@@ -397,7 +397,7 @@ static BOOL TestDirectSoundCaptureBufferInterfaces(LPDIRECTSOUNDCAPTUREBUFFER a,
 
 static BOOL TestDirectSoundCaptureBufferQueryInterfaces(LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b, DWORD dwFlags) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
@@ -408,7 +408,7 @@ static BOOL TestDirectSoundCaptureBufferQueryInterfaces(LPDIRECTSOUNDCAPTURECREA
     HRESULT rb = b(NULL, &dsb, NULL);
 
     if (ra != rb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     LPDIRECTSOUNDCAPTUREBUFFER dsba = NULL, dsbb = NULL;
@@ -428,7 +428,7 @@ static BOOL TestDirectSoundCaptureBufferQueryInterfaces(LPDIRECTSOUNDCAPTURECREA
     }
 
     if (dsa == NULL || dsb == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (!TestDirectSoundCaptureBufferInterfaces(dsba, dsbb)) {
@@ -448,20 +448,20 @@ exit:
 
 BOOL TestDirectSoundCaptureBufferQueryInterface(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     LPDIRECTSOUNDCAPTURECREATE dsca = GetDirectSoundCaptureCreate(a);
     LPDIRECTSOUNDCAPTURECREATE dscb = GetDirectSoundCaptureCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     for (int i = 0; i < MAX_BUFFER_FLAG_COUNT; i++) {
         if (!TestDirectSoundCaptureBufferQueryInterfaces(dsca, dscb,
             CreateBufferFlags[i])) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 

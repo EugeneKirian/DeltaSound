@@ -33,7 +33,7 @@ const static DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
 
 static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a, LPDIRECTSOUNDCAPTUREBUFFER b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // GetCaps
@@ -49,11 +49,11 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
     HRESULT rb = IDirectSoundCaptureBuffer_GetCaps(b, &capsb);
 
     if (ra != rb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (memcmp(&capsa, &capsb, sizeof(DSCBCAPS)) != 0) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     DWORD cpa = 0, cpb = 0, cwa = 0, cwb = 0;
@@ -62,11 +62,11 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
     rb = IDirectSoundCaptureBuffer_GetCurrentPosition(b, &cpb, &cwb);
 
     if (ra != rb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (cpa != cpb || cwa != cwb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     // Lock
@@ -79,19 +79,19 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
         rb = IDirectSoundCaptureBuffer_Lock(b, cwb, 10111, &a21, &al12, &a22, &al22, 0);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (al11 != al12 || al21 != al22) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (ra == S_OK || rb == S_OK) {
@@ -99,7 +99,7 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
             rb = IDirectSoundBuffer_Unlock(b, a21, al12, a22, al22);
 
             if (ra != rb) {
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
         }
     }
@@ -111,11 +111,11 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
     rb = IDirectSoundCaptureBuffer_GetCurrentPosition(b, &cpb, &cwb);
 
     if (ra != rb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (cpa != cpb || cwa != cwb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     {
@@ -126,19 +126,19 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
         rb = IDirectSoundCaptureBuffer_Lock(b, cwb, 10111, &a21, &al12, &a22, &al22, 0);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (al11 != al12 || al21 != al22) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (ra == S_OK || rb == S_OK) {
@@ -146,7 +146,7 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
             rb = IDirectSoundCaptureBuffer_Unlock(b, a21, al12, a22, al22);
 
             if (ra != rb) {
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
         }
     }
@@ -159,19 +159,19 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
         rb = IDirectSoundCaptureBuffer_Lock(b, cwb, capsb.dwBufferBytes, &a21, &al12, &a22, &al22, 0);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (al11 != al12 || al21 != al22) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (ra == S_OK || rb == S_OK) {
@@ -179,7 +179,7 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
             rb = IDirectSoundCaptureBuffer_Unlock(b, a21, al12, a22, al22);
 
             if (ra != rb) {
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
         }
     }
@@ -194,19 +194,19 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
         rb = IDirectSoundCaptureBuffer_Lock(b, cwb, 0, &a21, &al12, &a22, &al22, DSCBLOCK_ENTIREBUFFER);
 
         if (ra != rb) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a11 == NULL && a21 != NULL) || (a11 != NULL && a21 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if ((a12 == NULL && a22 != NULL) || (a12 != NULL && a22 == NULL)) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (al11 != al12 || al21 != al22) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
 
         if (ra == S_OK || rb == S_OK) {
@@ -214,7 +214,7 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
             rb = IDirectSoundCaptureBuffer_Unlock(b, a21, al12, a22, al22);
 
             if (ra != rb) {
-                DebugBreak(); return FALSE;
+                return FALSE;
             }
         }
     }
@@ -227,11 +227,11 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
     rb = IDirectSoundCaptureBuffer_GetCurrentPosition(b, &cpb, &cwb);
 
     if (ra != rb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (cpa != cpb || cwa != cwb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -240,7 +240,7 @@ static BOOL TestDirectSoundCaptureBufferValidLocks(LPDIRECTSOUNDCAPTUREBUFFER a,
 static BOOL TestDirectSoundCaptureBufferLockDetails(
     LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b, DWORD dwFlags) {
     if (a == NULL|| b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     BOOL result = TRUE;
@@ -258,11 +258,11 @@ static BOOL TestDirectSoundCaptureBufferLockDetails(
     HRESULT rb = b(NULL, &dsb, NULL);
 
     if (ra != rb) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     if (dsa == NULL || dsb == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     ra = IDirectSoundCapture_CreateCaptureBuffer(dsa, &desc, &dsba, NULL);
@@ -294,19 +294,19 @@ exit:
 
 BOOL TestDirectSoundCaptureBufferLock(HMODULE a, HMODULE b) {
     if (a == NULL || b == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     LPDIRECTSOUNDCAPTURECREATE dsca = GetDirectSoundCaptureCreate(a);
     LPDIRECTSOUNDCAPTURECREATE dscb = GetDirectSoundCaptureCreate(b);
 
     if (dsca == NULL || dscb == NULL) {
-        DebugBreak(); return FALSE;
+        return FALSE;
     }
 
     for (int i = 0; i < BUFFER_FLAG_COUNT; i++) {
         if (!TestDirectSoundCaptureBufferLockDetails(dsca, dscb, BufferFlags[i])) {
-            DebugBreak(); return FALSE;
+            return FALSE;
         }
     }
 
