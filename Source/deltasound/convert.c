@@ -23,22 +23,22 @@ SOFTWARE.
 */
 
 #include "arena.h"
-#include "convertor.h"
+#include "convert.h"
 
-struct convertor {
+struct converter {
     allocator*  Allocator;
     arena*      Arena;
 };
 
-HRESULT DELTACALL convertor_create(allocator* pAlloc, convertor** ppOut) {
+HRESULT DELTACALL converter_create(allocator* pAlloc, converter** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    convertor* instance = NULL;
+    converter* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(convertor), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(converter), &instance))) {
         instance->Allocator = pAlloc;
 
         if (SUCCEEDED(hr = arena_create(pAlloc, &instance->Arena))) {
@@ -54,10 +54,33 @@ HRESULT DELTACALL convertor_create(allocator* pAlloc, convertor** ppOut) {
     return hr;
 }
 
-VOID DELTACALL convertor_release(convertor* self) {
+VOID DELTACALL converter_release(converter* self) {
     if (self == NULL) { return; }
 
     arena_release(self->Arena);
 
     allocator_free(self->Allocator, self);
+}
+
+HRESULT DELTACALL converter_convert(converter* self,
+    LPWAVEFORMATEX pwfxInFormat, BYTE* pBuffer, DWORD dwFrames,
+    LPWAVEFORMATEX pwfxOutFormat, DWORD dwFlags) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (pwfxInFormat == NULL || pBuffer == NULL || pwfxOutFormat == NULL) {
+        return E_INVALIDARG;
+    }
+
+    arena_clear(self->Arena);
+
+    // TODO Convert from ieee to 8/16-bit pcm
+
+
+
+
+    // TODO NOT IMPLEMENTED
+
+    return E_NOTIMPL;
 }

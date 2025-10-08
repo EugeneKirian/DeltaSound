@@ -28,7 +28,7 @@ SOFTWARE.
 #include "device_info.h"
 #include "mixer.h"
 
-typedef struct convertor convertor;
+typedef struct converter converter;
 typedef struct dsc dsc;
 
 #define CAPTURE_START_EVENT_INDEX       0
@@ -41,7 +41,7 @@ typedef struct dsc dsc;
 typedef struct capture {
     allocator*              Allocator;
     dsc*                    Instance;
-    convertor*              Convertor;
+    converter*              Converter;
 
     device_info             Info;
 

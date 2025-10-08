@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #include "capture.h"
-#include "convertor.h"
+#include "convert.h"
 #include "dsc.h"
 #include "dscb.h"
 #include "uuid.h"
@@ -60,7 +60,7 @@ HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInf
 
         CopyMemory(&instance->Info, pInfo, sizeof(device_info));
 
-        if (SUCCEEDED(hr = convertor_create(pAlloc, &instance->Convertor))) {
+        if (SUCCEEDED(hr = converter_create(pAlloc, &instance->Converter))) {
             instance->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
             if (instance->Init == NULL) {
                 capture_release(instance);
@@ -100,7 +100,7 @@ HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInf
             return S_OK;
         }
 
-        convertor_release(instance->Convertor);
+        converter_release(instance->Converter);
     }
 
     return hr;
@@ -121,7 +121,7 @@ VOID DELTACALL capture_release(capture* self) {
         CloseHandle(self->Thread);
     }
 
-    convertor_release(self->Convertor);
+    converter_release(self->Converter);
 
     allocator_free(self->Allocator, self);
 }
@@ -252,16 +252,13 @@ DWORD WINAPI capture_thread(capture* self) {
                     DWORD flags = AUDCLNT_BUFFERFLAGS_NONE;
 
                     if (SUCCEEDED(hr = IAudioCaptureClient_GetBuffer(self->AudioCapturer, &lock, &frames, &flags, NULL, NULL))) {
+                        if (SUCCEEDED(hr = converter_convert(self->Converter,
+                            self->Format, lock, frames, self->Instance->Buffer->Format, flags))) {
+                            // TODO CopyMemory()
 
-                        // TODO NOT IMPLEMENTED
-
-                        // convertor!!
-
-                        if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
-                            // TODO silence
-                        }
-                        else {
-
+                            // TODO write data back to buffer in needed format,
+                            // TODO trigger notifications...
+                            // TODO stop recording if buffer is non-looping and reached its end
                         }
 
                         hr = IAudioCaptureClient_ReleaseBuffer(self->AudioCapturer, frames);

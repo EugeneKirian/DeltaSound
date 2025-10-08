@@ -298,7 +298,6 @@ HRESULT DELTACALL dscb_start(dscb* self, DWORD dwFlags) {
 
     if (self->Status & DSCBSTATUS_CAPTURING) {
         self->Start = dwFlags;
-
         self->Status = DSCBSTATUS_CAPTURING;
 
         if (dwFlags & DSCBSTART_LOOPING) {

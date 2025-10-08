@@ -26,8 +26,11 @@ SOFTWARE.
 
 #include "allocator.h"
 
-typedef struct convertor convertor;
+typedef struct converter converter;
 
-HRESULT DELTACALL convertor_create(allocator* pAlloc, convertor** ppOut);
-VOID DELTACALL convertor_release(convertor* pConvertor);
+HRESULT DELTACALL converter_create(allocator* pAlloc, converter** ppOut);
+VOID DELTACALL converter_release(converter* pConverter);
 
+HRESULT DELTACALL converter_convert(converter* pConverter,
+    LPWAVEFORMATEX pwfxInFormat, BYTE* pBuffer, DWORD dwFrames,
+    LPWAVEFORMATEX pwfxOutFormat, DWORD dwFlags);
