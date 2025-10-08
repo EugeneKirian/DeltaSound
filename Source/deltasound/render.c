@@ -371,6 +371,8 @@ DWORD WINAPI render_thread(render_thread_context* ctx) {
         }
     }
 
+    IAudioClient_Stop(device->AudioClient);
+
     if (device->Format != NULL) {
         allocator_free(device->Allocator, device->Format);
     }
