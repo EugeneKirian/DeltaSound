@@ -26,6 +26,7 @@
     <ClInclude Include="capture.h" />
     <ClInclude Include="cblc.h" />
     <ClInclude Include="cf.h" />
+    <ClInclude Include="convertor.h" />
     <ClInclude Include="deltasound.h" />
     <ClInclude Include="device_info.h" />
     <ClInclude Include="ds.h" />
@@ -65,6 +66,7 @@
     <ClCompile Include="capture.c" />
     <ClCompile Include="cblc.c" />
     <ClCompile Include="cf.c" />
+    <ClCompile Include="convertor.c" />
     <ClCompile Include="deltasound.c" />
     <ClCompile Include="device_info.c" />
     <ClCompile Include="ds.c" />

@@ -24,38 +24,10 @@ SOFTWARE.
 
 #pragma once
 
-#include "arena.h"
-#include "device_info.h"
-#include "mixer.h"
+#include "allocator.h"
 
-typedef struct ds ds;
+typedef struct convertor convertor;
 
-#define RENDER_AUDIO_EVENT_INDEX        0
-#define RENDER_CLOSE_EVENT_INDEX        1
+HRESULT DELTACALL convertor_create(allocator* pAlloc, convertor** ppOut);
+VOID DELTACALL convertor_release(convertor* pConvertor);
 
-#define RENDER_MAX_EVENT_COUNT          2
-
-typedef struct render {
-    allocator*              Allocator;
-    ds*                     Instance;
-    arena*                  Arena;
-    mixer*                  Mixer;
-
-    device_info             Info;
-
-    IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
-
-    UINT32                  AudioClientBufferSize;  // In frames
-
-    PWAVEFORMATEXTENSIBLE   Format;
-
-    HANDLE                  Events[RENDER_MAX_EVENT_COUNT];
-
-    HANDLE                  Thread;
-    HANDLE                  ThreadEvent;
-} render;
-
-HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, render** ppOut);
-VOID DELTACALL render_release(render* pRender);

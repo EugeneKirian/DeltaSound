@@ -44,7 +44,7 @@ typedef struct render_thread_context {
 DWORD WINAPI render_thread(render_thread_context* ctx);
 
 HRESULT DELTACALL render_initialize(render* pRender);
-HRESULT DELTACALL render_get_mix_format(render* pRender, LPWAVEFORMATEX* ppFormat);
+HRESULT DELTACALL render_get_format(render* pRender, LPWAVEFORMATEX* ppwfxFormat);
 
 HRESULT DELTACALL render_render(render* pRender, DWORD dwBuffers, dsb** ppBuffers);
 HRESULT DELTACALL render_get_active_buffers(render* pRender, LPDWORD pdwCount, dsb*** ppBuffers);
@@ -142,6 +142,8 @@ VOID DELTACALL render_release(render* self) {
         CloseHandle(self->Thread);
     }
 
+    arena_release(self->Arena);
+
     mixer_release(self->Mixer);
 
     allocator_free(self->Allocator, self);
@@ -173,7 +175,7 @@ HRESULT DELTACALL render_initialize(render* self) {
         goto exit;
     }
 
-    if (FAILED(hr = render_get_mix_format(self, &wfx))) {
+    if (FAILED(hr = render_get_format(self, &wfx))) {
         goto exit;
     }
 
@@ -228,16 +230,16 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL render_get_mix_format(render* self, LPWAVEFORMATEX* ppFormat) {
+HRESULT DELTACALL render_get_format(render* self, LPWAVEFORMATEX* ppwfxFormat) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (ppFormat == NULL) {
+    if (ppwfxFormat == NULL) {
         return E_INVALIDARG;
     }
 
-    return IAudioClient_GetMixFormat(self->AudioClient, ppFormat);
+    return IAudioClient_GetMixFormat(self->AudioClient, ppwfxFormat);
 }
 
 HRESULT DELTACALL render_render(render* self, DWORD dwBuffers, dsb** ppBuffers) {

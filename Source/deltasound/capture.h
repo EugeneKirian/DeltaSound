@@ -28,6 +28,7 @@ SOFTWARE.
 #include "device_info.h"
 #include "mixer.h"
 
+typedef struct convertor convertor;
 typedef struct dsc dsc;
 
 #define CAPTURE_AUDIO_EVENT_INDEX       0
@@ -38,16 +39,15 @@ typedef struct dsc dsc;
 typedef struct capture {
     allocator*              Allocator;
     dsc*                    Instance;
-    // arena* Arena; // TODO
-    // mixer* Mixer; // TODO
+    convertor*              Convertor;
 
     device_info             Info;
 
     IMMDevice*              Device;
-    // IAudioClient*           AudioClient; // TODO
-    //IAudioRenderClient*     AudioRenderer; // TODO
+    IAudioClient*           AudioClient;
+    IAudioCaptureClient*    AudioCapturer;
 
-    //UINT32                  AudioClientBufferSize;  // In frames
+    UINT32                  AudioClientBufferSize;  // In frames
 
     PWAVEFORMATEXTENSIBLE   Format;
 
@@ -58,4 +58,4 @@ typedef struct capture {
 } capture;
 
 HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, capture** ppOut);
-VOID DELTACALL capture_release(capture* pDev);
+VOID DELTACALL capture_release(capture* pCapture);

@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #include "arena.h"
-#include "ds.h"
+#include "dsb.h"
 #include "mixer.h"
 #include "wave.h"
 
@@ -35,7 +35,7 @@ SOFTWARE.
     (OVERRIDE == DSBFREQUENCY_ORIGINAL ? FREQUENCY : OVERRIDE)
 
 typedef struct mb {
-    dsb* Instance;
+    dsb*            Instance;
 
     LPWAVEFORMATEX  Format;
     DWORD           Frequency;
@@ -48,8 +48,8 @@ typedef struct mb {
     FLOAT           Ratio;
 
     LPVOID          Input;
-    FLOAT* Intermediate;
-    FLOAT* Out;
+    FLOAT*          Intermediate;
+    FLOAT*          Out;
 } mb;
 
 struct mixer {
