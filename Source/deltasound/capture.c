@@ -37,16 +37,10 @@ SOFTWARE.
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 #define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
 
-typedef struct capture_thread_context {
-    capture*    Device;
-    HANDLE      Init;
-} capture_thread_context;
-
-DWORD WINAPI capture_thread(capture_thread_context* ctx);
+DWORD WINAPI capture_thread(capture* pCapture);
 
 HRESULT DELTACALL capture_initialize(capture* pCapture);
 HRESULT DELTACALL capture_get_format(capture* pCapture, LPWAVEFORMATEX* ppwfxFormat);
-HRESULT DELTACALL capture_capture(capture* pCapture);
 
 HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, capture** ppOut) {
     if (pAlloc == NULL) {
@@ -67,15 +61,8 @@ HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInf
         CopyMemory(&instance->Info, pInfo, sizeof(device_info));
 
         if (SUCCEEDED(hr = convertor_create(pAlloc, &instance->Convertor))) {
-            capture_thread_context* ctx;
-
-            if (FAILED(hr = allocator_allocate(pAlloc, sizeof(capture_thread_context), &ctx))) {
-                capture_release(instance);
-                return hr;
-            }
-
-            ctx->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
-            if (ctx->Init == NULL) {
+            instance->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
+            if (instance->Init == NULL) {
                 capture_release(instance);
                 return E_FAIL;
             }
@@ -95,9 +82,7 @@ HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInf
                 return E_FAIL;
             }
 
-            ctx->Device = instance;
-
-            instance->Thread = CreateThread(NULL, 0, capture_thread, ctx, 0, NULL);
+            instance->Thread = CreateThread(NULL, 0, capture_thread, instance, 0, NULL);
 
             if (instance->Thread == NULL) {
                 capture_release(instance);
@@ -105,9 +90,8 @@ HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInf
             }
 
             SetThreadPriority(instance->Thread, THREAD_PRIORITY_TIME_CRITICAL);
-
-            WaitForSingleObject(ctx->Init, INFINITE);
-            CloseHandle(ctx->Init);
+            WaitForSingleObject(instance->Init, INFINITE);
+            CloseHandle(instance->Init);
 
             // TODO check if thread exited prematurely...
 
@@ -201,10 +185,6 @@ HRESULT DELTACALL capture_initialize(capture* self) {
         goto exit;
     }
 
-    if (FAILED(hr = IAudioClient_Start(self->AudioClient))) {
-        goto exit;
-    }
-
     RELEASE(enumerator);
 
     return S_OK;
@@ -235,89 +215,82 @@ HRESULT DELTACALL capture_get_format(capture* self, LPWAVEFORMATEX* ppwfxFormat)
     return IAudioClient_GetMixFormat(self->AudioClient, ppwfxFormat);
 }
 
-HRESULT DELTACALL capture_capture(capture* self) {
-    if (self->Instance == NULL) {
-        return E_FAIL;
-    }
-
-    HRESULT hr = S_OK;
-    UINT32 packet = 0; // In frames
-
-    if (SUCCEEDED(hr = IAudioCaptureClient_GetNextPacketSize(self->AudioCapturer, &packet))) {
-        if (packet != 0) {
-            BYTE* lock = NULL;
-            UINT32 frames = 0;
-            DWORD flags = AUDCLNT_BUFFERFLAGS_NONE;
-
-            if (SUCCEEDED(hr = IAudioCaptureClient_GetBuffer(self->AudioCapturer, &lock, &frames, &flags, NULL, NULL))) {
-                
-                // TODO NOT IMPLEMENTED
-
-                // convertor!!
-                
-                if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
-                    // TODO silence
-                }
-                else {
-
-                }
-
-                hr = IAudioCaptureClient_ReleaseBuffer(self->AudioCapturer, frames);
-            }
-        }
-    }
-
-    return hr;
-}
-
-DWORD WINAPI capture_thread(capture_thread_context* ctx) {
+DWORD WINAPI capture_thread(capture* self) {
     if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
         return EXIT_FAILURE;
     }
 
     HRESULT hr = S_OK;
-    capture* device = ctx->Device;
+    BOOL execute = TRUE;
 
-    if (FAILED(hr = capture_initialize(device))) {
+    if (FAILED(hr = capture_initialize(self))) {
         goto exit;
     }
 
-    SetEvent(ctx->Init);
+    SetEvent(self->Init);
 
-    while (TRUE) {
+    while (execute) {
         const DWORD result =
-            WaitForMultipleObjects(CAPTURE_MAX_EVENT_COUNT, device->Events, FALSE, INFINITE);
+            WaitForMultipleObjects(CAPTURE_MAX_EVENT_COUNT, self->Events, FALSE, INFINITE);
 
-        if (result == CAPTURE_CLOSE_EVENT_INDEX
-            || result == CAPTURE_MAX_EVENT_COUNT) {
+        switch (result) {
+        case CAPTURE_START_EVENT_INDEX: {
+            hr = IAudioClient_Start(self->AudioClient);
             break;
         }
-        else if (result == CAPTURE_AUDIO_EVENT_INDEX) {
-            if (device->Instance->Buffer != NULL) {
-                if (device->Instance->Buffer->Status & DSCBSTATUS_CAPTURING) {
-                    hr = capture_capture(device);
+        case CAPTURE_STOP_EVENT_INDEX: {
+            hr = IAudioClient_Stop(self->AudioClient);
+            break;
+        }
+        case CAPTURE_AUDIO_EVENT_INDEX: {
+            UINT32 packet = 0; // In frames
+
+            if (SUCCEEDED(hr = IAudioCaptureClient_GetNextPacketSize(self->AudioCapturer, &packet))) {
+                if (packet != 0) {
+                    BYTE* lock = NULL;
+                    UINT32 frames = 0;
+                    DWORD flags = AUDCLNT_BUFFERFLAGS_NONE;
+
+                    if (SUCCEEDED(hr = IAudioCaptureClient_GetBuffer(self->AudioCapturer, &lock, &frames, &flags, NULL, NULL))) {
+
+                        // TODO NOT IMPLEMENTED
+
+                        // convertor!!
+
+                        if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
+                            // TODO silence
+                        }
+                        else {
+
+                        }
+
+                        hr = IAudioCaptureClient_ReleaseBuffer(self->AudioCapturer, frames);
+                    }
                 }
             }
+
+            break;
+        }
+        case CAPTURE_CLOSE_EVENT_INDEX:
+        case CAPTURE_MAX_EVENT_COUNT: { execute = FALSE; break; }
         }
     }
 
-    IAudioClient_Stop(device->AudioClient);
+    IAudioClient_Stop(self->AudioClient);
 
-    if (device->Format != NULL) {
-        allocator_free(device->Allocator, device->Format);
+    if (self->Format != NULL) {
+        allocator_free(self->Allocator, self->Format);
     }
 
-    RELEASE(device->AudioCapturer);
-    RELEASE(device->AudioClient);
-    RELEASE(device->Device);
-
-    allocator_free(device->Allocator, ctx);
+    RELEASE(self->AudioCapturer);
+    RELEASE(self->AudioClient);
+    RELEASE(self->Device);
 
 exit:
 
     CoUninitialize();
 
-    SetEvent(device->ThreadEvent);
+    SetEvent(self->ThreadEvent);
 
     return SUCCEEDED(hr) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

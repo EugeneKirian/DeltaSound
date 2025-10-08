@@ -36,12 +36,7 @@ SOFTWARE.
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 #define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
 
-typedef struct render_thread_context {
-    render*     Device;
-    HANDLE      Init;
-} render_thread_context;
-
-DWORD WINAPI render_thread(render_thread_context* ctx);
+DWORD WINAPI render_thread(render* pRender);
 
 HRESULT DELTACALL render_initialize(render* pRender);
 HRESULT DELTACALL render_get_format(render* pRender, LPWAVEFORMATEX* ppwfxFormat);
@@ -49,7 +44,7 @@ HRESULT DELTACALL render_get_format(render* pRender, LPWAVEFORMATEX* ppwfxFormat
 HRESULT DELTACALL render_render(render* pRender, DWORD dwBuffers, dsb** ppBuffers);
 HRESULT DELTACALL render_get_active_buffers(render* pRender, LPDWORD pdwCount, dsb*** ppBuffers);
 
-HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, render** ppOut) {
+HRESULT DELTACALL render_create(allocator * pAlloc, ds * pDS, device_info * pInfo, render * *ppOut) {
     if (pAlloc == NULL) {
         return E_INVALIDARG;
     }
@@ -69,15 +64,8 @@ HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, 
 
         if (SUCCEEDED(hr = arena_create(pAlloc, &instance->Arena))) {
             if (SUCCEEDED(hr = mixer_create(pAlloc, &instance->Mixer))) {
-                render_thread_context* ctx;
-
-                if (FAILED(hr = allocator_allocate(pAlloc, sizeof(render_thread_context), &ctx))) {
-                    render_release(instance);
-                    return hr;
-                }
-
-                ctx->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
-                if (ctx->Init == NULL) {
+                instance->Init = CreateEventA(NULL, FALSE, FALSE, NULL);
+                if (instance->Init == NULL) {
                     render_release(instance);
                     return E_FAIL;
                 }
@@ -97,9 +85,7 @@ HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, 
                     return E_FAIL;
                 }
 
-                ctx->Device = instance;
-
-                instance->Thread = CreateThread(NULL, 0, render_thread, ctx, 0, NULL);
+                instance->Thread = CreateThread(NULL, 0, render_thread, instance, 0, NULL);
 
                 if (instance->Thread == NULL) {
                     render_release(instance);
@@ -107,9 +93,8 @@ HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, 
                 }
 
                 SetThreadPriority(instance->Thread, THREAD_PRIORITY_TIME_CRITICAL);
-
-                WaitForSingleObject(ctx->Init, INFINITE);
-                CloseHandle(ctx->Init);
+                WaitForSingleObject(instance->Init, INFINITE);
+                CloseHandle(instance->Init);
 
                 // TODO check if thread exited prematurely...
 
@@ -337,57 +322,57 @@ HRESULT DELTACALL render_get_active_buffers(render* self, LPDWORD pdwCount, dsb*
     return hr;
 }
 
-DWORD WINAPI render_thread(render_thread_context* ctx) {
+DWORD WINAPI render_thread(render* self) {
     if (FAILED(CoInitializeEx(NULL, COINIT_SPEED_OVER_MEMORY))) {
         return EXIT_FAILURE;
     }
 
     HRESULT hr = S_OK;
-    render* device = ctx->Device;
+    BOOL execute = TRUE;
 
-    if (FAILED(hr = render_initialize(device))) {
+    if (FAILED(hr = render_initialize(self))) {
         goto exit;
     }
 
-    SetEvent(ctx->Init);
+    SetEvent(self->Init);
 
-    while (TRUE) {
+    while (execute) {
         const DWORD result =
-            WaitForMultipleObjects(RENDER_MAX_EVENT_COUNT, device->Events, FALSE, INFINITE);
+            WaitForMultipleObjects(RENDER_MAX_EVENT_COUNT, self->Events, FALSE, INFINITE);
 
-        if (result == RENDER_CLOSE_EVENT_INDEX
-            || result == RENDER_MAX_EVENT_COUNT) {
-            break;
-        }
-        else if (result == RENDER_AUDIO_EVENT_INDEX) {
+        switch (result) {
+        case RENDER_AUDIO_EVENT_INDEX: {
             dsb** buffers = NULL;
             DWORD count = 0;
 
-            if (SUCCEEDED(hr = render_get_active_buffers(device, &count, &buffers))) {
+            if (SUCCEEDED(hr = render_get_active_buffers(self, &count, &buffers))) {
                 if (count != 0) {
-                    hr = render_render(device, count, buffers);
+                    hr = render_render(self, count, buffers);
                 }
             }
+
+            break;
+        }
+        case RENDER_CLOSE_EVENT_INDEX:
+        case RENDER_MAX_EVENT_COUNT: { execute = FALSE; break; }
         }
     }
 
-    IAudioClient_Stop(device->AudioClient);
+    IAudioClient_Stop(self->AudioClient);
 
-    if (device->Format != NULL) {
-        allocator_free(device->Allocator, device->Format);
+    if (self->Format != NULL) {
+        allocator_free(self->Allocator, self->Format);
     }
 
-    RELEASE(device->AudioRenderer);
-    RELEASE(device->AudioClient);
-    RELEASE(device->Device);
-
-    allocator_free(device->Allocator, ctx);
+    RELEASE(self->AudioRenderer);
+    RELEASE(self->AudioClient);
+    RELEASE(self->Device);
 
 exit:
 
     CoUninitialize();
 
-    SetEvent(device->ThreadEvent);
+    SetEvent(self->ThreadEvent);
 
     return SUCCEEDED(hr) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

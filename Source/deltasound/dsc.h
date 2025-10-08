@@ -56,3 +56,6 @@ HRESULT DELTACALL dsc_remove_capture_buffer(dsc* pDSC, dscb* pDSCB);
 
 HRESULT DELTACALL dsc_get_caps(dsc* pDSC, LPDSCCAPS pDSCCaps);
 HRESULT DELTACALL dsc_initialize(dsc* pDSC, LPCGUID pcGuidDevice);
+
+HRESULT DELTACALL dsc_start(dsc* pDSC);
+HRESULT DELTACALL dsc_stop(dsc* pDSC);

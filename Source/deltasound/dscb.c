@@ -319,12 +319,13 @@ HRESULT DELTACALL dscb_start(dscb* self, DWORD dwFlags) {
             capture, advance, DSCBCB_SETPOSITION_NONE))) {
 
             self->Start = dwFlags;
-
             self->Status = DSCBSTATUS_CAPTURING;
 
             if (dwFlags & DSCBSTART_LOOPING) {
                 self->Status = self->Status | DSCBSTART_LOOPING;
             }
+
+            hr = dsc_start(self->Instance);
         }
     }
 
@@ -345,6 +346,8 @@ HRESULT DELTACALL dscb_stop(dscb* self) {
         if (SUCCEEDED(hr = dscbcb_set_current_position(self->Buffer, 0, 0, DSCBCB_SETPOSITION_NONE))) {
             hr = dscb_trigger_notifications(self, self->Caps.dwBufferBytes, 0);
         }
+
+        hr = dsc_stop(self->Instance);
     }
 
     return hr;

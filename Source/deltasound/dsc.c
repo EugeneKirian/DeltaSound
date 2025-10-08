@@ -250,3 +250,19 @@ HRESULT DELTACALL dsc_initialize(dsc* self, LPCGUID pcGuidDevice) {
 
     return hr;
 }
+
+HRESULT DELTACALL dsc_start(dsc* self) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    return SetEvent(self->Device->Events[CAPTURE_START_EVENT_INDEX]) ? S_OK : E_FAIL;
+}
+
+HRESULT DELTACALL dsc_stop(dsc* self) {
+    if (self->Device == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    return SetEvent(self->Device->Events[CAPTURE_STOP_EVENT_INDEX]) ? S_OK : E_FAIL;
+}

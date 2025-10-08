@@ -51,6 +51,7 @@ typedef struct render {
 
     PWAVEFORMATEXTENSIBLE   Format;
 
+    HANDLE                  Init;
     HANDLE                  Events[RENDER_MAX_EVENT_COUNT];
 
     HANDLE                  Thread;

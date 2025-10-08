@@ -31,10 +31,12 @@ SOFTWARE.
 typedef struct convertor convertor;
 typedef struct dsc dsc;
 
-#define CAPTURE_AUDIO_EVENT_INDEX       0
-#define CAPTURE_CLOSE_EVENT_INDEX       1
+#define CAPTURE_START_EVENT_INDEX       0
+#define CAPTURE_STOP_EVENT_INDEX        1
+#define CAPTURE_AUDIO_EVENT_INDEX       2
+#define CAPTURE_CLOSE_EVENT_INDEX       3
 
-#define CAPTURE_MAX_EVENT_COUNT         2
+#define CAPTURE_MAX_EVENT_COUNT         4
 
 typedef struct capture {
     allocator*              Allocator;
@@ -51,6 +53,7 @@ typedef struct capture {
 
     PWAVEFORMATEXTENSIBLE   Format;
 
+    HANDLE                  Init;
     HANDLE                  Events[CAPTURE_MAX_EVENT_COUNT];
 
     HANDLE                  Thread;
