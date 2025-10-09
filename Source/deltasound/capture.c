@@ -252,8 +252,12 @@ DWORD WINAPI capture_thread(capture* self) {
                     DWORD flags = AUDCLNT_BUFFERFLAGS_NONE;
 
                     if (SUCCEEDED(hr = IAudioCaptureClient_GetBuffer(self->AudioCapturer, &lock, &frames, &flags, NULL, NULL))) {
+                        LPVOID buffer = NULL;
+                        LPWAVEFORMATEX format = self->Instance->Buffer->Format;
+                        DWORD size = 0;
+                        
                         if (SUCCEEDED(hr = converter_convert(self->Converter,
-                            self->Format, lock, frames, self->Instance->Buffer->Format, flags))) {
+                            self->Format, lock, frames, format, &buffer, &size, flags))) {
                             // TODO CopyMemory()
 
                             // TODO write data back to buffer in needed format,

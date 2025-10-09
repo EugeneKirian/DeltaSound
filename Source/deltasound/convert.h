@@ -32,5 +32,5 @@ HRESULT DELTACALL converter_create(allocator* pAlloc, converter** ppOut);
 VOID DELTACALL converter_release(converter* pConverter);
 
 HRESULT DELTACALL converter_convert(converter* pConverter,
-    LPWAVEFORMATEX pwfxInFormat, BYTE* pBuffer, DWORD dwFrames,
-    LPWAVEFORMATEX pwfxOutFormat, DWORD dwFlags);
+    PWAVEFORMATEXTENSIBLE pwfxInFormat, LPVOID pBuffer, DWORD dwFrames,
+    LPWAVEFORMATEX pwfxOutFormat, LPVOID* ppOutBuffer, LPDWORD pdwBytes, DWORD dwFlags);

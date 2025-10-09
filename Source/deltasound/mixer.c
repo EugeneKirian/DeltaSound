@@ -25,10 +25,10 @@ SOFTWARE.
 #include "arena.h"
 #include "dsb.h"
 #include "mixer.h"
-#include "wave.h"
 
 #include <math.h>
 
+#define MONO                1
 #define STEREO              2
 
 #define BUFFERFREQUENCY(FREQUENCY, OVERRIDE) \
@@ -209,7 +209,8 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
     // Convert audio data to requested wave format.
     if (pwfxFormat->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE
         && IsEqualGUID(&pwfxFormat->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
-        // TODO
+        // TODO NOT INPLEMENTED
+
         return E_NOTIMPL;
     }
 
@@ -232,16 +233,16 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
 /* ---------------------------------------------------------------------- */
 
-FLOAT linear_interpolate(FLOAT v1, FLOAT v2, FLOAT t) {
-    return v1 * (1.0f - t) + v2 * t;
+static FLOAT DELTACALL linear_interpolate(FLOAT fA, FLOAT fB, FLOAT fT) {
+    return fA * (1.0f - fT) + fB * fT;
 }
 
-FLOAT DELTACALL convert_to_float(DWORD dwBits, LPVOID pValue) {
+static FLOAT DELTACALL convert_to_float(DWORD dwBits, LPVOID pValue) {
     if (dwBits == 8) {
         return ((FLOAT)(*(PBYTE)pValue) - 128.0f) / 128.0f;
     }
     else if (dwBits == 16) {
-        return  (FLOAT)(*(PSHORT)pValue) / 32768.0f;
+        return (FLOAT)(*(PSHORT)pValue) / 32768.0f;
     }
 
     return 0.0f;
@@ -318,23 +319,21 @@ HRESULT DELTACALL mixer_convert(mixer* self, mb* pBuffer) {
     const DWORD bytes = bits >> 3;
     const DWORD channels = pBuffer->Format->nChannels;
 
-    if (channels != 1 && channels != 2) {
+    if (channels != MONO && channels != STEREO) {
         return E_NOTIMPL;
     }
 
     HRESULT hr = S_OK;
-    const DWORD length = pBuffer->InActualFrames * STEREO * sizeof(FLOAT);
+    const DWORD size = pBuffer->InActualFrames * STEREO * sizeof(FLOAT);
 
-    if (FAILED(hr = arena_allocate(self->Arena, length, &pBuffer->Intermediate))) {
+    if (FAILED(hr = arena_allocate(self->Arena, size, &pBuffer->Intermediate))) {
         return hr;
     }
-
-    ZeroMemory(pBuffer->Intermediate, length);
 
     DWORD offset = 0;
 
     for (DWORD i = 0; i < pBuffer->InActualFrames; i++) {
-        if (channels == 1) {
+        if (channels == MONO) {
             const FLOAT v =
                 convert_to_float(bits, (LPVOID)((size_t)pBuffer->Input + offset));
 

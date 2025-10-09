@@ -25,10 +25,20 @@ SOFTWARE.
 #include "arena.h"
 #include "convert.h"
 
+#include <math.h>
+
+#define MONO                1
+#define STEREO              2
+
 struct converter {
     allocator*  Allocator;
     arena*      Arena;
 };
+
+static FLOAT DELTACALL linear_interpolate(FLOAT v1, FLOAT v2, FLOAT t);
+static INT DELTACALL convert_from_float(FLOAT fValue, DWORD dwBits);
+HRESULT DELTACALL converter_resample(converter* self,
+    DWORD dwInFrames, DWORD dwChannels, FLOAT fRatio, FLOAT* pInBuffer, FLOAT** ppOutBuffer);
 
 HRESULT DELTACALL converter_create(allocator* pAlloc, converter** ppOut) {
     if (pAlloc == NULL || ppOut == NULL) {
@@ -63,24 +73,175 @@ VOID DELTACALL converter_release(converter* self) {
 }
 
 HRESULT DELTACALL converter_convert(converter* self,
-    LPWAVEFORMATEX pwfxInFormat, BYTE* pBuffer, DWORD dwFrames,
-    LPWAVEFORMATEX pwfxOutFormat, DWORD dwFlags) {
+    PWAVEFORMATEXTENSIBLE pwfxInFormat, LPVOID pInBuffer, DWORD dwFrames,
+    LPWAVEFORMATEX pwfxOutFormat, LPVOID* pOutBuffer, LPDWORD pdwBytes, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pwfxInFormat == NULL || pBuffer == NULL || pwfxOutFormat == NULL) {
+    if (pwfxInFormat == NULL || pInBuffer == NULL || dwFrames == 0
+        || pwfxOutFormat == NULL || pOutBuffer == NULL || pdwBytes == NULL) {
         return E_INVALIDARG;
     }
 
-    arena_clear(self->Arena);
+    const DWORD inChannels = pwfxInFormat->Format.nChannels;
 
-    // TODO Convert from ieee to 8/16-bit pcm
+    if (inChannels != MONO && inChannels != STEREO) {
+        // TODO NOT INPLEMENTED
 
+        return E_NOTIMPL;
+    }
 
+    const DWORD outChannels = pwfxOutFormat->nChannels;
 
+    if (outChannels != MONO && outChannels != STEREO) {
+        // TODO NOT INPLEMENTED
 
-    // TODO NOT IMPLEMENTED
+        return E_NOTIMPL;
+    }
 
-    return E_NOTIMPL;
+    // TODO. Assumption is that inputs are IEEE PCM.
+
+    if (pwfxInFormat->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE
+        && IsEqualGUID(&pwfxInFormat->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
+        // TODO NOT INPLEMENTED
+
+        return E_NOTIMPL;
+    }
+
+    // TODO: dwFlags
+    // Support Silence flag
+
+    HRESULT hr = S_OK;
+
+    if (FAILED(hr = arena_clear(self->Arena))) {
+        return hr;
+    }
+
+    // TODO frame calculation in one place
+    // see calculations in converter_resample
+    const FLOAT ratio =
+        (FLOAT)pwfxOutFormat->nSamplesPerSec / (FLOAT)pwfxInFormat->Format.nSamplesPerSec;
+    const DWORD frames = (DWORD)(dwFrames * ratio);
+
+    FLOAT* resampled = NULL; // TODO name
+
+    if (FAILED(hr = converter_resample(self, dwFrames,
+        pwfxInFormat->Format.nChannels, ratio, pInBuffer, &resampled))) {
+        return hr;
+    }
+
+    // Convert from IEEE to 8/16-bit PCM
+
+    LPVOID buffer = NULL;
+    const DWORD bytes =
+        frames * pwfxOutFormat->nChannels * (pwfxOutFormat->wBitsPerSample >> 3);
+    const DWORD outBits = pwfxOutFormat->wBitsPerSample;
+
+    if (FAILED(hr = arena_allocate(self->Arena, bytes, &buffer))) {
+        return hr;
+    }
+
+    DWORD offset = 0;
+
+    for (DWORD i = 0; i < frames; i++) {
+        if (outChannels == MONO) {
+            const INT v = convert_from_float(resampled[i * inChannels], outBits);
+
+            if (outBits == 8) {
+                ((BYTE*)buffer)[i] = (BYTE)v;
+            }
+            else if (outBits == 16) {
+                ((SHORT*)buffer)[i] = (SHORT)v;
+            }
+        }
+        else {
+            const INT v1 = convert_from_float(resampled[i * inChannels + 0], outBits);
+            const INT v2 = convert_from_float(resampled[i * inChannels + 1], outBits);
+
+            if (outBits == 8) {
+                ((BYTE*)buffer)[i * outChannels + 0] = (BYTE)v1;
+                ((BYTE*)buffer)[i * outChannels + 1] = (BYTE)v1;
+            }
+            else if (outBits == 16) {
+                ((SHORT*)buffer)[i * outChannels + 0] = (SHORT)v1;
+                ((SHORT*)buffer)[i * outChannels + 1] = (SHORT)v1;
+            }
+        }
+    }
+
+    *pOutBuffer = buffer;
+    *pdwBytes = bytes;
+
+    return S_OK;
+}
+
+/* ---------------------------------------------------------------------- */
+
+FLOAT DELTACALL linear_interpolate(FLOAT fA, FLOAT fB, FLOAT fT) {
+    return fA * (1.0f - fT) + fB * fT;
+}
+
+INT DELTACALL convert_from_float(FLOAT fValue, DWORD dwBits) {
+    if (dwBits == 8) {
+        return (INT)((fValue + 1.0f) / 256.0f);
+    }
+    else if (dwBits == 16) {
+        return (INT)(fValue * 32768.0f);
+    }
+
+    return 0;
+}
+
+// TODO
+// Combine with mixer_resample
+// TODO
+// Better downsampling methods
+HRESULT DELTACALL converter_resample(converter* self,
+    DWORD dwInFrames, DWORD dwChannels, FLOAT fRatio, FLOAT* pInBuffer, FLOAT** ppOutBuffer) {
+    if (self == NULL) {
+        return E_POINTER;
+    }
+
+    if (dwInFrames == 0 || fRatio == 0.0f
+        || pInBuffer == NULL || ppOutBuffer == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+
+    // TODO frame calculation in one place
+    const DWORD frames = (DWORD)roundf(dwInFrames * fRatio);
+    const DWORD size = frames * dwChannels * sizeof(FLOAT);
+
+    FLOAT* buffer = NULL;
+
+    if (FAILED(hr = arena_allocate(self->Arena, size, &buffer))) {
+        return hr;
+    }
+
+    for (DWORD i = 0; i < dwInFrames; i++) {
+        for (DWORD j = 0; j < dwChannels; j++) {
+            const FLOAT t = i * fRatio;
+
+            DWORD index0 = (DWORD)t;
+            DWORD index1 = index0 + 1;
+
+            // Handle edge case for the last sample.
+            if (index1 >= frames) {
+                index1 = frames - 1;
+                index0 = index1 - 1;
+            }
+
+            // Perform linear interpolation.
+            const FLOAT y0 = pInBuffer[index0 * dwChannels + j];
+            const FLOAT y1 = pInBuffer[index1 * dwChannels + j];
+
+            buffer[i * dwChannels + j] = linear_interpolate(y0, y1, t - index0);
+        }
+    }
+
+    *ppOutBuffer = buffer;
+
+    return S_OK;
 }
