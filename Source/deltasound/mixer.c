@@ -219,7 +219,7 @@ HRESULT DELTACALL mixer_mix(mixer* self, DWORD dwBuffers, dsb** ppBuffers,
 
         if (SUCCEEDED(hr = dsb_get_status(ppBuffers[i], &status))) {
             if (status & DSBSTATUS_PLAYING) {
-                dsb_update_current_position(ppBuffers[i],
+                hr = dsb_update(ppBuffers[i],
                     buffers[i].InFrames * ppBuffers[i]->Format->nBlockAlign);
             }
         }

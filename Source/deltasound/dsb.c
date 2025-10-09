@@ -850,7 +850,7 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
     return dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
 }
 
-HRESULT DELTACALL dsb_update_current_position(dsb* self, DWORD dwAdvance) {
+HRESULT DELTACALL dsb_update(dsb* self, DWORD dwBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -861,31 +861,31 @@ HRESULT DELTACALL dsb_update_current_position(dsb* self, DWORD dwAdvance) {
     if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
         if (self->Status & DSBSTATUS_LOOPING) {
             if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
-                read + dwAdvance, write + dwAdvance, DSBCB_SETPOSITION_LOOPING))) {
+                read + dwBytes, write + dwBytes, DSBCB_SETPOSITION_LOOPING))) {
                 if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                    hr = dsb_trigger_notifications(self, read, dwAdvance);
+                    hr = dsb_trigger_notifications(self, read, dwBytes);
                 }
             }
         }
         else {
-            if (self->Caps.dwBufferBytes < read + dwAdvance) {
+            if (self->Caps.dwBufferBytes < read + dwBytes) {
                 self->Play = DSBPLAY_NONE;
                 self->Status = DSBSTATUS_NONE;
 
                 if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE))) {
                     if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                        hr = dsb_trigger_notifications(self, read, dwAdvance);
+                        hr = dsb_trigger_notifications(self, read, dwBytes);
                     }
                 }
             }
             else {
-                const DWORD rad = min(read + dwAdvance, self->Caps.dwBufferBytes);
-                const DWORD wad = min(write + dwAdvance, self->Caps.dwBufferBytes);
+                const DWORD rad = min(read + dwBytes, self->Caps.dwBufferBytes);
+                const DWORD wad = min(write + dwBytes, self->Caps.dwBufferBytes);
 
                 if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
                     rad, wad, DSBCB_SETPOSITION_NONE))) {
                     if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                        hr = dsb_trigger_notifications(self, read, dwAdvance);
+                        hr = dsb_trigger_notifications(self, read, dwBytes);
                     }
                 }
             }

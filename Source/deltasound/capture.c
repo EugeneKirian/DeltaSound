@@ -243,29 +243,38 @@ DWORD WINAPI capture_thread(capture* self) {
             break;
         }
         case CAPTURE_AUDIO_EVENT_INDEX: {
-            UINT32 packet = 0; // In frames
+            dscb* buffer = self->Instance->Buffer;
 
-            if (SUCCEEDED(hr = IAudioCaptureClient_GetNextPacketSize(self->AudioCapturer, &packet))) {
-                if (packet != 0) {
-                    BYTE* lock = NULL;
-                    UINT32 frames = 0;
-                    DWORD flags = AUDCLNT_BUFFERFLAGS_NONE;
+            if (buffer != NULL) {
+                UINT32 packet = 0; // In frames
 
-                    if (SUCCEEDED(hr = IAudioCaptureClient_GetBuffer(self->AudioCapturer, &lock, &frames, &flags, NULL, NULL))) {
-                        LPVOID buffer = NULL;
-                        LPWAVEFORMATEX format = self->Instance->Buffer->Format;
-                        DWORD size = 0;
-                        
-                        if (SUCCEEDED(hr = converter_convert(self->Converter,
-                            self->Format, lock, frames, format, &buffer, &size, flags))) {
-                            // TODO CopyMemory()
+                if (SUCCEEDED(hr = IAudioCaptureClient_GetNextPacketSize(self->AudioCapturer, &packet))) {
+                    if (packet != 0) {
+                        BYTE* lock = NULL;
+                        UINT32 frames = 0;
+                        DWORD flags = AUDCLNT_BUFFERFLAGS_NONE;
 
-                            // TODO write data back to buffer in needed format,
-                            // TODO trigger notifications...
-                            // TODO stop recording if buffer is non-looping and reached its end
+                        if (SUCCEEDED(hr = IAudioCaptureClient_GetBuffer(self->AudioCapturer, &lock, &frames, &flags, NULL, NULL))) {
+                            LPVOID audio = NULL;
+                            WAVEFORMATEX format;
+
+                            if (SUCCEEDED(hr = dscb_get_format(buffer, &format, sizeof(WAVEFORMATEX), NULL))) {
+                                DWORD size = 0;
+
+                                if (SUCCEEDED(hr = converter_convert(self->Converter,
+                                    self->Format, lock, frames, &format, &audio, &size, flags))) {
+                                    DWORD status = DSCBSTATUS_NONE;
+
+                                    if (SUCCEEDED(hr = dscb_get_status(buffer, &status))) {
+                                        if (status & DSCBSTATUS_CAPTURING) {
+                                            hr = dscb_update(buffer, audio, size);
+                                        }
+                                    }
+                                }
+                            }
+
+                            hr = IAudioCaptureClient_ReleaseBuffer(self->AudioCapturer, frames);
                         }
-
-                        hr = IAudioCaptureClient_ReleaseBuffer(self->AudioCapturer, frames);
                     }
                 }
             }

@@ -68,3 +68,5 @@ HRESULT DELTACALL dscb_lock(dscb* pDSCB, DWORD dwOffset, DWORD dwBytes, LPVOID* 
 HRESULT DELTACALL dscb_start(dscb* pDSCB, DWORD dwFlags);
 HRESULT DELTACALL dscb_stop(dscb* pDSCB);
 HRESULT DELTACALL dscb_unlock(dscb* pDSCB, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
+
+HRESULT DELTACALL dscb_update(dscb* pDSCB, LPVOID pvAudio, DWORD dwBytes);

@@ -26,8 +26,8 @@ SOFTWARE.
 
 #include "allocator.h"
 
-#define DSCBCB_READ_NONE             0
-#define DSCBCB_READ_LOOPING          1
+#define DSCBCB_WRITE_NONE           0
+#define DSCBCB_WRITE_LOOPING        1
 
 #define DSCBCB_SETPOSITION_NONE      0
 #define DSCBCB_SETPOSITION_LOOPING   1
@@ -48,4 +48,4 @@ HRESULT DELTACALL dscbcb_get_lockable_length(dscbcb* pBuffer, LPDWORD pdwBytes);
 HRESULT DELTACALL dscbcb_lock(dscbcb* pBuffer, DWORD dwOffset, DWORD dwBytes,
     LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2);
 HRESULT DELTACALL dscbcb_unlock(dscbcb* pBuffer, LPVOID pvAudioPtr1, LPVOID pvAudioPtr2);
-HRESULT DELTACALL dscbcb_read(dscbcb* pBuffer, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytes, DWORD dwFlags);
+HRESULT DELTACALL dscbcb_write(dscbcb* pBuffer, DWORD dwBytes, LPVOID pvAudio, DWORD dwFlags);

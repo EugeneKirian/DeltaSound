@@ -234,10 +234,10 @@ HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDSC, LPCDSCBUFFERDESC pcDesc
     self->Instance = pDSC;
 
     self->Caps.dwFlags = pcDesc->dwFlags;
+    self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
 
     // TODO Set DSCBCAPS_WAVEMAPPED caps when the format is not one of the standard ones?
 
-    self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
     CopyMemory(self->Format, pcDesc->lpwfxFormat, SIZEOFFORMAT(pcDesc->lpwfxFormat));
 
     return dscbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);
@@ -370,6 +370,56 @@ HRESULT DELTACALL dscb_unlock(dscb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes
     }
 
     return dscbcb_unlock(self->Buffer, pvAudioPtr1, pvAudioPtr2);
+}
+
+HRESULT DELTACALL dscb_update(dscb* self, LPVOID pvAudio, DWORD dwBytes) {
+    if (self->Instance == NULL) {
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (pvAudio == NULL) {
+        return E_INVALIDARG;
+    }
+
+    HRESULT hr = S_OK;
+    DWORD capture = 0, read = 0;
+
+    if (SUCCEEDED(hr = dscbcb_get_current_position(self->Buffer, &capture, &read))) {
+        if (self->Status & DSCBSTATUS_LOOPING) {
+            if (SUCCEEDED(hr = dscbcb_write(self->Buffer, dwBytes, pvAudio, DSCBCB_WRITE_LOOPING))) {
+                if (SUCCEEDED(hr = dscbcb_set_current_position(self->Buffer,
+                    capture + dwBytes, read + dwBytes, DSCBCB_SETPOSITION_LOOPING))) {
+                    hr = dscb_trigger_notifications(self, capture, dwBytes);
+                }
+            }
+        }
+        else {
+            if (self->Caps.dwBufferBytes < capture + dwBytes) {
+                self->Start = DSCBSTART_NONE;
+                self->Status = DSCBSTATUS_NONE;
+
+                if (SUCCEEDED(hr = dscbcb_write(self->Buffer, dwBytes, pvAudio, DSCBCB_WRITE_NONE))) {
+                    if (SUCCEEDED(hr = dscbcb_set_current_position(self->Buffer, 0, 0, DSCBCB_SETPOSITION_NONE))) {
+                        hr = dscb_trigger_notifications(self, capture, dwBytes);
+                    }
+                }
+
+                hr = dsc_stop(self->Instance);
+            }
+            else {
+                const DWORD cad = min(capture + dwBytes, self->Caps.dwBufferBytes);
+                const DWORD rad = min(read + dwBytes, self->Caps.dwBufferBytes);
+
+                if (SUCCEEDED(hr = dscbcb_write(self->Buffer, dwBytes, pvAudio, DSCBCB_WRITE_NONE))) {
+                    if (SUCCEEDED(hr = dscbcb_set_current_position(self->Buffer, cad, rad, DSCBCB_SETPOSITION_NONE))) {
+                        hr = dscb_trigger_notifications(self, capture, dwBytes);
+                    }
+                }
+            }
+        }
+    }
+
+    return hr;
 }
 
 /* ---------------------------------------------------------------------- */

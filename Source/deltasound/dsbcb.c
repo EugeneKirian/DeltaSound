@@ -317,12 +317,12 @@ HRESULT DELTACALL dsbcb_unlock(dsbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudioPt
     return E_INVALIDARG;
 }
 
-HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytes, DWORD dwFlags) {
+HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pvAudio, LPDWORD pdwBytes, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pData == NULL && pdwBytes == NULL) {
+    if (pvAudio == NULL && pdwBytes == NULL) {
         return E_INVALIDARG;
     }
 
@@ -342,10 +342,10 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
     EnterCriticalSection(&self->Lock);
 
     if (SUCCEEDED(hr = rcm_get_data(self->Buffer, &buffer))) {
-        if (pData != NULL) {
+        if (pvAudio != NULL) {
             DWORD bytes = min(dwBytes, size - self->ReadPosition);
 
-            CopyMemory(pData, (LPVOID)((size_t)buffer + self->ReadPosition), bytes);
+            CopyMemory(pvAudio, (LPVOID)((size_t)buffer + self->ReadPosition), bytes);
 
             DWORD offset = bytes;
             DWORD pending = dwBytes - bytes;
@@ -353,7 +353,7 @@ HRESULT DELTACALL dsbcb_read(dsbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD p
             while (pending != 0) {
                 bytes = min(pending, size);
 
-                CopyMemory((LPVOID)((size_t)pData + offset), buffer, bytes);
+                CopyMemory((LPVOID)((size_t)pvAudio + offset), buffer, bytes);
 
                 pending -= bytes;
                 offset += bytes;

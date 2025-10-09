@@ -35,7 +35,6 @@ struct converter {
     arena*      Arena;
 };
 
-static FLOAT DELTACALL linear_interpolate(FLOAT v1, FLOAT v2, FLOAT t);
 static INT DELTACALL convert_from_float(FLOAT fValue, DWORD dwBits);
 HRESULT DELTACALL converter_resample(converter* self,
     DWORD dwInFrames, DWORD dwChannels, FLOAT fRatio, FLOAT* pInBuffer, FLOAT** ppOutBuffer);
@@ -178,13 +177,9 @@ HRESULT DELTACALL converter_convert(converter* self,
 
 /* ---------------------------------------------------------------------- */
 
-FLOAT DELTACALL linear_interpolate(FLOAT fA, FLOAT fB, FLOAT fT) {
-    return fA * (1.0f - fT) + fB * fT;
-}
-
 INT DELTACALL convert_from_float(FLOAT fValue, DWORD dwBits) {
     if (dwBits == 8) {
-        return (INT)((fValue + 1.0f) / 256.0f);
+        return (INT)((fValue * 128.0f) + 128.0f);
     }
     else if (dwBits == 16) {
         return (INT)(fValue * 32768.0f);
@@ -192,6 +187,8 @@ INT DELTACALL convert_from_float(FLOAT fValue, DWORD dwBits) {
 
     return 0;
 }
+
+#include <stdio.h>
 
 // TODO
 // Combine with mixer_resample
@@ -203,8 +200,11 @@ HRESULT DELTACALL converter_resample(converter* self,
         return E_POINTER;
     }
 
-    if (dwInFrames == 0 || fRatio == 0.0f
-        || pInBuffer == NULL || ppOutBuffer == NULL) {
+    if (dwInFrames == 0 || pInBuffer == NULL || ppOutBuffer == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (fRatio == 0.0f || _isnan(fRatio) || isinf(fRatio)) {
         return E_INVALIDARG;
     }
 
@@ -220,24 +220,16 @@ HRESULT DELTACALL converter_resample(converter* self,
         return hr;
     }
 
-    for (DWORD i = 0; i < dwInFrames; i++) {
+    // Downsampling by decimation.
+    for (DWORD i = 0; i < frames; i++) {
         for (DWORD j = 0; j < dwChannels; j++) {
-            const FLOAT t = i * fRatio;
+            DWORD t = (DWORD)(i / fRatio);
 
-            DWORD index0 = (DWORD)t;
-            DWORD index1 = index0 + 1;
-
-            // Handle edge case for the last sample.
-            if (index1 >= frames) {
-                index1 = frames - 1;
-                index0 = index1 - 1;
+            if (dwInFrames < t) {
+                t = dwInFrames;
             }
 
-            // Perform linear interpolation.
-            const FLOAT y0 = pInBuffer[index0 * dwChannels + j];
-            const FLOAT y1 = pInBuffer[index1 * dwChannels + j];
-
-            buffer[i * dwChannels + j] = linear_interpolate(y0, y1, t - index0);
+            buffer[i * dwChannels + j] = pInBuffer[t * dwChannels + j];
         }
     }
 

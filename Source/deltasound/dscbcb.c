@@ -268,41 +268,35 @@ HRESULT DELTACALL dscbcb_unlock(dscbcb* self, LPVOID pvAudioPtr1, LPVOID pvAudio
     return E_INVALIDARG;
 }
 
-HRESULT DELTACALL dscbcb_read(dscbcb* self, DWORD dwBytes, LPVOID pData, LPDWORD pdwBytes, DWORD dwFlags) {
+HRESULT DELTACALL dscbcb_write(dscbcb* self, DWORD dwBytes, LPVOID pvAudio, DWORD dwFlags) {
     if (self == NULL) {
         return E_POINTER;
     }
 
-    if (pData == NULL && pdwBytes == NULL) {
+    if (pvAudio == NULL) {
         return E_INVALIDARG;
     }
 
-    if (!(dwFlags & DSCBCB_READ_LOOPING)) {
+    if (!(dwFlags & DSCBCB_WRITE_LOOPING)) {
         dwBytes = min(dwBytes, self->Size - self->CapturePosition);
     }
 
     EnterCriticalSection(&self->Lock);
 
-    if (pData != NULL) {
-        DWORD bytes = min(dwBytes, self->Size - self->ReadPosition);
+    DWORD bytes = min(dwBytes, self->Size - self->CapturePosition);
 
-        CopyMemory(pData, (LPVOID)((size_t)self->Buffer + self->ReadPosition), bytes);
+    CopyMemory((LPVOID)((size_t)self->Buffer + self->CapturePosition), pvAudio, bytes);
 
-        DWORD offset = bytes;
-        DWORD pending = dwBytes - bytes;
+    DWORD offset = bytes;
+    DWORD pending = dwBytes - bytes;
 
-        while (pending != 0) {
-            bytes = min(pending, self->Size);
+    while (pending != 0) {
+        bytes = min(pending, dwBytes);
 
-            CopyMemory((LPVOID)((size_t)pData + offset), self->Buffer, bytes);
+        CopyMemory(self->Buffer, (LPVOID)((size_t)pvAudio + offset), bytes);
 
-            pending -= bytes;
-            offset += bytes;
-        }
-    }
-
-    if (pdwBytes != NULL) {
-        *pdwBytes = dwBytes;
+        pending -= bytes;
+        offset += bytes;
     }
 
     LeaveCriticalSection(&self->Lock);
