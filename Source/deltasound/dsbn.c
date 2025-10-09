@@ -168,11 +168,11 @@ HRESULT DELTACALL dsbn_set_notification_positions(dsbn* self, DWORD dwPositionNo
     }
 
     HRESULT hr = S_OK;
-    const DWORD length = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
     LPDSBPOSITIONNOTIFY notes = NULL;
+    const DWORD size = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
 
-    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &notes))) {
-        CopyMemory(notes, pcPositionNotifies, length);
+    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, size, &notes))) {
+        CopyMemory(notes, pcPositionNotifies, size);
 
         if (SUCCEEDED(hr = dsbn_validate_notifications(self, dwPositionNotifies, notes))) {
             EnterCriticalSection(&self->Lock);

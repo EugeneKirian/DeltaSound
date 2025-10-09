@@ -200,7 +200,8 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
     }
 
     HRESULT hr = S_OK;
-    DWORD size = 0;
+    LPVOID buffer = NULL;
+    DWORD size = 0, lockable = 0;
 
     if (FAILED(hr = rcm_get_length(self->Buffer, &size))) {
         return hr;
@@ -210,8 +211,6 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
         return E_INVALIDARG;
     }
 
-    DWORD lockable = 0;
-
     if (FAILED(hr = dsbcb_get_lockable_length(self, &lockable))) {
         return hr;
     }
@@ -219,9 +218,7 @@ HRESULT DELTACALL dsbcb_lock(dsbcb* self, DWORD dwOffset, DWORD dwBytes,
     if (lockable < dwBytes) {
         return E_INVALIDARG;
     }
-
-    LPVOID buffer = NULL;
-
+    
     if (FAILED(hr = rcm_get_data(self->Buffer, &buffer))) {
         return hr;
     }
