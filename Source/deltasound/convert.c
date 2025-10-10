@@ -188,8 +188,6 @@ INT DELTACALL convert_from_float(FLOAT fValue, DWORD dwBits) {
     return 0;
 }
 
-#include <stdio.h>
-
 // TODO
 // Combine with mixer_resample
 // TODO
