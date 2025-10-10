@@ -26,5 +26,5 @@ SOFTWARE.
 
 #include "base.h"
 
-BOOL Synthesise(LPWAVEFORMATEX pwfxFormat,
-    FLOAT fFrequency, FLOAT fDuration, LPVOID* pBuffer, LPDWORD pdwSize);
+BOOL Synthesise(LPCWAVEFORMATEX pcwfxFormat,
+    FLOAT fFrequency, FLOAT fDuration, LPVOID* ppvAudio, LPDWORD pdwSize);

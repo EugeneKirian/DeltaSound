@@ -236,8 +236,6 @@ HRESULT DELTACALL dscb_initialize(dscb* self, dsc* pDSC, LPCDSCBUFFERDESC pcDesc
     self->Caps.dwFlags = pcDesc->dwFlags;
     self->Caps.dwBufferBytes = pcDesc->dwBufferBytes;
 
-    // TODO Set DSCBCAPS_WAVEMAPPED caps when the format is not one of the standard ones?
-
     CopyMemory(self->Format, pcDesc->lpwfxFormat, SIZEOFFORMAT(pcDesc->lpwfxFormat));
 
     return dscbcb_create(self->Allocator, self->Caps.dwBufferBytes, &self->Buffer);

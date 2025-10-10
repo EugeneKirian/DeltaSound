@@ -25,10 +25,18 @@ SOFTWARE.
 #include "directsoundcapturebuffer.h"
 
 #define BUFFER_FLAG_COUNT       2
+#define BUFFER_FORMAT_COUNT     4
 
 const static DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
     0,
     DSCBCAPS_WAVEMAPPED
+};
+
+const static WAVEFORMATEX Formats[BUFFER_FORMAT_COUNT] = {
+    { WAVE_FORMAT_PCM, 1, 22050, 22050, 1, 8, 0 },
+    { WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0 },
+    { WAVE_FORMAT_PCM, 1, 96000, 192000, 2, 16, 0 },
+    { WAVE_FORMAT_PCM, 2, 128000, 512000, 4, 16, 0 }
 };
 
 static BOOL TestDirectSoundCaptureBufferGetProperties(LPDIRECTSOUNDCAPTUREBUFFER a, LPDIRECTSOUNDCAPTUREBUFFER b) {
@@ -160,21 +168,18 @@ static BOOL TestDirectSoundCaptureBufferGetProperties(LPDIRECTSOUNDCAPTUREBUFFER
 }
 
 static BOOL TestDirectSoundCaptureBufferGetDetails(
-    LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b, DWORD dwFlags) {
+    LPDIRECTSOUNDCAPTURECREATE a, LPDIRECTSOUNDCAPTURECREATE b, LPCWAVEFORMATEX pcwfxFormat, DWORD dwFlags) {
     if (a == NULL || b == NULL) {
         return FALSE;
     }
 
     BOOL result = TRUE;
 
-    WAVEFORMATEX format;
-    InitializeWaveFormat(&format, 1, 22050, 8);
-
     LPDIRECTSOUNDCAPTURE dsa = NULL, dsb = NULL;
     LPDIRECTSOUNDCAPTUREBUFFER dsba = NULL, dsbb = NULL;
 
     DSCBUFFERDESC desc;
-    InitializeDirectSoundCaptureBufferDesc(&desc, dwFlags, 176400, &format);
+    InitializeDirectSoundCaptureBufferDesc(&desc, dwFlags, 176400, pcwfxFormat);
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -227,9 +232,11 @@ BOOL TestDirectSoundCaptureBufferGet(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    for (int i = 0; i < BUFFER_FLAG_COUNT; i++) {
-        if (!TestDirectSoundCaptureBufferGetDetails(dsca, dscb, BufferFlags[i])) {
-            return FALSE;
+    for (int i = 0; i < BUFFER_FORMAT_COUNT; i++) {
+        for (int j = 0; j < BUFFER_FLAG_COUNT; j++) {
+            if (!TestDirectSoundCaptureBufferGetDetails(dsca, dscb, &Formats[i], BufferFlags[j])) {
+                return FALSE;
+            }
         }
     }
 

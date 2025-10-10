@@ -82,7 +82,7 @@ HRESULT InitializeWaveFormat(LPWAVEFORMATEX self, DWORD dwChannels, DWORD dwFreq
 }
 
 HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC self,
-    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat) {
+    DWORD dwFlags, DWORD dwBufferSize, LPCWAVEFORMATEX pcwfxFormat) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -92,13 +92,13 @@ HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC self,
     self->dwSize = sizeof(DSBUFFERDESC);
     self->dwFlags = dwFlags;
     self->dwBufferBytes = dwBufferSize;
-    self->lpwfxFormat = pwfxFormat;
+    self->lpwfxFormat = (LPWAVEFORMATEX)pcwfxFormat;
 
     return S_OK;
 }
 
 HRESULT InitializeDirectSoundCaptureBufferDesc(LPDSCBUFFERDESC self,
-    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat) {
+    DWORD dwFlags, DWORD dwBufferSize, LPCWAVEFORMATEX pcwfxFormat) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -108,7 +108,7 @@ HRESULT InitializeDirectSoundCaptureBufferDesc(LPDSCBUFFERDESC self,
     self->dwSize = sizeof(DSCBUFFERDESC);
     self->dwFlags = dwFlags;
     self->dwBufferBytes = dwBufferSize;
-    self->lpwfxFormat = pwfxFormat;
+    self->lpwfxFormat = (LPWAVEFORMATEX)pcwfxFormat;
 
     return S_OK;
 }

@@ -58,10 +58,10 @@ LPFNGETCLASSOBJECT GetDllGetClassObject(HMODULE module);
 HRESULT InitializeWaveFormat(LPWAVEFORMATEX pwfxFormat, DWORD dwChannels, DWORD dwFrequency, DWORD dwBits);
 
 HRESULT InitializeDirectSoundBufferDesc(LPDSBUFFERDESC pDSBD,
-    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat);
+    DWORD dwFlags, DWORD dwBufferSize, LPCWAVEFORMATEX pcwfxFormat);
 
 HRESULT InitializeDirectSoundCaptureBufferDesc(LPDSCBUFFERDESC pDSBD,
-    DWORD dwFlags, DWORD dwBufferSize, LPWAVEFORMATEX pwfxFormat);
+    DWORD dwFlags, DWORD dwBufferSize, LPCWAVEFORMATEX pcwfxFormat);
 
 HRESULT InitializeDirectSoundBufferCaps(LPDSBCAPS pDSBC, DWORD dwFlags, DWORD dwBufferBytes);
 HRESULT InitializeDirectSoundCaptureBufferCaps(LPDSCBCAPS pDSBC, DWORD dwFlags, DWORD dwBufferBytes);

@@ -27,6 +27,7 @@ SOFTWARE.
 #define DSCBSTART_NONE              0
 
 #define CAPTURE_DURATION            4
+#define CAPTURE_LOOP_COUNT          3
 
 #define BUFFER_FLAG_COUNT           2
 #define BUFFER_FORMAT_COUNT         28
@@ -75,19 +76,19 @@ const static WAVEFORMATDESCRIPTION Formats[BUFFER_FORMAT_COUNT] = {
     { 2, 196000, 16 }
 };
 
-static BOOL InitializeCaptureWaveFormat(LPCWAVEFORMATDESCRIPTION pwfdDesc, LPWAVEFORMATEX pwfxFormat) {
-    if (pwfdDesc == NULL || pwfxFormat == NULL) {
+static BOOL InitializeCaptureWaveFormat(LPCWAVEFORMATDESCRIPTION pcwfdDesc, LPWAVEFORMATEX pwfxFormat) {
+    if (pcwfdDesc == NULL || pwfxFormat == NULL) {
         return FALSE;
     }
 
-    const DWORD bytes = pwfdDesc->nBits >> 3;
+    const DWORD bytes = pcwfdDesc->nBits >> 3;
 
     pwfxFormat->wFormatTag = WAVE_FORMAT_PCM;
-    pwfxFormat->nChannels = (WORD)pwfdDesc->nChannels;
-    pwfxFormat->nSamplesPerSec = pwfdDesc->nFrequency;
-    pwfxFormat->nAvgBytesPerSec = bytes * pwfdDesc->nChannels * pwfdDesc->nFrequency;
-    pwfxFormat->nBlockAlign = (WORD)(bytes * pwfdDesc->nChannels);
-    pwfxFormat->wBitsPerSample = (WORD)pwfdDesc->nBits;
+    pwfxFormat->nChannels = (WORD)pcwfdDesc->nChannels;
+    pwfxFormat->nSamplesPerSec = pcwfdDesc->nFrequency;
+    pwfxFormat->nAvgBytesPerSec = bytes * pcwfdDesc->nChannels * pcwfdDesc->nFrequency;
+    pwfxFormat->nBlockAlign = (WORD)(bytes * pcwfdDesc->nChannels);
+    pwfxFormat->wBitsPerSample = (WORD)pcwfdDesc->nBits;
     pwfxFormat->cbSize = 0;
 
     return FALSE;
@@ -97,7 +98,7 @@ static DWORD CalculateBufferSize(DWORD dwChannels, DWORD dwFrequency, DWORD dwDu
     return dwChannels * dwFrequency * dwDuration * (dwBits >> 3);
 }
 
-static BOOL TestDirectSoundCaptureBufferCaptureOnce(LPDIRECTSOUNDCAPTUREBUFFER a,
+static BOOL TestDirectSoundCaptureBufferCaptureAudio(LPDIRECTSOUNDCAPTUREBUFFER a,
     LPDIRECTSOUNDCAPTUREBUFFER b, DWORD dwDuration, DWORD dwFlags) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -134,7 +135,7 @@ static BOOL TestDirectSoundCaptureBufferCaptureOnce(LPDIRECTSOUNDCAPTUREBUFFER a
         IDirectSoundBuffer_Stop(a);
     }
 
-    // Play B
+    // Start B
 
     if (SUCCEEDED(rb = IDirectSoundCaptureBuffer_Start(b, dwFlags))) {
         Sleep(dwDuration * 1000);
@@ -160,8 +161,8 @@ static BOOL TestDirectSoundCaptureBufferCaptureOnce(LPDIRECTSOUNDCAPTUREBUFFER a
     return TRUE;
 }
 
-static BOOL TestDirectSoundCaptureBufferStartCaptureCreate(LPDIRECTSOUNDCAPTURECREATE a,
-    LPDIRECTSOUNDCAPTURECREATE b, LPCWAVEFORMATDESCRIPTION pwfdDesc,
+static BOOL TestDirectSoundCaptureBufferStartCapture(LPDIRECTSOUNDCAPTURECREATE a,
+    LPDIRECTSOUNDCAPTURECREATE b, LPCWAVEFORMATDESCRIPTION pcwfdDesc,
     DWORD dwDuration, DWORD dwStart, DWORD dwFlags) {
     if (a == NULL || b == NULL) {
         return FALSE;
@@ -172,11 +173,11 @@ static BOOL TestDirectSoundCaptureBufferStartCaptureCreate(LPDIRECTSOUNDCAPTUREC
     LPDIRECTSOUNDCAPTUREBUFFER dsba = NULL, dsbb = NULL;
 
     WAVEFORMATEX format;
-    InitializeCaptureWaveFormat(pwfdDesc, &format);
+    InitializeCaptureWaveFormat(pcwfdDesc, &format);
 
     DSCBUFFERDESC desc;
     InitializeDirectSoundCaptureBufferDesc(&desc, dwFlags,
-        CalculateBufferSize(pwfdDesc->nChannels, pwfdDesc->nFrequency, dwDuration, pwfdDesc->nBits), &format);
+        CalculateBufferSize(pcwfdDesc->nChannels, pcwfdDesc->nFrequency, dwDuration, pcwfdDesc->nBits), &format);
 
     WAVEFORMATEX fa, fb;
     ZeroMemory(&fa, sizeof(WAVEFORMATEX));
@@ -230,7 +231,8 @@ static BOOL TestDirectSoundCaptureBufferStartCaptureCreate(LPDIRECTSOUNDCAPTUREC
         goto exit;
     }
 
-    if (!TestDirectSoundCaptureBufferCaptureOnce(dsba, dsbb, dwDuration, dwStart)) {
+    if (!TestDirectSoundCaptureBufferCaptureAudio(dsba, dsbb,
+        dwStart & DSCBSTART_LOOPING ? (dwDuration * CAPTURE_LOOP_COUNT) : dwDuration, dwStart)) {
         result = FALSE;
         goto exit;
     }
@@ -257,30 +259,21 @@ BOOL TestDirectSoundCaptureBufferStart(HMODULE a, HMODULE b) {
         return FALSE;
     }
 
-    for (DWORD i = 0; i < BUFFER_FORMAT_COUNT; i++) {
+    for (int i = 0; i < BUFFER_FORMAT_COUNT; i++) {
         for (int j = 0; j < BUFFER_FLAG_COUNT; j++) {
-            if (!TestDirectSoundCaptureBufferStartCaptureCreate(
+            if (!TestDirectSoundCaptureBufferStartCapture(
                 dsca, dscb, &Formats[i], CAPTURE_DURATION, DSCBSTART_NONE, BufferFlags[j])) {
                 return FALSE;
             }
         }
     }
 
-    // TODO Set Format
-    //for (int i = 0; i < BUFFER_FLAG_COUNT; i++) {
-    //    if (!TestDirectSoundCaptureBufferStartCaptureCreate(dsca, dscb, DSCBSTART_NONE, BufferFlags[i])) {
-    //        return FALSE;
-    //    }
-    //}
-
-    // TODO LOOPING
-    //for (int i = 0; i < BUFFER_FLAG_COUNT; i++) {
-    //    if (!TestDirectSoundCaptureBufferStartCapture(dsca, dscb, DSCBSTART_LOOPING, BufferFlags[i])) {
-    //        return FALSE;
-    //    }
-    //}
-
-    // TODO Looping + Set Format
+    for (int i = 0; i < BUFFER_FLAG_COUNT; i++) {
+        if (!TestDirectSoundCaptureBufferStartCapture(dsca, dscb,
+            &Formats[i], CAPTURE_DURATION, DSCBSTART_LOOPING, BufferFlags[i])) {
+            return FALSE;
+        }
+    }
 
     return TRUE;
 }
