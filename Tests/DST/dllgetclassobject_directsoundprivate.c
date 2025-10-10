@@ -940,7 +940,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescription1Capture(LPKSPROPER
         }
     }
 
-    // TODO DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & DeviceID
+    // DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & DeviceID
     {
         ULONG la = 0, lb = 0;
         const DWORD length = sizeof(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA);
@@ -1207,7 +1207,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderA(LPKSPROPERT
         free(db);
     }
 
-    // TODO DIRECTSOUNDDEVICE_DATAFLOW_RENDER & DeviceID
+    // DIRECTSOUNDDEVICE_DATAFLOW_RENDER & DeviceID
     {
         ULONG la = 0, lb = 0;
 
@@ -1425,7 +1425,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureA(LPKSPROPER
         free(db);
     }
 
-    // TODO DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & DeviceID
+    // DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & DeviceID
     {
         ULONG la = 0, lb = 0;
 
@@ -1720,7 +1720,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionRenderW(LPKSPROPERT
         free(db);
     }
 
-    // TODO DIRECTSOUNDDEVICE_DATAFLOW_RENDER & DeviceID
+    // DIRECTSOUNDDEVICE_DATAFLOW_RENDER & DeviceID
     {
         ULONG la = 0, lb = 0;
 
@@ -1938,7 +1938,7 @@ static BOOL TestDirectSoundPrivateKsPropertySetGetDescriptionCaptureW(LPKSPROPER
         free(db);
     }
 
-    // TODO DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & DeviceID
+    // DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE & DeviceID
     {
         ULONG la = 0, lb = 0;
 

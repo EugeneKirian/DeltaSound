@@ -627,12 +627,6 @@ BOOL TestDirectSoundDuplicateSecondary(HMODULE a, HMODULE b) {
         }
     }
 
-
-    // TODO test while playing, check priority, status, etc...
-    // TODO in what state buffer is created if the original is playing?
-    // TODO what happens to the flags?
-    // TODO todo what happens with notifications?
-
 exit:
 
     RELEASE(dsa);
