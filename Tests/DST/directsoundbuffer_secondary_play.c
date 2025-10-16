@@ -52,12 +52,13 @@ const static DWORD BufferFlags[BUFFER_FLAG_COUNT] = {
 
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     LPDIRECTSOUNDBUFFER b, HWND wb, LPDIRECTSOUNDBUFFER ma, LPDIRECTSOUNDBUFFER mb,
-    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD priority, DWORD flags) {
+    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD dwPriority, DWORD dwFlags) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
 
     // GetCaps
+
     if (FAILED(CompareDirectSoundBufferCaps(a, b))) {
         return FALSE;
     }
@@ -123,10 +124,11 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     }
 
     // Play A
+
     ShowWindow(wa, SW_SHOW);
     UpdateWindow(wa);
 
-    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, priority, flags))) {
+    if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, dwPriority, dwFlags))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(a);
     }
@@ -135,10 +137,11 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUNDBUFFER a, HWND wa,
     UpdateWindow(wa);
 
     // Play B
+
     ShowWindow(wb, SW_SHOW);
     UpdateWindow(wb);
 
-    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, priority, flags))) {
+    if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, dwPriority, dwFlags))) {
         Sleep(seconds * 1000);
         IDirectSoundBuffer_Stop(b);
     }

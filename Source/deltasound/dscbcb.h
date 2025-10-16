@@ -26,22 +26,26 @@ SOFTWARE.
 
 #include "allocator.h"
 
-typedef struct dsbcbl {
-    DWORD   Offset;
-    DWORD   Size;
-    LPVOID  Audio1;
-    DWORD   AudioSize1;
-    LPVOID  Audio2;
-    DWORD   AudioSize2;
-} dsbcbl;
+#define DSCBCB_WRITE_NONE           0
+#define DSCBCB_WRITE_LOOPING        1
 
-typedef struct dsbcblc dsbcblc;
+#define DSCBCB_SETPOSITION_NONE      0
+#define DSCBCB_SETPOSITION_LOOPING   1
 
-HRESULT DELTACALL dsbcblc_create(allocator* pAlloc, dsbcblc** ppOut);
-VOID DELTACALL dsbcblc_release(dsbcblc* pLock);
+typedef struct dscbcb dscbcb;
 
-HRESULT DELTACALL dsbcblc_add_item(dsbcblc* pLock, dsbcbl* pItem);
-HRESULT DELTACALL dsbcblc_get_item(dsbcblc* pLock, DWORD dwIndex, dsbcbl** ppItem);
-HRESULT DELTACALL dsbcblc_remove_item(dsbcblc* pLock, DWORD dwIndex);
+HRESULT DELTACALL dscbcb_create(allocator* pAlloc, DWORD dwBytes, dscbcb** ppOut);
+VOID DELTACALL dscbcb_release(dscbcb* pBuffer);
 
-DWORD DELTACALL dsbcblc_get_count(dsbcblc* pLock);
+HRESULT DELTACALL dscbcb_get_current_position(dscbcb* pBuffer,
+    LPDWORD pdwCaptureBytes, LPDWORD pdwReadBytes);
+HRESULT DELTACALL dscbcb_set_current_position(dscbcb* pBuffer,
+    DWORD dwCaptureBytes, DWORD dwReadBytes, DWORD dwFlags);
+
+HRESULT DELTACALL dscbcb_get_length(dscbcb* pBuffer, LPDWORD pdwBytes);
+HRESULT DELTACALL dscbcb_get_lockable_length(dscbcb* pBuffer, LPDWORD pdwBytes);
+
+HRESULT DELTACALL dscbcb_lock(dscbcb* pBuffer, DWORD dwOffset, DWORD dwBytes,
+    LPVOID* ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID* ppvAudioPtr2, LPDWORD pdwAudioBytes2);
+HRESULT DELTACALL dscbcb_unlock(dscbcb* pBuffer, LPVOID pvAudioPtr1, LPVOID pvAudioPtr2);
+HRESULT DELTACALL dscbcb_write(dscbcb* pBuffer, DWORD dwBytes, LPVOID pvAudio, DWORD dwFlags);

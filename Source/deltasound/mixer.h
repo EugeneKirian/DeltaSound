@@ -24,8 +24,9 @@ SOFTWARE.
 
 #pragma once
 
-#include "dsb.h"
+#include "allocator.h"
 
+typedef struct dsb dsb;
 typedef struct mixer mixer;
 
 HRESULT DELTACALL mixer_create(allocator* pAlloc, mixer** ppOut);

@@ -24,29 +24,29 @@ SOFTWARE.
 
 #pragma once
 
-#include "idsn.h"
-#include "intfc.h"
+#include "allocator.h"
 
-typedef struct dsb dsb;
+typedef struct dscbn dscbn;
+typedef struct idscbn_vft idscbn_vft;
 
-typedef struct dsn {
-    allocator*              Allocator;
-    IID                     ID;
-    dsb*                    Instance;
-    intfc*                  Interfaces;
+typedef struct idsbcn {
+    const idscbn_vft*   Self;
+    allocator*          Allocator;
+    IID                 ID;
+    LONG                RefCount;
+    dscbn*              Instance;
+} idscbn;
 
-    CRITICAL_SECTION        Lock;
+typedef HRESULT(DELTACALL* LPIDSCBNQUERYINTERFACE)(idscbn*, REFIID, LPVOID*);
+typedef ULONG(DELTACALL* LPIDSCBNADDREF)(idscbn*);
+typedef ULONG(DELTACALL* LPIDSCBNRELEASE)(idscbn*);
 
-    LPDSBPOSITIONNOTIFY     Notifications;
-    DWORD                   NotificationCount;
-} dsn;
+typedef HRESULT(DELTACALL* LPIDSCBNSETNOTIFICATIONPOSITIONS)(idscbn*,
+    DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
 
-HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut);
-VOID DELTACALL dsn_release(dsn* pDSN);
+HRESULT DELTACALL idscbn_create(allocator* pAlloc, REFIID riid, idscbn** ppOut);
+VOID DELTACALL idscbn_release(idscbn* pIDSCBN);
 
-HRESULT DELTACALL dsn_query_interface(dsn* pDSN, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL dsn_add_ref(dsn* pDSN, idsn* pIDSN);
-HRESULT DELTACALL dsn_remove_ref(dsn* pDSN, idsn* pIDSN);
-
-HRESULT DELTACALL dsn_get_notification_positions(dsn* pDSN, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies);
-HRESULT DELTACALL dsn_set_notification_positions(dsn* pDSN, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
+HRESULT DELTACALL idscbn_query_interface(idscbn* pIDSCBN, REFIID riid, LPVOID* ppOut);
+ULONG DELTACALL idscbn_add_ref(idscbn* pIDSCBN);
+ULONG DELTACALL idscbn_remove_ref(idscbn* pIDSCBN);

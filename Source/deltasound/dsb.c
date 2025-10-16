@@ -24,11 +24,11 @@ SOFTWARE.
 
 #include "ds.h"
 #include "dsb.h"
-#include "dsn.h"
+#include "dsbn.h"
+#include "dsbps.h"
 #include "dssb.h"
 #include "dssl.h"
 #include "ids.h"
-#include "ksp.h"
 #include "wave.h"
 
 #define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
@@ -95,11 +95,15 @@ VOID DELTACALL dsb_release(dsb* self) {
     }
 
     if (self->PropertySet != NULL) {
-        ksp_release(self->PropertySet);
+        dsbps_release(self->PropertySet);
     }
 
     if (self->Buffer != NULL) {
         dsbcb_release(self->Buffer);
+    }
+
+    if (self->Notifications != NULL) {
+        dsbn_release(self->Notifications);
     }
 
     allocator_free(self->Allocator, self->Format);
@@ -248,9 +252,9 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
         if (!(self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER)) {
             if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
                 if (self->Notifications == NULL) {
-                    dsn* instance = NULL;
+                    dsbn* instance = NULL;
 
-                    if (FAILED(hr = dsn_create(self->Allocator, riid, &instance))) {
+                    if (FAILED(hr = dsbn_create(self->Allocator, riid, &instance))) {
                         goto exit;
                     }
 
@@ -258,15 +262,15 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
                     self->Notifications = instance;
                 }
 
-                hr = dsn_query_interface(self->Notifications, riid, ppOut);
+                hr = dsbn_query_interface(self->Notifications, riid, ppOut);
             }
         }
     }
     else if (IsEqualIID(&IID_IKsPropertySet, riid)) {
         if (self->PropertySet == NULL) {
-            ksp* instance = NULL;
+            dsbps* instance = NULL;
 
-            if (FAILED(hr = ksp_create(self->Allocator, riid, &instance))) {
+            if (FAILED(hr = dsbps_create(self->Allocator, riid, &instance))) {
                 goto exit;
             }
 
@@ -274,7 +278,7 @@ HRESULT DELTACALL dsb_query_interface(dsb* self, REFIID riid, LPVOID* ppOut) {
             self->PropertySet = instance;
         }
 
-        hr = ksp_query_interface(self->PropertySet, riid, ppOut);
+        hr = dsbps_query_interface(self->PropertySet, riid, ppOut);
     }
 
 exit:
@@ -463,11 +467,12 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     }
 
     HRESULT hr = S_OK;
+    DWORD lockable = 0;
 
     if (self->Caps.dwFlags & DSBCAPS_PRIMARYBUFFER) {
         if (self->Instance->Level != DSSCL_WRITEPRIMARY) {
             hr = DSERR_PRIOLEVELNEEDED;
-            goto fail;
+            goto exit;
         }
     }
     else if (self->Instance->Level == DSSCL_WRITEPRIMARY) {
@@ -475,25 +480,24 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         self->Status = DSBSTATUS_BUFFERLOST;
 
         hr = DSERR_BUFFERLOST;
-        
-        goto fail;
+
+        goto exit;
     }
 
     if (self->Status & DSBSTATUS_BUFFERLOST) {
         hr = DSERR_BUFFERLOST;
 
-        goto fail;
+        goto exit;
     }
 
     if (dwFlags & DSBLOCK_FROMWRITECURSOR) {
         if (FAILED(hr = dsb_get_current_position(self, NULL, &dwOffset))) {
-            goto fail;
+            goto exit;
         }
     }
 
-    DWORD lockable = 0;
     if (FAILED(hr = dsbcb_get_lockable_length(self->Buffer, &lockable))) {
-        goto fail;
+        goto exit;
     }
 
     if (dwFlags & DSBLOCK_ENTIREBUFFER) {
@@ -503,7 +507,7 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
     if (dwBytes == 0
         || self->Caps.dwBufferBytes < dwOffset || lockable < dwBytes) {
         hr = E_INVALIDARG;
-        goto fail;
+        goto exit;
     }
 
     if (SUCCEEDED(hr = dsbcb_lock(self->Buffer, dwOffset, dwBytes,
@@ -511,7 +515,8 @@ HRESULT DELTACALL dsb_lock(dsb* self, DWORD dwOffset, DWORD dwBytes,
         return hr;
     }
 
-fail:
+exit:
+
     if (ppvAudioPtr1 != NULL) {
         *ppvAudioPtr1 = NULL;
     }
@@ -607,6 +612,22 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         }
     }
 
+    if (self->Status & DSBSTATUS_PLAYING) {
+        self->Play = dwFlags;
+        self->Priority = dwPriority;
+        self->Status = DSBSTATUS_PLAYING;
+
+        if (dwFlags & DSBPLAY_LOOPING) {
+            self->Status = self->Status | DSBSTATUS_LOOPING;
+        }
+
+        if (self->Caps.dwFlags & DSBCAPS_LOCDEFER) {
+            self->Status = self->Status | DSBSTATUS_LOCSOFTWARE;
+        }
+
+        return S_OK;
+    }
+
     HRESULT hr = S_OK;
     DWORD read = 0, write = 0;
 
@@ -614,11 +635,11 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
         const DWORD advance = min(self->Caps.dwBufferBytes,
             ADVANCEWRITEPOSITION(write, self->Format->nBlockAlign));
 
-        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, read, advance, DSBCB_SETPOSITION_NONE))) {
+        if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
+            read, advance, DSBCB_SETPOSITION_NONE))) {
 
             self->Play = dwFlags;
             self->Priority = dwPriority;
-
             self->Status = DSBSTATUS_PLAYING;
 
             if (dwFlags & DSBPLAY_LOOPING) {
@@ -765,7 +786,6 @@ HRESULT DELTACALL dsb_stop(dsb* self) {
     HRESULT hr = S_OK;
 
     if (self->Status & DSBSTATUS_PLAYING) {
-
         self->Play = DSBPLAY_NONE;
         self->Status = DSBSTATUS_NONE;
 
@@ -830,7 +850,7 @@ HRESULT DELTACALL dsb_restore(dsb* self) {
     return dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE);
 }
 
-HRESULT DELTACALL dsb_update_current_position(dsb* self, DWORD dwAdvance) {
+HRESULT DELTACALL dsb_update(dsb* self, DWORD dwBytes) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -841,31 +861,31 @@ HRESULT DELTACALL dsb_update_current_position(dsb* self, DWORD dwAdvance) {
     if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
         if (self->Status & DSBSTATUS_LOOPING) {
             if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
-                read + dwAdvance, write + dwAdvance, DSBCB_SETPOSITION_LOOPING))) {
+                read + dwBytes, write + dwBytes, DSBCB_SETPOSITION_LOOPING))) {
                 if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                    hr = dsb_trigger_notifications(self, read, dwAdvance);
+                    hr = dsb_trigger_notifications(self, read, dwBytes);
                 }
             }
         }
         else {
-            if (self->Caps.dwBufferBytes < read + dwAdvance) {
+            if (self->Caps.dwBufferBytes < read + dwBytes) {
                 self->Play = DSBPLAY_NONE;
                 self->Status = DSBSTATUS_NONE;
 
                 if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer, 0, 0, DSBCB_SETPOSITION_NONE))) {
                     if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                        hr = dsb_trigger_notifications(self, read, dwAdvance);
+                        hr = dsb_trigger_notifications(self, read, dwBytes);
                     }
                 }
             }
             else {
-                const DWORD rad = min(read + dwAdvance, self->Caps.dwBufferBytes);
-                const DWORD wad = min(write + dwAdvance, self->Caps.dwBufferBytes);
+                const DWORD rad = min(read + dwBytes, self->Caps.dwBufferBytes);
+                const DWORD wad = min(write + dwBytes, self->Caps.dwBufferBytes);
 
                 if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
                     rad, wad, DSBCB_SETPOSITION_NONE))) {
                     if (self->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-                        hr = dsb_trigger_notifications(self, read, dwAdvance);
+                        hr = dsb_trigger_notifications(self, read, dwBytes);
                     }
                 }
             }
@@ -896,7 +916,7 @@ HRESULT DELTACALL dsb_trigger_notifications(dsb* self, DWORD dwPosition, DWORD d
         DWORD count = 0;
         LPDSBPOSITIONNOTIFY notes = NULL;
 
-        if (SUCCEEDED(hr = dsn_get_notification_positions(self->Notifications, &count, &notes))) {
+        if (SUCCEEDED(hr = dsbn_get_notification_positions(self->Notifications, &count, &notes))) {
             if (count != 0) {
                 if (self->Status & DSBSTATUS_LOOPING) {
                     DWORD length = self->Caps.dwBufferBytes < dwPosition + dwAdvance

@@ -24,38 +24,29 @@ SOFTWARE.
 
 #pragma once
 
-#include "arena.h"
-#include "device_info.h"
-#include "mixer.h"
+#include "idsbn.h"
+#include "intfc.h"
 
-typedef struct ds ds;
+typedef struct dsb dsb;
 
-#define DSDEVICE_AUDIO_EVENT_INDEX      0
-#define DSDEVICE_CLOSE_EVENT_INDEX      1
-
-#define DSDEVICE_MAX_EVENT_COUNT        2
-
-typedef struct dsdevice {
+typedef struct dsbn {
     allocator*              Allocator;
-    ds*                     Instance;
-    arena*                  Arena;
-    mixer*                  Mixer;
+    IID                     ID;
+    dsb*                    Instance;
+    intfc*                  Interfaces;
 
-    device_info             Info;
+    CRITICAL_SECTION        Lock;
 
-    IMMDevice*              Device;
-    IAudioClient*           AudioClient;
-    IAudioRenderClient*     AudioRenderer;
+    LPDSBPOSITIONNOTIFY     Notifications;
+    DWORD                   NotificationCount;
+} dsbn;
 
-    UINT32                  AudioClientBufferSize;  // In frames
+HRESULT DELTACALL dsbn_create(allocator* pAlloc, REFIID riid, dsbn** ppOut);
+VOID DELTACALL dsbn_release(dsbn* pDSBN);
 
-    PWAVEFORMATEXTENSIBLE   Format;
+HRESULT DELTACALL dsbn_query_interface(dsbn* pDSBN, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL dsbn_add_ref(dsbn* pDSBN, idsbn* pIDSBN);
+HRESULT DELTACALL dsbn_remove_ref(dsbn* pDSBN, idsbn* pIDSBN);
 
-    HANDLE                  Events[DSDEVICE_MAX_EVENT_COUNT];
-
-    HANDLE                  Thread;
-    HANDLE                  ThreadEvent;
-} dsdevice;
-
-HRESULT DELTACALL dsdevice_create(allocator* pAlloc, ds* pDS, device_info* pInfo, dsdevice** ppOut);
-VOID DELTACALL dsdevice_release(dsdevice* pDev);
+HRESULT DELTACALL dsbn_get_notification_positions(dsbn* pDSBN, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies);
+HRESULT DELTACALL dsbn_set_notification_positions(dsbn* pDSBN, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);

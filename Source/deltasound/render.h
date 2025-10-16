@@ -28,34 +28,35 @@ SOFTWARE.
 #include "device_info.h"
 #include "mixer.h"
 
-typedef struct dsc dsc;
+typedef struct ds ds;
 
-#define DSCDEVICE_AUDIO_EVENT_INDEX      0
-#define DSCDEVICE_CLOSE_EVENT_INDEX      1
+#define RENDER_AUDIO_EVENT_INDEX        0
+#define RENDER_CLOSE_EVENT_INDEX        1
 
-#define DSCDEVICE_MAX_EVENT_COUNT        2
+#define RENDER_MAX_EVENT_COUNT          2
 
-typedef struct dscdevice {
-    allocator* Allocator;
-    dsc* Instance;
-    // arena* Arena; // TODO
-    // mixer* Mixer; // TODO
+typedef struct render {
+    allocator*              Allocator;
+    ds*                     Instance;
+    arena*                  Arena;
+    mixer*                  Mixer;
 
     device_info             Info;
 
     IMMDevice*              Device;
-    // IAudioClient*           AudioClient; // TODO
-    //IAudioRenderClient*     AudioRenderer; // TODO
+    IAudioClient*           AudioClient;
+    IAudioRenderClient*     AudioRenderer;
 
-    //UINT32                  AudioClientBufferSize;  // In frames
+    UINT32                  AudioClientBufferSize;  // In frames
 
     PWAVEFORMATEXTENSIBLE   Format;
 
-    HANDLE                  Events[DSCDEVICE_MAX_EVENT_COUNT];
+    HANDLE                  Init;
+    HANDLE                  Events[RENDER_MAX_EVENT_COUNT];
 
     HANDLE                  Thread;
     HANDLE                  ThreadEvent;
-} dscdevice;
+} render;
 
-HRESULT DELTACALL dscdevice_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, dscdevice** ppOut);
-VOID DELTACALL dscdevice_release(dscdevice* pDev);
+HRESULT DELTACALL render_create(allocator* pAlloc, ds* pDS, device_info* pInfo, render** ppOut);
+VOID DELTACALL render_release(render* pRender);

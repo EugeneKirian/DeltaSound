@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#include "dscbcb.h"
 #include "idscb.h"
 #include "intfc.h"
 
@@ -31,19 +32,19 @@ SOFTWARE.
 #define DSCBSTATUS_NONE     0
 
 typedef struct dsc dsc;
+typedef struct dscbn dscbn;
 
 typedef struct dscb {
     allocator*          Allocator;
     IID                 ID;
     dsc*                Instance;
     intfc*              Interfaces;
-    // TODO Notifications
+    dscbn*              Notifications;
 
     CRITICAL_SECTION    Lock;
 
     DSCBCAPS            Caps;
-
-    // TODO
+    dscbcb*             Buffer;
 
     LPWAVEFORMATEX      Format;
 
@@ -67,3 +68,5 @@ HRESULT DELTACALL dscb_lock(dscb* pDSCB, DWORD dwOffset, DWORD dwBytes, LPVOID* 
 HRESULT DELTACALL dscb_start(dscb* pDSCB, DWORD dwFlags);
 HRESULT DELTACALL dscb_stop(dscb* pDSCB);
 HRESULT DELTACALL dscb_unlock(dscb* pDSCB, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
+
+HRESULT DELTACALL dscb_update(dscb* pDSCB, LPVOID pvAudio, DWORD dwBytes);

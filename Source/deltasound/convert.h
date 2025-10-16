@@ -24,7 +24,13 @@ SOFTWARE.
 
 #pragma once
 
-#include "base.h"
+#include "allocator.h"
 
-BOOL Synthesise(LPCWAVEFORMATEX pcwfxFormat,
-    FLOAT fFrequency, FLOAT fDuration, LPVOID* ppvAudio, LPDWORD pdwSize);
+typedef struct converter converter;
+
+HRESULT DELTACALL converter_create(allocator* pAlloc, converter** ppOut);
+VOID DELTACALL converter_release(converter* pConverter);
+
+HRESULT DELTACALL converter_convert(converter* pConverter,
+    PWAVEFORMATEXTENSIBLE pwfxInFormat, LPVOID pBuffer, DWORD dwFrames,
+    LPWAVEFORMATEX pwfxOutFormat, LPVOID* ppOutBuffer, LPDWORD pdwBytes, DWORD dwFlags);

@@ -27,6 +27,7 @@ SOFTWARE.
 #include "directsoundbuffer_secondary.h"
 
 #include "directsoundcapture.h"
+#include "directsoundcapturebuffer.h"
 
 #include "getdeviceid.h"
 
@@ -122,6 +123,15 @@ int main(int argc, char** argv) {
 
     TEST(DirectSoundCaptureCreateCaptureBuffer);
     TEST(DirectSoundCaptureGetCaps);
+
+    TEST(DirectSoundCaptureBufferBasics);
+    TEST(DirectSoundCaptureBufferQueryInterface);
+    TEST(DirectSoundCaptureBufferGet);
+    TEST(DirectSoundCaptureBufferLock);
+    TEST(DirectSoundCaptureBufferStart);
+    TEST(DirectSoundCaptureBufferStop);
+
+    // TODO Notifications
 
     TEST(DllGetClassObject);
     TEST(DllGetClassObjectDirectSound);

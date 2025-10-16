@@ -22,43 +22,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "dsc.h"
-#include "dscb.h"
-#include "dscdevice.h"
-#include "uuid.h"
+#pragma once
 
-HRESULT DELTACALL dscdevice_create(allocator* pAlloc, dsc* pDSC, device_info* pInfo, dscdevice** ppOut) {
-    if (pAlloc == NULL) {
-        return E_INVALIDARG;
-    }
+#include "idscbn.h"
+#include "intfc.h"
 
-    if (pInfo == NULL || ppOut == NULL) {
-        return E_INVALIDARG;
-    }
+typedef struct dscb dscb;
 
-    HRESULT hr = S_OK;
-    dscdevice* instance = NULL;
+typedef struct dscbn {
+    allocator*              Allocator;
+    IID                     ID;
+    dscb*                   Instance;
+    intfc*                  Interfaces;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dscdevice), &instance))) {
-        instance->Allocator = pAlloc;
-        instance->Instance = pDSC;
+    CRITICAL_SECTION        Lock;
 
-        CopyMemory(&instance->Info, pInfo, sizeof(device_info));
+    LPDSBPOSITIONNOTIFY     Notifications;
+    DWORD                   NotificationCount;
+} dscbn;
 
-        // TODO NOT IMPLEMENTED
+HRESULT DELTACALL dscbn_create(allocator* pAlloc, REFIID riid, dscbn** ppOut);
+VOID DELTACALL dscbn_release(dscbn* pDSCBN);
 
-        *ppOut = instance;
+HRESULT DELTACALL dscbn_query_interface(dscbn* pDSCBN, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL dscbn_add_ref(dscbn* pDSCBN, idscbn* pIDSCBN);
+HRESULT DELTACALL dscbn_remove_ref(dscbn* pDSCBN, idscbn* pIDSCBN);
 
-        return S_OK;
-    }
-
-    return hr;
-}
-
-VOID DELTACALL dscdevice_release(dscdevice* self) {
-    if (self == NULL) { return; }
-
-    // TODO NOT IMPLEMENTED
-
-    allocator_free(self->Allocator, self);
-}
+HRESULT DELTACALL dscbn_get_notification_positions(dscbn* pDSCBN, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies);
+HRESULT DELTACALL dscbn_set_notification_positions(dscbn* pDSCBN, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);

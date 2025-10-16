@@ -41,8 +41,8 @@ SOFTWARE.
 #define DSB_DEFAULT_PRIMARY_BUFFER_SIZE     32768
 
 typedef struct ds ds;
-typedef struct ksp ksp;
-typedef struct dsn dsn;
+typedef struct dsbps dsbps;
+typedef struct dsbn dsbn;
 typedef struct dssl dssl;
 typedef struct dssb dssb;
 
@@ -51,10 +51,10 @@ typedef struct dsb {
     IID                 ID;
     ds*                 Instance;
     intfc*              Interfaces;
-    ksp*                PropertySet;
+    dsbps*              PropertySet;
     dssl*               SpatialListener;
     dssb*               SpatialBuffer;
-    dsn*                Notifications;
+    dsbn*               Notifications;
 
     CRITICAL_SECTION    Lock;
 
@@ -106,4 +106,4 @@ HRESULT DELTACALL dsb_stop(dsb* pDSB);
 HRESULT DELTACALL dsb_unlock(dsb* self, LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioBytes2);
 HRESULT DELTACALL dsb_restore(dsb* pDSB);
 
-HRESULT DELTACALL dsb_update_current_position(dsb* pDSB, DWORD dwAdvance);
+HRESULT DELTACALL dsb_update(dsb* pDSB, DWORD dwBytes);

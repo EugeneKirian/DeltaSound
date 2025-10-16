@@ -22,49 +22,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "iksp.h"
-#include "ksp.h"
+#include "dsbps.h"
+#include "idsbps.h"
 
-HRESULT DELTACALL iksp_get(iksp*,
+HRESULT DELTACALL idsbps_get(idsbps*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData,
     ULONG ulDataLength, PULONG pulBytesReturned);
-HRESULT DELTACALL iksp_set(iksp*,
+HRESULT DELTACALL idsbps_set(idsbps*,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength);
-HRESULT DELTACALL iksp_query_support(iksp*,
+HRESULT DELTACALL idsbps_query_support(idsbps*,
     REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport);
 
-struct iksp_vft {
-    LPIKSPQUERYINTERFACE    QueryInterface;
-    LPIKSPADDREF            AddRef;
-    LPIKSPRELEASE           Release;
-    LPIKSPGET               Get;
-    LPIKSPSET               Set;
-    LPIKSPQUERYSUPPORT      QuerySupport;
+struct idsbps_vft {
+    LPIDSBPSQUERYINTERFACE  QueryInterface;
+    LPIDSBPSADDREF          AddRef;
+    LPIDSBPSRELEASE         Release;
+    LPIDSBPSGET             Get;
+    LPIDSBPSSET             Set;
+    LPIDSBPSQUERYSUPPORT    QuerySupport;
 };
 
-const static iksp_vft iksp_self = {
-    iksp_query_interface,
-    iksp_add_ref,
-    iksp_remove_ref,
-    iksp_get,
-    iksp_set,
-    iksp_query_support
+const static idsbps_vft idsbps_self = {
+    idsbps_query_interface,
+    idsbps_add_ref,
+    idsbps_remove_ref,
+    idsbps_get,
+    idsbps_set,
+    idsbps_query_support
 };
 
-HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
+HRESULT DELTACALL idsbps_create(allocator* pAlloc, REFIID riid, idsbps** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    iksp* instance = NULL;
+    idsbps* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(iksp), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsbps), &instance))) {
         instance->Allocator = pAlloc;
 
-        instance->Self = &iksp_self;
+        instance->Self = &idsbps_self;
         CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
@@ -74,13 +74,13 @@ HRESULT DELTACALL iksp_create(allocator* pAlloc, REFIID riid, iksp** ppOut) {
     return hr;
 }
 
-VOID DELTACALL iksp_release(iksp* self) {
+VOID DELTACALL idsbps_release(idsbps* self) {
     if (self == NULL) { return; }
 
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL iksp_query_interface(iksp* self, REFIID riid, LPVOID* ppOut) {
+HRESULT DELTACALL idsbps_query_interface(idsbps* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -89,10 +89,10 @@ HRESULT DELTACALL iksp_query_interface(iksp* self, REFIID riid, LPVOID* ppOut) {
         return E_INVALIDARG;
     }
 
-    return ksp_query_interface(self->Instance, riid, ppOut);
+    return dsbps_query_interface(self->Instance, riid, ppOut);
 }
 
-ULONG DELTACALL iksp_add_ref(iksp* self) {
+ULONG DELTACALL idsbps_add_ref(idsbps* self) {
     if (self == NULL) {
         return 0;
     }
@@ -100,7 +100,7 @@ ULONG DELTACALL iksp_add_ref(iksp* self) {
     return InterlockedIncrement(&self->RefCount);
 }
 
-ULONG DELTACALL iksp_remove_ref(iksp* self) {
+ULONG DELTACALL idsbps_remove_ref(idsbps* self) {
     if (self == NULL) {
         return 0;
     }
@@ -115,16 +115,16 @@ ULONG DELTACALL iksp_remove_ref(iksp* self) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
-            ksp_remove_ref(self->Instance, self);
+            dsbps_remove_ref(self->Instance, self);
         }
 
-        iksp_release(self);
+        idsbps_release(self);
     }
 
     return result;
 }
 
-HRESULT DELTACALL iksp_get(iksp* self,
+HRESULT DELTACALL idsbps_get(idsbps* self,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData,
     ULONG ulDataLength, PULONG pulBytesReturned) {
@@ -132,14 +132,14 @@ HRESULT DELTACALL iksp_get(iksp* self,
     return E_NOTIMPL;
 }
 
-HRESULT DELTACALL iksp_set(iksp* self,
+HRESULT DELTACALL idsbps_set(idsbps* self,
     REFGUID rguidPropSet, ULONG ulId, LPVOID pInstanceData,
     ULONG ulInstanceLength, LPVOID pPropertyData, ULONG ulDataLength) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;
 }
 
-HRESULT DELTACALL iksp_query_support(iksp* self,
+HRESULT DELTACALL idsbps_query_support(idsbps* self,
     REFGUID rguidPropSet, ULONG ulId, PULONG pulTypeSupport) {
     // TODO NOT IMPLEMENTED
     return E_NOTIMPL;

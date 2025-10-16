@@ -22,20 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "dsb.h"
-#include "dsn.h"
+#include "dscb.h"
+#include "dscbn.h"
 
-HRESULT DELTACALL dsn_validate_notifications(dsn* pDSN, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies);
+HRESULT DELTACALL dscbn_validate_notifications(dscbn* pDSN, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies);
 
-HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
+HRESULT DELTACALL dscbn_create(allocator* pAlloc, REFIID riid, dscbn** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    dsn* instance = NULL;
+    dscbn* instance = NULL;
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dsn), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(dscbn), &instance))) {
         instance->Allocator = pAlloc;
 
         CopyMemory(&instance->ID, riid, sizeof(GUID));
@@ -54,7 +54,7 @@ HRESULT DELTACALL dsn_create(allocator* pAlloc, REFIID riid, dsn** ppOut) {
     return hr;
 }
 
-VOID DELTACALL dsn_release(dsn* self) {
+VOID DELTACALL dscbn_release(dscbn* self) {
     if (self == NULL) { return; }
 
     DeleteCriticalSection(&self->Lock);
@@ -62,10 +62,10 @@ VOID DELTACALL dsn_release(dsn* self) {
     const DWORD count = intfc_get_count(self->Interfaces);
 
     for (DWORD i = 0; i < count; i++) {
-        idsn* instance = NULL;
+        idscbn* instance = NULL;
 
         if (SUCCEEDED(intfc_get_item(self->Interfaces, i, &instance))) {
-            idsn_release(instance);
+            idscbn_release(instance);
         }
     }
 
@@ -78,16 +78,16 @@ VOID DELTACALL dsn_release(dsn* self) {
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
+HRESULT DELTACALL dscbn_query_interface(dscbn* self, REFIID riid, LPVOID* ppOut) {
     HRESULT hr = E_NOINTERFACE;
 
     EnterCriticalSection(&self->Lock);
 
     {
-        idsn* instance = NULL;
+        idscbn* instance = NULL;
 
         if (SUCCEEDED(hr = intfc_query_item(self->Interfaces, riid, &instance))) {
-            idsn_add_ref(instance);
+            idscbn_add_ref(instance);
 
             *ppOut = instance;
 
@@ -97,10 +97,10 @@ HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
 
     if (IsEqualIID(&IID_IUnknown, riid)
         || IsEqualIID(&IID_IDirectSoundNotify, riid)) {
-        idsn* instance = NULL;
+        idscbn* instance = NULL;
 
-        if (SUCCEEDED(hr = idsn_create(self->Allocator, riid, &instance))) {
-            if (SUCCEEDED(hr = dsn_add_ref(self, instance))) {
+        if (SUCCEEDED(hr = idscbn_create(self->Allocator, riid, &instance))) {
+            if (SUCCEEDED(hr = dscbn_add_ref(self, instance))) {
                 instance->Instance = self;
 
                 *ppOut = instance;
@@ -108,12 +108,11 @@ HRESULT DELTACALL dsn_query_interface(dsn* self, REFIID riid, LPVOID* ppOut) {
                 goto exit;
             }
 
-            idsn_release(instance);
+            idscbn_release(instance);
         }
     }
-    else if (IsEqualIID(&IID_IDirectSoundBuffer, riid)
-        || IsEqualIID(&IID_IKsPropertySet, riid)) {
-        hr = dsb_query_interface(self->Instance, riid, ppOut);
+    else if (IsEqualIID(&IID_IDirectSoundCaptureBuffer, riid)) {
+        hr = dscb_query_interface(self->Instance, riid, ppOut);
     }
 
 exit:
@@ -123,15 +122,15 @@ exit:
     return hr;
 }
 
-HRESULT DELTACALL dsn_add_ref(dsn* self, idsn* pIDSN) {
-    return intfc_add_item(self->Interfaces, &pIDSN->ID, pIDSN);
+HRESULT DELTACALL dscbn_add_ref(dscbn* self, idscbn* pIDSCBN) {
+    return intfc_add_item(self->Interfaces, &pIDSCBN->ID, pIDSCBN);
 }
 
-HRESULT DELTACALL dsn_remove_ref(dsn* self, idsn* pIDSN) {
-    return intfc_remove_item(self->Interfaces, &pIDSN->ID);
+HRESULT DELTACALL dscbn_remove_ref(dscbn* self, idscbn* pIDSCBN) {
+    return intfc_remove_item(self->Interfaces, &pIDSCBN->ID);
 }
 
-HRESULT DELTACALL dsn_get_notification_positions(dsn* self, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies) {
+HRESULT DELTACALL dscbn_get_notification_positions(dscbn* self, LPDWORD pdwPositionNotifies, LPCDSBPOSITIONNOTIFY* ppcPositionNotifies) {
     if (pdwPositionNotifies == NULL) {
         return E_INVALIDARG;
     }
@@ -149,12 +148,8 @@ HRESULT DELTACALL dsn_get_notification_positions(dsn* self, LPDWORD pdwPositionN
     return S_OK;
 }
 
-HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
-    if (!(self->Instance->Caps.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)) {
-        return DSERR_CONTROLUNAVAIL;
-    }
-
-    if (self->Instance->Status & DSBSTATUS_PLAYING) {
+HRESULT DELTACALL dscbn_set_notification_positions(dscbn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
+    if (self->Instance->Status & DSCBSTATUS_CAPTURING) {
         return DSERR_INVALIDCALL;
     }
 
@@ -168,13 +163,13 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
     }
 
     HRESULT hr = S_OK;
-    const DWORD length = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
     LPDSBPOSITIONNOTIFY notes = NULL;
+    const DWORD size = dwPositionNotifies * sizeof(DSBPOSITIONNOTIFY);
 
-    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, length, &notes))) {
-        CopyMemory(notes, pcPositionNotifies, length);
+    if (SUCCEEDED(hr = allocator_allocate(self->Allocator, size, &notes))) {
+        CopyMemory(notes, pcPositionNotifies, size);
 
-        if (SUCCEEDED(hr = dsn_validate_notifications(self, dwPositionNotifies, notes))) {
+        if (SUCCEEDED(hr = dscbn_validate_notifications(self, dwPositionNotifies, notes))) {
             EnterCriticalSection(&self->Lock);
 
             if (self->Notifications != NULL) {
@@ -199,7 +194,7 @@ HRESULT DELTACALL dsn_set_notification_positions(dsn* self, DWORD dwPositionNoti
 
 /* ---------------------------------------------------------------------- */
 
-HRESULT DELTACALL dsn_validate_notifications(dsn* self, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies) {
+HRESULT DELTACALL dscbn_validate_notifications(dscbn* self, DWORD dwPositionNotifies, LPDSBPOSITIONNOTIFY pPositionNotifies) {
     // Sort notifications in ascending order.
     for (DWORD i = 0; i < dwPositionNotifies; i++) {
         for (DWORD j = 0; j < dwPositionNotifies; j++) {

@@ -245,7 +245,7 @@ static BOOL TestDirectSoundBufferGetProperties(LPDIRECTSOUNDBUFFER a, LPDIRECTSO
 }
 
 static BOOL TestDirectSoundBufferSecondaryGetDetails(
-    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD flags, DWORD level) {
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dwFlags, DWORD dwLevel) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
@@ -259,7 +259,7 @@ static BOOL TestDirectSoundBufferSecondaryGetDetails(
     LPDIRECTSOUNDBUFFER dsba = NULL, dsbb = NULL;
 
     DSBUFFERDESC desc;
-    InitializeDirectSoundBufferDesc(&desc, flags, 176400, &format);
+    InitializeDirectSoundBufferDesc(&desc, dwFlags, 176400, &format);
 
     HRESULT ra = a(NULL, &dsa, NULL);
     HRESULT rb = b(NULL, &dsb, NULL);
@@ -272,8 +272,8 @@ static BOOL TestDirectSoundBufferSecondaryGetDetails(
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, level);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, level);
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, dwLevel);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, dwLevel);
 
     if (ra != rb) {
         result = FALSE;
@@ -283,12 +283,12 @@ static BOOL TestDirectSoundBufferSecondaryGetDetails(
     ra = IDirectSound_CreateSoundBuffer(dsa, &desc, &dsba, NULL);
     rb = IDirectSound_CreateSoundBuffer(dsb, &desc, &dsbb, NULL);
 
-    if (ra != rb && !(flags & DSBCAPS_LOCHARDWARE)) {
+    if (ra != rb && !(dwFlags & DSBCAPS_LOCHARDWARE)) {
         result = FALSE;
         goto exit;
     }
 
-    if (flags & DSBCAPS_LOCHARDWARE) {
+    if (dwFlags & DSBCAPS_LOCHARDWARE) {
         goto exit;
     }
 

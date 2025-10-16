@@ -22,38 +22,38 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "dsn.h"
-#include "idsn.h"
+#include "dscbn.h"
+#include "idscbn.h"
 
-HRESULT DELTACALL idsn_set_notification_positions(idsn*, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
+HRESULT DELTACALL idscbn_set_notification_positions(idscbn*, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies);
 
-typedef struct idsn_vft {
-    LPIDSNQUERYINTERFACE            QueryInterface;
-    LPIDSNADDREF                    AddRef;
-    LPIDSNRELEASE                   Release;
-    LPIDSNSETNOTIFICATIONPOSITIONS  SetNotificationPositions;
-} idsn_vft;
+typedef struct idscbn_vft {
+    LPIDSCBNQUERYINTERFACE              QueryInterface;
+    LPIDSCBNADDREF                      AddRef;
+    LPIDSCBNRELEASE                     Release;
+    LPIDSCBNSETNOTIFICATIONPOSITIONS    SetNotificationPositions;
+} idscbn_vft;
 
-const static idsn_vft idsn_self = {
-    idsn_query_interface,
-    idsn_add_ref,
-    idsn_remove_ref,
-    idsn_set_notification_positions
+const static idscbn_vft idscbn_self = {
+    idscbn_query_interface,
+    idscbn_add_ref,
+    idscbn_remove_ref,
+    idscbn_set_notification_positions
 };
 
-HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
+HRESULT DELTACALL idscbn_create(allocator* pAlloc, REFIID riid, idscbn** ppOut) {
     if (pAlloc == NULL || riid == NULL || ppOut == NULL) {
         return E_INVALIDARG;
     }
 
     HRESULT hr = S_OK;
-    idsn* instance = NULL;
+    idscbn* instance = NULL;
 
 
-    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idsn), &instance))) {
+    if (SUCCEEDED(hr = allocator_allocate(pAlloc, sizeof(idscbn), &instance))) {
         instance->Allocator = pAlloc;
 
-        instance->Self = &idsn_self;
+        instance->Self = &idscbn_self;
         CopyMemory(&instance->ID, riid, sizeof(IID));
         instance->RefCount = 1;
 
@@ -63,13 +63,13 @@ HRESULT DELTACALL idsn_create(allocator* pAlloc, REFIID riid, idsn** ppOut) {
     return hr;
 }
 
-VOID DELTACALL idsn_release(idsn* self) {
+VOID DELTACALL idscbn_release(idscbn* self) {
     if (self == NULL) { return; }
 
     allocator_free(self->Allocator, self);
 }
 
-HRESULT DELTACALL idsn_query_interface(idsn* self, REFIID riid, LPVOID* ppOut) {
+HRESULT DELTACALL idscbn_query_interface(idscbn* self, REFIID riid, LPVOID* ppOut) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -78,10 +78,10 @@ HRESULT DELTACALL idsn_query_interface(idsn* self, REFIID riid, LPVOID* ppOut) {
         return E_INVALIDARG;
     }
 
-    return dsn_query_interface(self->Instance, riid, ppOut);
+    return dscbn_query_interface(self->Instance, riid, ppOut);
 }
 
-ULONG DELTACALL idsn_add_ref(idsn* self) {
+ULONG DELTACALL idscbn_add_ref(idscbn* self) {
     if (self == NULL) {
         return 0;
     }
@@ -89,7 +89,7 @@ ULONG DELTACALL idsn_add_ref(idsn* self) {
     return InterlockedIncrement(&self->RefCount);
 }
 
-ULONG DELTACALL idsn_remove_ref(idsn* self) {
+ULONG DELTACALL idscbn_remove_ref(idscbn* self) {
     if (self == NULL) {
         return 0;
     }
@@ -104,16 +104,16 @@ ULONG DELTACALL idsn_remove_ref(idsn* self) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
-            dsn_remove_ref(self->Instance, self);
+            dscbn_remove_ref(self->Instance, self);
         }
 
-        idsn_release(self);
+        idscbn_release(self);
     }
 
     return result;
 }
 
-HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
+HRESULT DELTACALL idscbn_set_notification_positions(idscbn* self, DWORD dwPositionNotifies, LPCDSBPOSITIONNOTIFY pcPositionNotifies) {
     if (self == NULL) {
         return E_POINTER;
     }
@@ -122,5 +122,5 @@ HRESULT DELTACALL idsn_set_notification_positions(idsn* self, DWORD dwPositionNo
         return E_INVALIDARG;
     }
 
-    return dsn_set_notification_positions(self->Instance, dwPositionNotifies, pcPositionNotifies);
+    return dscbn_set_notification_positions(self->Instance, dwPositionNotifies, pcPositionNotifies);
 }

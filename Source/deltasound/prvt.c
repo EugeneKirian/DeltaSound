@@ -312,7 +312,6 @@ HRESULT DELTACALL prvt_get_render_device_interface(prvt* self,
                             LPWSTR intfc = NULL;
 
                             if (SUCCEEDED(hr = allocator_allocate(self->Allocator, size, &intfc))) {
-
                                 mmr = waveOutMessage(wave, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)intfc, size);
 
                                 if (mmr == MMSYSERR_NOERROR) {

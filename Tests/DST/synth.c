@@ -45,22 +45,25 @@ static INT Convert(FLOAT fIn, DWORD dwBits) {
     return 0;   // NOT SUPPORTED
 }
 
-BOOL Synthesise(LPWAVEFORMATEX pwfxFormat,
-    FLOAT fFrequency, FLOAT fDuration, LPVOID* pBuffer, LPDWORD pdwSize) {
-    if (pwfxFormat == NULL
-        || fFrequency < 0.0f || fDuration < 0.0f
-        || pBuffer == NULL || pdwSize == NULL) {
+BOOL Synthesise(LPCWAVEFORMATEX pcwfxFormat,
+    FLOAT fFrequency, FLOAT fDuration, LPVOID* ppvAudio, LPDWORD pdwSize) {
+    if (pcwfxFormat == NULL || ppvAudio == NULL || pdwSize == NULL) {
         return FALSE;
     }
 
-    if (pwfxFormat->wBitsPerSample != 8
-        && pwfxFormat->wBitsPerSample != 16) {
+    if (fFrequency < 0.0f || _isnan(fFrequency) || isinf(fFrequency)
+        || fDuration < 0.0f || _isnan(fDuration) || isinf(fDuration)) {
+        return FALSE;
+    }
+
+    if (pcwfxFormat->wBitsPerSample != 8
+        && pcwfxFormat->wBitsPerSample != 16) {
         return FALSE;   // NOT SUPPORTED
     }
 
     const DWORD samples =
-        (DWORD)(fDuration * pwfxFormat->nChannels * pwfxFormat->nSamplesPerSec);
-    const DWORD length = samples * (pwfxFormat->wBitsPerSample >> 3);
+        (DWORD)(fDuration * pcwfxFormat->nChannels * pcwfxFormat->nSamplesPerSec);
+    const DWORD length = samples * (pcwfxFormat->wBitsPerSample >> 3);
 
     LPVOID buffer = malloc(length);
 
@@ -69,26 +72,26 @@ BOOL Synthesise(LPWAVEFORMATEX pwfxFormat,
     }
 
     const FLOAT multiplier = 2.0f * (FLOAT)M_PI * fFrequency;
-    const DWORD frames = samples / pwfxFormat->nChannels;
+    const DWORD frames = samples / pcwfxFormat->nChannels;
 
     for (DWORD i = 0; i < frames; i++) {
-        const FLOAT value = (FLOAT)sin(multiplier * ((FLOAT)i / (FLOAT)pwfxFormat->nSamplesPerSec));
-        const DWORD converted = Convert(value, pwfxFormat->wBitsPerSample);
-        const DWORD block_offset = i * pwfxFormat->nChannels * (pwfxFormat->wBitsPerSample >> 3);
+        const FLOAT value = (FLOAT)sin(multiplier * ((FLOAT)i / (FLOAT)pcwfxFormat->nSamplesPerSec));
+        const DWORD converted = Convert(value, pcwfxFormat->wBitsPerSample);
+        const DWORD block_offset = i * pcwfxFormat->nChannels * (pcwfxFormat->wBitsPerSample >> 3);
 
-        for (DWORD j = 0; j < pwfxFormat->nChannels; j++) {
-            const DWORD sample_offset = block_offset + j * (pwfxFormat->wBitsPerSample >> 3);
+        for (DWORD j = 0; j < pcwfxFormat->nChannels; j++) {
+            const DWORD sample_offset = block_offset + j * (pcwfxFormat->wBitsPerSample >> 3);
 
-            if (pwfxFormat->wBitsPerSample == 8) {
+            if (pcwfxFormat->wBitsPerSample == 8) {
                 *(PBYTE)((SIZE_T)buffer + sample_offset) = (BYTE)converted;
             }
-            else if (pwfxFormat->wBitsPerSample == 16) {
+            else if (pcwfxFormat->wBitsPerSample == 16) {
                 *(PSHORT)((SIZE_T)buffer + sample_offset) = (SHORT)converted;
             }
         }
     }
 
-    *pBuffer = buffer;
+    *ppvAudio = buffer;
     *pdwSize = length;
 
     return TRUE;

@@ -30,7 +30,7 @@ SOFTWARE.
 #define WINDOW_NAME "DirectSound Primary Buffer Stop"
 
 static BOOL TestDirectSoundBufferPrimaryBufferStop(
-    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD level) {
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dwLevel) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
@@ -72,8 +72,8 @@ static BOOL TestDirectSoundBufferPrimaryBufferStop(
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, level);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, level);
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, dwLevel);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, dwLevel);
 
     if (ra != rb) {
         result = FALSE;
@@ -94,6 +94,7 @@ static BOOL TestDirectSoundBufferPrimaryBufferStop(
     }
 
     // GetCaps
+
     if (FAILED(CompareDirectSoundBufferCaps(dsba, dsbb))) {
         result = FALSE;
         goto exit;
@@ -126,7 +127,6 @@ static BOOL TestDirectSoundBufferPrimaryBufferStop(
 
     // GetCurrentPosition
 
-
     ra = IDirectSoundBuffer_GetCurrentPosition(dsba, &cpa, &cwa);
     rb = IDirectSoundBuffer_GetCurrentPosition(dsbb, &cpb, &cwb);
 
@@ -146,7 +146,6 @@ static BOOL TestDirectSoundBufferPrimaryBufferStop(
     }
 
     // GetCurrentPosition
-
 
     ra = IDirectSoundBuffer_GetCurrentPosition(dsba, &cpa, &cwa);
     rb = IDirectSoundBuffer_GetCurrentPosition(dsbb, &cpb, &cwb);

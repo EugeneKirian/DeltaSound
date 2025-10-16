@@ -24,23 +24,23 @@ SOFTWARE.
 
 #pragma once
 
-#include "iksp.h"
+#include "idsbps.h"
 
 typedef struct dsb dsb;
 typedef struct intfc intfc;
 
-typedef struct ksp {
+typedef struct dsbps {
     allocator*          Allocator;
     IID                 ID;
     dsb*                Instance;
     intfc*              Interfaces;
 
     CRITICAL_SECTION    Lock;
-} ksp;
+} dsbps;
 
-HRESULT DELTACALL ksp_create(allocator* pAlloc, REFIID riid, ksp** ppOut);
-VOID DELTACALL ksp_release(ksp* pKSP);
+HRESULT DELTACALL dsbps_create(allocator* pAlloc, REFIID riid, dsbps** ppOut);
+VOID DELTACALL dsbps_release(dsbps* pPS);
 
-HRESULT DELTACALL ksp_query_interface(ksp* pKSP, REFIID riid, LPVOID* ppOut);
-HRESULT DELTACALL ksp_add_ref(ksp* pKSP, iksp* pIKSP);
-HRESULT DELTACALL ksp_remove_ref(ksp* pKSP, iksp* pIKSP);
+HRESULT DELTACALL dsbps_query_interface(dsbps* pPS, REFIID riid, LPVOID* ppOut);
+HRESULT DELTACALL dsbps_add_ref(dsbps* pPS, idsbps* PIPS);
+HRESULT DELTACALL dsbps_remove_ref(dsbps* pPS, idsbps* pIPS);

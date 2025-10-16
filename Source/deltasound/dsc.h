@@ -27,7 +27,7 @@ SOFTWARE.
 #include "intfc.h"
 
 typedef struct deltasound deltasound;
-typedef struct dscdevice dscdevice;
+typedef struct capture capture;
 typedef struct dscb dscb;
 typedef struct idsc idsc;
 
@@ -39,7 +39,7 @@ typedef struct dsc {
 
     CRITICAL_SECTION    Lock;
 
-    dscdevice*          Device;
+    capture*            Device;
 
     dscb*               Buffer;
 } dsc;
@@ -56,3 +56,6 @@ HRESULT DELTACALL dsc_remove_capture_buffer(dsc* pDSC, dscb* pDSCB);
 
 HRESULT DELTACALL dsc_get_caps(dsc* pDSC, LPDSCCAPS pDSCCaps);
 HRESULT DELTACALL dsc_initialize(dsc* pDSC, LPCGUID pcGuidDevice);
+
+HRESULT DELTACALL dsc_start(dsc* pDSC);
+HRESULT DELTACALL dsc_stop(dsc* pDSC);

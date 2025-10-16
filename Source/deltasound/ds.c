@@ -26,8 +26,8 @@ SOFTWARE.
 #include "device_info.h"
 #include "ds.h"
 #include "dsb.h"
-#include "dsdevice.h"
 #include "ids.h"
+#include "render.h"
 
 HRESULT DELTACALL ds_create(allocator* pAlloc, REFCLSID rclsid, ds** ppOut) {
     if (pAlloc == NULL || rclsid == NULL || ppOut == NULL) {
@@ -75,7 +75,7 @@ VOID DELTACALL ds_release(ds* self) {
     if (self == NULL) { return; }
 
     if (self->Device != NULL) {
-        dsdevice_release(self->Device);
+        render_release(self->Device);
     }
 
     DeleteCriticalSection(&self->Lock);
@@ -322,7 +322,7 @@ HRESULT DELTACALL ds_initialize(ds* self, LPCGUID pcGuidDevice) {
 
     EnterCriticalSection(&self->Lock);
 
-    if (SUCCEEDED(hr = dsdevice_create(self->Allocator, self, &info, &self->Device))) {
+    if (SUCCEEDED(hr = render_create(self->Allocator, self, &info, &self->Device))) {
         DSBUFFERDESC desc;
         ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 

@@ -30,7 +30,7 @@ SOFTWARE.
 
 static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUND da, LPDIRECTSOUND db,
     HWND wa, HWND wb, LPDIRECTSOUNDBUFFER a, LPDIRECTSOUNDBUFFER b,
-    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD level) {
+    DWORD seconds, LPVOID wave, DWORD wave_length, DWORD dwLevel) {
     if (a == NULL || b == NULL || wave == NULL || wave_length == 0) {
         return FALSE;
     }
@@ -110,12 +110,13 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUND da, LPDIRECTSOUND db,
     }
 
     // Play A
+
     ShowWindow(wa, SW_SHOW);
     UpdateWindow(wa);
 
     if (SUCCEEDED(ra = IDirectSoundBuffer_Play(a, 0, 0, DSBPLAY_LOOPING))) {
         Sleep(100);
-        scla = IDirectSound_SetCooperativeLevel(da, wa, level);
+        scla = IDirectSound_SetCooperativeLevel(da, wa, dwLevel);
         Sleep(100);
         IDirectSoundBuffer_GetStatus(a, &sta);
         Sleep(seconds * 1000);
@@ -126,12 +127,13 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUND da, LPDIRECTSOUND db,
     UpdateWindow(wa);
 
     // Play B
+
     ShowWindow(wb, SW_SHOW);
     UpdateWindow(wb);
 
     if (SUCCEEDED(rb = IDirectSoundBuffer_Play(b, 0, 0, DSBPLAY_LOOPING))) {
         Sleep(100);
-        sclb = IDirectSound_SetCooperativeLevel(db, wb, level);
+        sclb = IDirectSound_SetCooperativeLevel(db, wb, dwLevel);
         Sleep(100);
         IDirectSoundBuffer_GetStatus(b, &stb);
         Sleep(seconds * 1000);
@@ -161,7 +163,7 @@ static BOOL TestDirectSoundBufferSingleWave(LPDIRECTSOUND da, LPDIRECTSOUND db,
 }
 
 static BOOL TestDirectSoundBufferPrimaryPlayTest(
-    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD level) {
+    LPDIRECTSOUNDCREATE a, HWND wa, LPDIRECTSOUNDCREATE b, HWND wb, DWORD dwLevel) {
     if (a == NULL || wa == NULL || b == NULL || wb == NULL) {
         return FALSE;
     }
@@ -196,8 +198,8 @@ static BOOL TestDirectSoundBufferPrimaryPlayTest(
         return FALSE;
     }
 
-    ra = IDirectSound_SetCooperativeLevel(dsa, wa, level);
-    rb = IDirectSound_SetCooperativeLevel(dsb, wb, level);
+    ra = IDirectSound_SetCooperativeLevel(dsa, wa, dwLevel);
+    rb = IDirectSound_SetCooperativeLevel(dsb, wb, dwLevel);
 
     if (ra != rb) {
         result = FALSE;
