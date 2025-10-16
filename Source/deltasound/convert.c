@@ -218,7 +218,7 @@ HRESULT DELTACALL converter_resample(converter* self,
         return hr;
     }
 
-    // Downsampling by decimation.
+    // TODO. Improve. Downsampling by decimation.
     for (DWORD i = 0; i < frames; i++) {
         for (DWORD j = 0; j < dwChannels; j++) {
             DWORD t = (DWORD)(i / fRatio);

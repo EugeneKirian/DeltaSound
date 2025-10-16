@@ -93,8 +93,6 @@ HRESULT DELTACALL capture_create(allocator* pAlloc, dsc* pDSC, device_info* pInf
             WaitForSingleObject(instance->Init, INFINITE);
             CloseHandle(instance->Init);
 
-            // TODO check if thread exited prematurely...
-
             *ppOut = instance;
 
             return S_OK;

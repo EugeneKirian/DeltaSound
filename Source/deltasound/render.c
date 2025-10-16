@@ -96,8 +96,6 @@ HRESULT DELTACALL render_create(allocator * pAlloc, ds * pDS, device_info * pInf
                 WaitForSingleObject(instance->Init, INFINITE);
                 CloseHandle(instance->Init);
 
-                // TODO check if thread exited prematurely...
-
                 *ppOut = instance;
 
                 return S_OK;
