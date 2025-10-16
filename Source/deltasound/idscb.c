@@ -129,8 +129,14 @@ ULONG DELTACALL idscb_remove_ref(idscb* self) {
         self->RefCount = 0;
 
         if (self->Instance != NULL) {
-            dscb_remove_ref(self->Instance, self);
-            idscb_release(self);
+            BOOL release = FALSE;
+
+            if (SUCCEEDED(dscb_can_release(self->Instance, &release))) {
+                if (release) {
+                    dscb_remove_ref(self->Instance, self);
+                    idscb_release(self);
+                }
+            }
         }
     }
 

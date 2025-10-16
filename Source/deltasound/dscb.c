@@ -102,6 +102,20 @@ VOID DELTACALL dscb_release(dscb* self) {
     allocator_free(self->Allocator, self);
 }
 
+HRESULT DELTACALL dscb_can_release(dscb* self, PBOOL pAllow) {
+    if (pAllow == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (self->Notifications == NULL) {
+        *pAllow = TRUE;
+
+        return S_OK;
+    }
+
+    return dscbn_can_release(self->Notifications, pAllow);
+}
+
 HRESULT DELTACALL dscb_query_interface(dscb* self, REFIID riid, LPVOID* ppOut) {
     HRESULT hr = E_NOINTERFACE;
 
@@ -319,7 +333,7 @@ HRESULT DELTACALL dscb_start(dscb* self, DWORD dwFlags) {
             self->Status = DSCBSTATUS_CAPTURING;
 
             if (dwFlags & DSCBSTART_LOOPING) {
-                self->Status = self->Status | DSCBSTART_LOOPING;
+                self->Status = self->Status | DSCBSTATUS_LOOPING;
             }
 
             hr = dsc_start(self->Instance);

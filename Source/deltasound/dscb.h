@@ -54,6 +54,7 @@ typedef struct dscb {
 
 HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut);
 VOID DELTACALL dscb_release(dscb* pDSB);
+HRESULT DELTACALL dscb_can_release(dscb* pDSB, PBOOL pAllow);
 
 HRESULT DELTACALL dscb_query_interface(dscb* pDSB, REFIID riid, LPVOID* ppOut);
 HRESULT DELTACALL dscb_add_ref(dscb* pDSB, idscb* pIDSCB);

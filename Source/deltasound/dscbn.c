@@ -78,6 +78,18 @@ VOID DELTACALL dscbn_release(dscbn* self) {
     allocator_free(self->Allocator, self);
 }
 
+HRESULT DELTACALL dscbn_can_release(dscbn* self, PBOOL pAllow) {
+    if (pAllow == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (intfc_get_count(self->Interfaces) == 0) {
+        *pAllow = TRUE;
+    }
+
+    return S_OK;
+}
+
 HRESULT DELTACALL dscbn_query_interface(dscbn* self, REFIID riid, LPVOID* ppOut) {
     HRESULT hr = E_NOINTERFACE;
 
