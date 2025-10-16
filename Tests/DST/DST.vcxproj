@@ -150,6 +150,7 @@
     <ClCompile Include="directsoundcapturebuffer_basics.c" />
     <ClCompile Include="directsoundcapturebuffer_get.c" />
     <ClCompile Include="directsoundcapturebuffer_lock.c" />
+    <ClCompile Include="directsoundcapturebuffer_notify.c" />
     <ClCompile Include="directsoundcapturebuffer_query_interface.c" />
     <ClCompile Include="directsoundcapturebuffer_start.c" />
     <ClCompile Include="directsoundcapturebuffer_stop.c" />

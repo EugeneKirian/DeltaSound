@@ -130,8 +130,7 @@ int main(int argc, char** argv) {
     TEST(DirectSoundCaptureBufferLock);
     TEST(DirectSoundCaptureBufferStart);
     TEST(DirectSoundCaptureBufferStop);
-
-    // TODO Notifications
+    TEST(DirectSoundCaptureBufferNotify);
 
     TEST(DllGetClassObject);
     TEST(DllGetClassObjectDirectSound);
