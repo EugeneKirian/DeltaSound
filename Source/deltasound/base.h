@@ -41,3 +41,11 @@ SOFTWARE.
 #define UNUSED(X)   ((VOID)X)
 
 #define IS_VALID_HANDLE(h)  (((h) != NULL) && ((h) != INVALID_HANDLE_VALUE))
+
+#define AUDCLNT_BUFFERFLAGS_NONE            0
+
+#define WASAPI_REFTIMES_PER_SEC             10000000
+#define WASAPI_BUFFER_PADDING_IN_SECONDS    (1.0f / 100.0f)
+
+#define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
+#define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }

@@ -29,14 +29,6 @@ SOFTWARE.
 #include "uuid.h"
 #include "wave.h"
 
-#define REFTIMES_PER_SEC                    10000000
-#define TARGET_BUFFER_PADDING_IN_SECONDS    (1.0f / 60.0f)
-
-#define AUDCLNT_BUFFERFLAGS_NONE            0
-
-#define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
-#define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
-
 DWORD WINAPI capture_thread(capture* pCapture);
 
 HRESULT DELTACALL capture_initialize(capture* pCapture);
@@ -157,7 +149,7 @@ HRESULT DELTACALL capture_initialize(capture* self) {
     if (FAILED(hr = IAudioClient_Initialize(self->AudioClient,
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_NOPERSIST | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-        REFTIMES_PER_SEC, 0, wfx, NULL))) {
+        WASAPI_REFTIMES_PER_SEC, 0, wfx, NULL))) {
         goto exit;
     }
 
