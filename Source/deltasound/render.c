@@ -227,7 +227,7 @@ HRESULT DELTACALL render_render(render* self, DWORD dwBuffers, dsb** ppBuffers) 
 
     if (SUCCEEDED(hr = IAudioClient_GetCurrentPadding(self->AudioClient, &padding))) {
         const UINT32 frames =
-            (UINT32)(self->AudioClientBufferSize * WASAPI_BUFFER_PADDING_IN_SECONDS) - padding;
+            (UINT32)(self->AudioClientBufferSize * WASAPI_10_MILLISECONDS) - padding;
 
         if (frames != 0) {
             BYTE* lock = NULL;

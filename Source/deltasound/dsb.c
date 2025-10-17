@@ -31,10 +31,6 @@ SOFTWARE.
 #include "ids.h"
 #include "wave.h"
 
-#define DSB_PLAY_WRITE_CURSOR_FRAME_COUNT   800
-
-#define ADVANCEWRITEPOSITION(X, ALIGN) (X + DSB_PLAY_WRITE_CURSOR_FRAME_COUNT * ALIGN)
-
 HRESULT DELTACALL dsb_trigger_notifications(dsb* pDSB, DWORD dwPosition, DWORD dwAdvance);
 
 HRESULT DELTACALL dsb_create(allocator* pAlloc, REFIID riid, dsb** ppOut) {
@@ -633,7 +629,7 @@ HRESULT DELTACALL dsb_play(dsb* self, DWORD dwPriority, DWORD dwFlags) {
 
     if (SUCCEEDED(hr = dsbcb_get_current_position(self->Buffer, &read, &write))) {
         const DWORD advance = min(self->Caps.dwBufferBytes,
-            ADVANCEWRITEPOSITION(write, self->Format->nBlockAlign));
+            ADVANCEPOSITION(write, self->Format->nSamplesPerSec, self->Format->nBlockAlign));
 
         if (SUCCEEDED(hr = dsbcb_set_current_position(self->Buffer,
             read, advance, DSBCB_SETPOSITION_NONE))) {
@@ -675,7 +671,8 @@ HRESULT DELTACALL dsb_set_current_position(dsb* self, DWORD dwNewPosition) {
     }
 
     const DWORD write = (self->Status & DSBSTATUS_PLAYING)
-        ? min(self->Caps.dwBufferBytes, ADVANCEWRITEPOSITION(dwNewPosition, self->Format->nBlockAlign))
+        ? min(self->Caps.dwBufferBytes,
+            ADVANCEPOSITION(dwNewPosition, self->Format->nSamplesPerSec, self->Format->nBlockAlign))
         : dwNewPosition;
 
     return dsbcb_set_current_position(self->Buffer,

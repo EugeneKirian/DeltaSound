@@ -42,10 +42,14 @@ SOFTWARE.
 
 #define IS_VALID_HANDLE(h)  (((h) != NULL) && ((h) != INVALID_HANDLE_VALUE))
 
-#define AUDCLNT_BUFFERFLAGS_NONE            0
+#define AUDCLNT_BUFFERFLAGS_NONE                0
 
-#define WASAPI_REFTIMES_PER_SEC             10000000
-#define WASAPI_BUFFER_PADDING_IN_SECONDS    (1.0f / 100.0f)
+#define WASAPI_REFTIMES_PER_SEC                 10000000
+#define WASAPI_10_MILLISECONDS                  (1.0f / 100.0f)
+
+#define WASAPI_10_MILLISECONDS_TIME(FREQ)       (FREQ * WASAPI_10_MILLISECONDS)
+
+#define ADVANCEPOSITION(X, FREQ, ALIGN)         (DWORD)(X + WASAPI_10_MILLISECONDS_TIME(FREQ) * ALIGN)
 
 #define RELEASE(X) if ((X) != NULL) { (X)->lpVtbl->Release(X); (X) = NULL; }
 #define RELEASEHANDLE(X) if((X)) { CloseHandle((X)); (X) = NULL; }
