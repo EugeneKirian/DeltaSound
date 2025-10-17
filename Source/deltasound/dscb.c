@@ -27,10 +27,6 @@ SOFTWARE.
 #include "dscbn.h"
 #include "wave.h"
 
-#define DSCB_START_READ_CURSOR_FRAME_COUNT  800
-
-#define ADVANCEREADPOSITION(X, ALIGN) (X + DSCB_START_READ_CURSOR_FRAME_COUNT * ALIGN)
-
 HRESULT DELTACALL dscb_trigger_notifications(dscb* pDSCB, DWORD dwPosition, DWORD dwAdvance);
 
 HRESULT DELTACALL dscb_create(allocator* pAlloc, REFIID riid, dscb** ppOut) {
@@ -324,7 +320,7 @@ HRESULT DELTACALL dscb_start(dscb* self, DWORD dwFlags) {
 
     if (SUCCEEDED(hr = dscbcb_get_current_position(self->Buffer, &capture, &read))) {
         const DWORD advance = min(self->Caps.dwBufferBytes,
-            ADVANCEREADPOSITION(read, self->Format->nBlockAlign));
+            ADVANCEPOSITION(read, self->Format->nSamplesPerSec, self->Format->nBlockAlign));
 
         if (SUCCEEDED(hr = dscbcb_set_current_position(self->Buffer,
             capture, advance, DSCBCB_SETPOSITION_NONE))) {
