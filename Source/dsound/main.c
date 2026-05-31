@@ -43,7 +43,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         DisableThreadLibraryCalls(hinstDLL);
 
         if (SUCCEEDED(allocator_create(&alc))) {
-            if (SUCCEEDED(deltasound_create(alc, &delta))) {
+            if (SUCCEEDED(deltasound_create(alc, &delta, DELTASOUND_TRACK_WINDOW_FOCUS))) {
                 return TRUE;
             }
         }

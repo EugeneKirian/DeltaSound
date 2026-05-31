@@ -31,7 +31,18 @@ SOFTWARE.
 
 #define DELTASOUNDDEVICE_INVALID_COUNT ((DWORD)-1)
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
+DWORD WINAPI delta_sound_thread(deltasound* pDS);
+
+HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut, DWORD dwFlags) {
+    if (pAlloc == NULL || ppOut == NULL) {
+        return E_INVALIDARG;
+    }
+
+    if (dwFlags != DELTASOUND_NONE
+        && dwFlags != DELTASOUND_TRACK_WINDOW_FOCUS) {
+        return E_INVALIDARG;
+    }
+
     HRESULT hr = S_OK;
     deltasound* instance = NULL;
 
@@ -43,6 +54,10 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
                 if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Create))) {
                     if (SUCCEEDED(hr = arr_create(pAlloc, &instance->Private))) {
                         InitializeCriticalSection(&instance->Lock);
+
+                        if (dwFlags & DELTASOUND_TRACK_WINDOW_FOCUS) {
+                            instance->Thread = CreateThread(NULL, 0, delta_sound_thread, instance, 0, NULL);
+                        }
 
                         *ppOut = instance;
 
@@ -66,6 +81,10 @@ HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut) {
 
 VOID DELTACALL deltasound_release(deltasound* self) {
     if (self == NULL) { return; }
+
+    if (self->Thread != NULL) {
+        RELEASEHANDLE(self->Thread);
+    }
 
     {
         const DWORD count = arr_get_count(self->Render);
@@ -426,4 +445,16 @@ HRESULT DELTACALL deltasound_can_unload(deltasound* self) {
         && arr_get_count(self->Create) == 0;
 
     return result ? S_OK : S_FALSE;
+}
+
+/* ---------------------------------------------------------------------- */
+
+DWORD WINAPI delta_sound_thread(deltasound* self) {
+    // TODO
+    // While true loop
+    // Get the focused window
+    // mark buffers that are not write-primary??? as lost for non-focused window
+    // what todo with buffers for desktop window? always play?
+
+    TODO
 }

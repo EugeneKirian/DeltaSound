@@ -26,6 +26,9 @@ SOFTWARE.
 
 #include "arr.h"
 
+#define DELTASOUND_NONE                 0
+#define DELTASOUND_TRACK_WINDOW_FOCUS   1
+
 typedef struct cf cf;
 typedef struct ds ds;
 typedef struct dsc dsc;
@@ -39,9 +42,11 @@ typedef struct deltasound {
     arr*                Render;
     arr*                Capture;
     arr*                Private;
+
+    HANDLE              Thread;
 } deltasound;
 
-HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut);
+HRESULT DELTACALL deltasound_create(allocator* pAlloc, deltasound** ppOut, DWORD dwFlags);
 VOID DELTACALL deltasound_release(deltasound* pD);
 
 HRESULT DELTACALL deltasound_create_direct_sound(deltasound* pD,
