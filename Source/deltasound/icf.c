@@ -32,7 +32,7 @@ struct icf_vft {
     LPICFQUERYINTERFACE         QueryInterface;
     LPICFADDREF                 AddRef;
     LPICFRELEASE                Release;
-    LPCIFCREATEINSTANCE         CreateInstance;
+    LPICFCREATEINSTANCE         CreateInstance;
     LPICFLOCKSERVER             LockServer;
 };
 
